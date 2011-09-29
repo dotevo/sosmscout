@@ -21,26 +21,20 @@
 */
 
 
-#if defined(__WIN32__) || defined(WIN32)
+#ifdef Q_OS_WIN
   #define _USE_MATH_DEFINES
 #endif
 
 #include <cmath>
 
-#include <osmscout/private/Config.h>
-
-#if !HAVE_DECL_LOG2
   inline double log2(double x)
   {
     return log(x)/log(2.0l);
   }
-#endif
 
-#if !HAVE_DECL_ATANH
   inline double atanh(double x)
-    {
+  {
       return log((1.0+x)/(1.0-x))/2.0;
-    }
-#endif
+  }
 
 #endif

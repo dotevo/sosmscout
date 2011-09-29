@@ -33,7 +33,7 @@ namespace osmscout {
    AdminRegions are currently returned by
    Database.GetMatchingAdminRegions() using the CityStreetIndex.
    */
-  struct OSMSCOUT_API AdminRegion
+  struct AdminRegion
   {
     ObjectRef              reference; //! Reference to the object defining the region
     FileOffset             offset;    //! Offset into the region datafile

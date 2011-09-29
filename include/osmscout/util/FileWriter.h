@@ -27,7 +27,7 @@
 
 namespace osmscout {
 
-  class OSMSCOUT_API FileWriter
+  class FileWriter
   {
   private:
     FILE *file;

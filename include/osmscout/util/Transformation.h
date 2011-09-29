@@ -22,27 +22,26 @@
 
 #include <vector>
 
-#include <osmscout/private/CoreImportExport.h>
 
 #include <osmscout/Point.h>
 #include <osmscout/util/Projection.h>
 
 namespace osmscout {
 
-  struct OSMSCOUT_API TransPoint
+  struct TransPoint
   {
     bool   draw;
     double x;
     double y;
   };
 
-  struct OSMSCOUT_API Pixel
+  struct Pixel
   {
     double x;
     double y;
   };
 
-  class OSMSCOUT_API TransPolygon
+  class TransPolygon
   {
   private:
     size_t      pointsSize;
@@ -98,7 +97,7 @@ namespace osmscout {
                         double& cy) const;
   };
 
-  class OSMSCOUT_API TransBuffer
+  class TransBuffer
   {
   private:
     TransPolygon transPolygon;

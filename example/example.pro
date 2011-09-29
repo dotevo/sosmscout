@@ -33,9 +33,7 @@ HEADERS += \
     ../include/osmscout/util/StopClock.h \
     ../include/osmscout/oss/Parser.h \
     ../include/osmscout/oss/Scanner.h \
-    ../include/osmscout/private/CoreImportExport.h \
     ../include/osmscout/system/Types.h \
-    ../include/osmscout/Private/MapImportExport.h \
     ../include/osmscout/MapPainter.h \
     ../include/osmscout/Point.h \
     ../include/osmscout/util/Projection.h \
@@ -119,3 +117,5 @@ FORMS += \
 
 RESOURCES += \
     icons.qrc
+
+

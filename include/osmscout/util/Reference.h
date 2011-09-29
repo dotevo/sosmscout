@@ -23,14 +23,13 @@
 #include <cassert>
 #include <cstdio>
 
-#include <osmscout/private/CoreImportExport.h>
 
 namespace osmscout {
 
   /**
     Baseclass for all classes that support reference counting.
   */
-  class OSMSCOUT_API Referencable
+  class Referencable
   {
   public:
     Referencable()
@@ -86,7 +85,7 @@ namespace osmscout {
     Note that type T must inherit from class Referencable!
   */
   template <typename T>
-  class OSMSCOUT_API LazyRef
+  class LazyRef
   {
   private:
     mutable T* ptr;

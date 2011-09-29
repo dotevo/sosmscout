@@ -37,7 +37,7 @@ namespace osmscout {
 
   const static TypeId typeIgnore      = 0;
 
-  class OSMSCOUT_API Condition : public Referencable
+  class Condition : public Referencable
   {
   public:
     virtual ~Condition();
@@ -47,7 +47,7 @@ namespace osmscout {
 
   typedef Ref<Condition> ConditionRef;
 
-  class OSMSCOUT_API NotCondition : public Condition
+  class NotCondition : public Condition
   {
   private:
     ConditionRef condition;
@@ -58,7 +58,7 @@ namespace osmscout {
     bool Evaluate(const std::map<TagId,std::string>& tagMap) const;
   };
 
-  class OSMSCOUT_API AndCondition : public Condition
+  class AndCondition : public Condition
   {
   private:
     std::list<ConditionRef> conditions;
@@ -71,7 +71,7 @@ namespace osmscout {
     bool Evaluate(const std::map<TagId,std::string>& tagMap) const;
   };
 
-  class OSMSCOUT_API OrCondition : public Condition
+  class OrCondition : public Condition
   {
   private:
     std::list<ConditionRef> conditions;
@@ -84,7 +84,7 @@ namespace osmscout {
     bool Evaluate(const std::map<TagId,std::string>& tagMap) const;
   };
 
-  class OSMSCOUT_API ExistsCondition : public Condition
+  class ExistsCondition : public Condition
   {
   private:
     TagId tag;
@@ -95,7 +95,7 @@ namespace osmscout {
     bool Evaluate(const std::map<TagId,std::string>& tagMap) const;
   };
 
-  class OSMSCOUT_API EqualsCondition : public Condition
+  class EqualsCondition : public Condition
   {
   private:
     TagId       tag;
@@ -108,7 +108,7 @@ namespace osmscout {
     bool Evaluate(const std::map<TagId,std::string>& tagMap) const;
   };
 
-  class OSMSCOUT_API NotEqualsCondition : public Condition
+  class NotEqualsCondition : public Condition
   {
   private:
     TagId       tag;
@@ -121,7 +121,7 @@ namespace osmscout {
     bool Evaluate(const std::map<TagId,std::string>& tagMap) const;
   };
 
-  class OSMSCOUT_API IsInCondition : public Condition
+  class IsInCondition : public Condition
   {
   private:
     TagId                 tag;
@@ -135,7 +135,7 @@ namespace osmscout {
     bool Evaluate(const std::map<TagId,std::string>& tagMap) const;
   };
 
-  class OSMSCOUT_API TagInfo
+  class TagInfo
   {
   private:
     TagId       id;
@@ -165,7 +165,7 @@ namespace osmscout {
     }
   };
 
-  class OSMSCOUT_API TypeInfo
+  class TypeInfo
   {
   public:
     const static unsigned char typeNode     = 1 << 0;
@@ -349,7 +349,7 @@ namespace osmscout {
     }
   };
 
-  class OSMSCOUT_API TypeConfig
+  class TypeConfig
   {
   private:
     std::vector<TagInfo>                            tags;

@@ -65,7 +65,7 @@ namespace osmscout {
     The following groups attributes are currently available:
     * cache sizes.
     */
-  class OSMSCOUT_API DatabaseParameter
+  class DatabaseParameter
   {
   private:
     unsigned long areaAreaIndexCacheSize;
@@ -118,7 +118,7 @@ namespace osmscout {
     Parameter to influence the search result for searching for (drawable)
     objects in a given area.
     */
-  class OSMSCOUT_API AreaSearchParameter
+  class AreaSearchParameter
   {
   private:
     unsigned long maxAreaLevel;
@@ -142,7 +142,7 @@ namespace osmscout {
     unsigned long GetMaximumAreas() const;
   };
 
-  class OSMSCOUT_API Database
+  class Database
   {
   public: // Fix this
     struct NodeUse

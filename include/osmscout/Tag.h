@@ -22,7 +22,6 @@
 
 #include <string>
 
-#include <osmscout/private/CoreImportExport.h>
 
 #include <osmscout/system/Types.h>
 
@@ -30,7 +29,7 @@ namespace osmscout {
 
   typedef uint16_t TagId;
 
-  struct OSMSCOUT_API Tag
+  struct Tag
   {
     TagId       key;
     std::string value;

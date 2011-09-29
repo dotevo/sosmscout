@@ -26,7 +26,7 @@
 
 namespace osmscout {
 
-  class OSMSCOUT_API RouteData
+  class RouteData
   {
   public:
     class RouteEntry
@@ -65,7 +65,7 @@ namespace osmscout {
     }
   };
 
-  class OSMSCOUT_API RouteDescription
+  class RouteDescription
   {
   public:
     enum Action

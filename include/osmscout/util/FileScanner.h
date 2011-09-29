@@ -25,7 +25,7 @@
 
 #include <osmscout/TypeConfig.h>
 
-#if defined(__WIN32__) || defined(WIN32)
+#ifdef Q_OS_WIN
   #include <windows.h>
   #undef max
   #undef min
@@ -42,7 +42,7 @@ namespace osmscout {
     allocating real memory) resulting in measurable speed increase because of
     exchanging buffered file access with in memory array access.
     */
-  class OSMSCOUT_API FileScanner
+  class FileScanner
   {
   private:
     std::string  filename;
@@ -56,7 +56,7 @@ namespace osmscout {
     FileOffset   offset;
 
     // For Windows mmap usage
-#if defined(__WIN32__) || defined(WIN32)
+#ifdef Q_OS_WIN
     HANDLE       mmfHandle;
 #endif
 

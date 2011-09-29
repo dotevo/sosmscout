@@ -31,7 +31,7 @@
 
 namespace osmscout {
 
-  class OSMSCOUT_API Node : public Referencable
+  class Node : public Referencable
   {
   private:
     Id                id;

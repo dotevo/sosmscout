@@ -25,7 +25,7 @@
 
 namespace osmscout {
 
-  extern OSMSCOUT_API bool LoadStyleConfig(const char* styleFile,
+  extern bool LoadStyleConfig(const char* styleFile,
                                            StyleConfig& styleConfig);
 }
 

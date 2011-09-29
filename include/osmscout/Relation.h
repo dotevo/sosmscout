@@ -34,7 +34,7 @@ namespace osmscout {
   /**
     Representation of an relation
     */
-  class OSMSCOUT_API Relation : public Referencable
+  class Relation : public Referencable
   {
   public:
     class Role

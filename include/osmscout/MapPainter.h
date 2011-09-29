@@ -24,8 +24,6 @@
 #include <set>
 #include <string>
 
-#include <osmscout/Private/MapImportExport.h>
-
 #include <osmscout/util/Geometry.h>
 
 #include <osmscout/GroundTile.h>
@@ -39,7 +37,7 @@
 
 namespace osmscout {
 
-  class OSMSCOUT_MAP_API MapParameter
+  class MapParameter
   {
   private:
     double                 dpi;               //! DPI of the display, default is 92
@@ -131,7 +129,7 @@ namespace osmscout {
     }
   };
 
-  struct OSMSCOUT_MAP_API MapData
+  struct MapData
   {
     std::vector<NodeRef>     nodes;
     std::vector<WayRef>      ways;
@@ -143,7 +141,7 @@ namespace osmscout {
     std::list<GroundTile>    groundTiles;
   };
 
-  class OSMSCOUT_MAP_API MapPainter
+  class MapPainter
   {
   public:
     enum CapStyle
@@ -153,7 +151,7 @@ namespace osmscout {
     };
 
   protected:
-    struct OSMSCOUT_API AreaData
+    struct AreaData
     {
       const SegmentAttributes *attributes;
       const FillStyle         *fillStyle;
@@ -166,7 +164,7 @@ namespace osmscout {
       }
     };
 
-    struct OSMSCOUT_API WayData
+    struct WayData
     {
       const SegmentAttributes *attributes;
       const LineStyle         *lineStyle;
@@ -192,7 +190,7 @@ namespace osmscout {
       }
     };
 
-    struct OSMSCOUT_API Label
+    struct Label
     {
       bool              draw;
       bool              overlay;

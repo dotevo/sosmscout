@@ -23,26 +23,25 @@
 #include <set>
 #include <string>
 
-#include <osmscout/private/CoreImportExport.h>
 
 #include <osmscout/system/Types.h>
 
 namespace osmscout {
 
-  extern OSMSCOUT_API void GetKeysForName(const std::string& name, std::set<uint32_t>& keys);
+  extern void GetKeysForName(const std::string& name, std::set<uint32_t>& keys);
 
-  extern OSMSCOUT_API bool EncodeNumber(unsigned long number,
+  extern bool EncodeNumber(unsigned long number,
                                         size_t bufferLength,
                                         char* buffer,
                                         size_t& bytes);
 
-  extern OSMSCOUT_API bool DecodeNumber(const char* buffer,
+  extern bool DecodeNumber(const char* buffer,
                                         uint32_t& number,
                                         size_t& bytes);
 
-  extern OSMSCOUT_API bool GetFileSize(const std::string& filename, long& size);
+  extern bool GetFileSize(const std::string& filename, long& size);
 
-  extern OSMSCOUT_API std::string AppendFileToDir(const std::string& dir, const std::string& file);
+  extern std::string AppendFileToDir(const std::string& dir, const std::string& file);
 }
 
 #endif

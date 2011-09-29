@@ -31,7 +31,7 @@
 
 namespace osmscout {
 
-  class OSMSCOUT_API Way : public Referencable
+  class Way : public Referencable
   {
   public:
     enum RestrictionType

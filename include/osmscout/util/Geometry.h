@@ -29,7 +29,6 @@
 #include <string>
 #include <vector>
 
-#include <osmscout/private/CoreImportExport.h>
 
 #include <osmscout/system/Types.h>
 
@@ -180,7 +179,7 @@ namespace osmscout {
     return false;
   }
 
-  struct OSMSCOUT_API Coord
+  struct Coord
   {
     uint32_t x;
     uint32_t y;
@@ -203,13 +202,13 @@ namespace osmscout {
     }
   };
 
-  extern OSMSCOUT_API size_t Pow(size_t a, size_t b);
-  extern OSMSCOUT_API double GetSphericalDistance(double aLon, double aLat,
+  extern size_t Pow(size_t a, size_t b);
+  extern double GetSphericalDistance(double aLon, double aLat,
                                                   double bLon, double bLat);
-  extern OSMSCOUT_API double GetEllipsoidalDistance(double aLon, double aLat,
+  extern double GetEllipsoidalDistance(double aLon, double aLat,
                                                    double bLon, double bLat);
 
-  struct OSMSCOUT_API ScanCell
+  struct ScanCell
   {
     int x;
     int y;
@@ -217,10 +216,10 @@ namespace osmscout {
     ScanCell(int x, int y);
   };
 
-  void OSMSCOUT_API ScanConvertLine(int x1, int y1,
+  void ScanConvertLine(int x1, int y1,
                                     int x2, int y2,
                                     std::vector<ScanCell>& cells);
-  void OSMSCOUT_API ScanConvertLine(const std::vector<Point>& points,
+  void ScanConvertLine(const std::vector<Point>& points,
                                     double xTrans, double cellWidth,
                                     double yTrans, double cellHeight,
                                     std::vector<ScanCell>& cells);

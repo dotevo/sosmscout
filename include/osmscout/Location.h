@@ -29,7 +29,7 @@ namespace osmscout {
     by Database.GetMatchingLocations() which uses CityStreetIndex
     internally.
    */
-  class OSMSCOUT_API Location
+  class Location
   {
   public:
     std::string            name;

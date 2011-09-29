@@ -27,12 +27,12 @@
 
 #include <osmscout/private/Config.h>
 
-#if defined(HAVE_MMAP)
+#ifdef Q_OS_LINUX
   #include <unistd.h>
   #include <sys/mman.h>
 #endif
 
-#if defined(__WIN32__) || defined(WIN32)
+#ifdef Q_OS_WIN32
   #include<io.h>
 #endif
 
@@ -45,7 +45,7 @@ namespace osmscout {
      hasError(true),
      buffer(NULL),
      offset(0)
-#if defined(__WIN32__) || defined(WIN32)
+#ifdef Q_OS_WIN
      ,mmfHandle((HANDLE)0)
 #endif
   {
@@ -61,7 +61,7 @@ namespace osmscout {
 
   void FileScanner::FreeBuffer()
   {
-#if defined(HAVE_MMAP)
+#if Q_OS_LINUX
     if (buffer!=NULL) {
       if (munmap(buffer,size)!=0) {
         std::cerr << "Error while calling munmap: "<< strerror(errno) << std::endl;
@@ -69,7 +69,7 @@ namespace osmscout {
 
       buffer=NULL;
     }
-#elif  defined(__WIN32__) || defined(WIN32)
+#elif  Q_OS_WIN
       if (buffer!=NULL) {
         UnmapViewOfFile(buffer);
         buffer=NULL;
@@ -126,7 +126,7 @@ namespace osmscout {
       return false;
     }
 
-#if defined(HAVE_MMAP)
+#if Q_OS_LINUX
     if (file!=NULL && readOnly && this->size>0) {
       FreeBuffer();
 
@@ -139,7 +139,7 @@ namespace osmscout {
         buffer=NULL;
       }
     }
-#elif  defined(__WIN32__) || defined(WIN32)
+#elif  Q_OS_WIN
     if (file!=NULL && readOnly && this->size>0) {
       FreeBuffer();
 

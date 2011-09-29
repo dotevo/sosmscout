@@ -22,14 +22,13 @@
 
 #include <string>
 
-#include <osmscout/private/CoreImportExport.h>
 
 namespace osmscout {
 
   /**
     Simple stop clock implementation.
     */
-  class OSMSCOUT_API StopClock
+  class StopClock
   {
   private:
     struct StopClockPIMPL;
@@ -46,10 +45,10 @@ namespace osmscout {
 
     std::string ResultString() const;
 
-    friend OSMSCOUT_API std::ostream& operator<<(std::ostream& stream, const StopClock& clock);
+    friend std::ostream& operator<<(std::ostream& stream, const StopClock& clock);
   };
 
-  extern OSMSCOUT_API std::ostream& operator<<(std::ostream& stream, const StopClock& clock);
+  extern std::ostream& operator<<(std::ostream& stream, const StopClock& clock);
 
 }
 

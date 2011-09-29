@@ -22,11 +22,10 @@
 
 #include <cstdlib>
 
-#include <osmscout/private/CoreImportExport.h>
 
 namespace osmscout {
 
-  class OSMSCOUT_API Projection
+  class Projection
   {
   public:
     virtual ~Projection();
@@ -61,7 +60,7 @@ namespace osmscout {
     virtual double GetPixelSize() const = 0;
   };
 
-  class OSMSCOUT_API MercatorProjection : public Projection
+  class MercatorProjection : public Projection
   {
     bool                valid;         //! projects is valid
     double              lon;           //! Longitude coordinate of the center of the image

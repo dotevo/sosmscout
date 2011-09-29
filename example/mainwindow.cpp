@@ -44,12 +44,15 @@ void MainWindow::init()
 #endif
 
 #ifdef Q_OS_WIN
+    map = "c:/map/";
+    style = "c:/map/standard.oss.xml";
 #endif
 
     width = 640;
     height = 480;
-    lon = 19.16;
-    lat = 42.28;
+    lon = -26.52;
+
+    lat = 38.05;
     zoom = 10000;
 
     this->ui->zoomSlider->setValue(zoom);

@@ -32,7 +32,7 @@ namespace osmscout {
     refRelation = 4
   };
 
-  class OSMSCOUT_API ObjectRef
+  class ObjectRef
   {
   public:
     Id      id;

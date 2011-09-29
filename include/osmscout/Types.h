@@ -20,7 +20,6 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
 */
 
-#include <osmscout/private/CoreImportExport.h>
 
 #include <vector>
 
@@ -88,7 +87,7 @@ namespace osmscout {
     value sand afterwards multiplied by conversion factor
     to get long values without significant values after colon.
     */
-  extern OSMSCOUT_API const double conversionFactor;
+  extern const double conversionFactor;
 }
 
 #endif

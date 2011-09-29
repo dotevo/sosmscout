@@ -26,11 +26,10 @@
 #include <sstream>
 #include <string>
 
-#include <osmscout/private/CoreImportExport.h>
 
 namespace osmscout {
 
-  extern OSMSCOUT_API bool GetDigitValue(char digit, size_t& result);
+  extern bool GetDigitValue(char digit, size_t& result);
 
   template<typename A>
   size_t NumberDigits(const A& a,size_t base=10)
@@ -82,8 +81,8 @@ namespace osmscout {
     return res;
   }
 
-  extern OSMSCOUT_API bool StringToNumber(const char* string, double& value);
-  extern OSMSCOUT_API bool StringToNumber(const std::string& string, double& value);
+  extern bool StringToNumber(const char* string, double& value);
+  extern bool StringToNumber(const std::string& string, double& value);
 
   template<typename A>
   bool StringToNumber(const std::string& string, A& a, size_t base=10)
@@ -164,10 +163,10 @@ namespace osmscout {
     return true;
   }
 
-  extern OSMSCOUT_API std::string StringListToString(const std::list<std::string>& list,
+  extern std::string StringListToString(const std::list<std::string>& list,
                                                      const std::string& separator="/");
 
-  extern OSMSCOUT_API std::wstring UTF8StringToWString(const std::string& text);
+  extern std::wstring UTF8StringToWString(const std::string& text);
 }
 
 #endif

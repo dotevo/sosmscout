@@ -23,11 +23,9 @@
 #include <ctime>
 #include <string>
 
-#include <osmscout/private/CoreImportExport.h>
-
 namespace osmscout {
 
-  class OSMSCOUT_API Progress
+  class Progress
   {
   private:
     bool outputDebug;
@@ -51,7 +49,7 @@ namespace osmscout {
     virtual void Error(const std::string& text);
   };
 
-  class OSMSCOUT_API ConsoleProgress : public Progress
+  class ConsoleProgress : public Progress
   {
   private:
     time_t lastProgressDump;
