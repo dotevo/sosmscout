@@ -38,7 +38,8 @@ void MainWindow::init()
     style = "";
 
 #ifdef Q_OS_UNIX
-    map = "/home/bartek/QtProjects/OSMNavi/map/";
+   // map = "/home/bartek/QtProjects/OSMNavi/map/";
+    map = "/home/bartek/osmscout-map/montenegro/";
     style = "/home/bartek/QtProjects/OSMNavi/styles/standard.oss.xml";
 #endif
 
@@ -47,8 +48,8 @@ void MainWindow::init()
 
     width = 640;
     height = 480;
-    lon = 17.03;
-    lat = 51.11;
+    lon = 19.16;
+    lat = 42.28;
     zoom = 10000;
 
     this->ui->zoomSlider->setValue(zoom);
