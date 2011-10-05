@@ -19,7 +19,9 @@
 
 #include <osmscout/AreaNodeIndex.h>
 
+#ifndef WINCE
 #include <cerrno>
+#endif
 #include <cstring>
 #include <iostream>
 #include <map>

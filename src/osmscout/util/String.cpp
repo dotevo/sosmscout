@@ -18,7 +18,7 @@
 */
 
 #include <osmscout/util/String.h>
-
+#include <QString>
 #include <osmscout/private/Config.h>
 
 namespace osmscout {
@@ -88,24 +88,16 @@ namespace osmscout {
 
   bool StringToNumber(const char* string, double& value)
   {
-    std::istringstream stream(string);
-
-    stream.imbue(std::locale("C"));
-
-    stream >> value;
-
-    return stream.eof();
+    QString s(string);
+	value=s.toDouble();
+	return true;
   }
 
   bool StringToNumber(const std::string& string, double& value)
   {
-    std::istringstream stream(string);
-
-    stream.imbue(std::locale("C"));
-
-    stream >> value;
-
-    return stream.eof();
+    QString s(string.c_str());
+	value=s.toDouble();
+	return true;
   }
 
   std::string StringListToString(const std::list<std::string>& list,

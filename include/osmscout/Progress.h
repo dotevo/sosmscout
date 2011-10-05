@@ -39,20 +39,20 @@ namespace osmscout {
     void SetOutputDebug(bool outputDebug);
     bool OutputDebug() const;
 
-    virtual void SetStep(const std::string& step);
-    virtual void SetAction(const std::string& action);
-    virtual void SetProgress(double current, double total);
+    virtual void SetStep(const std::string& step)=0;
+    virtual void SetAction(const std::string& action)=0;
+    virtual void SetProgress(double current, double total)=0;
 
-    virtual void Debug(const std::string& text);
-    virtual void Info(const std::string& text);
-    virtual void Warning(const std::string& text);
-    virtual void Error(const std::string& text);
+    virtual void Debug(const std::string& text)=0;
+    virtual void Info(const std::string& text)=0;
+    virtual void Warning(const std::string& text)=0;
+    virtual void Error(const std::string& text)=0;
   };
 
   class ConsoleProgress : public Progress
   {
   private:
-    time_t lastProgressDump;
+    //time_t lastProgressDump;
 
   public:
     void SetStep(const std::string& step);

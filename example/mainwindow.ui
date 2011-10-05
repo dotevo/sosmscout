@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>640</width>
-    <height>480</height>
+    <width>480</width>
+    <height>272</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,8 +17,8 @@
    <widget class="QSlider" name="zoomSlider">
     <property name="geometry">
      <rect>
-      <x>600</x>
-      <y>20</y>
+      <x>10</x>
+      <y>10</y>
       <width>24</width>
       <height>160</height>
      </rect>
@@ -45,8 +45,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>640</width>
-     <height>23</height>
+     <width>480</width>
+     <height>21</height>
     </rect>
    </property>
   </widget>

@@ -44,15 +44,15 @@ void MainWindow::init()
 #endif
 
 #ifdef Q_OS_WIN
-    map = "c:/map/";
-    style = "c:/map/standard.oss.xml";
+    map = "/ResidentFlash/ZPI/map";
+    style = "/ResidentFlash/ZPI/standard.oss.xml";
 #endif
 
-    width = 640;
-    height = 480;
-    lon = -26.52;
+    width = 480;
+    height = 272;
+    lon = 17.03;
 
-    lat = 38.05;
+    lat = 51.1;
     zoom = 10000;
 
     this->ui->zoomSlider->setValue(zoom);
@@ -105,14 +105,14 @@ int MainWindow::DrawMap()
     osmscout::DatabaseParameter databaseParameter;
     osmscout::Database          database(databaseParameter);
 
-    if (!database.Open(map.c_str())) {
+	if (!database.Open(map)) {
         std::cerr << "Cannot open database" << std::endl;
         return 1;
     }
 
     osmscout::StyleConfig styleConfig(database.GetTypeConfig());
 
-    if (!osmscout::LoadStyleConfig(style.c_str(),styleConfig)) {
+	if (!osmscout::LoadStyleConfig((const char*)style.toLatin1(),styleConfig)) {
         std::cerr << "Cannot open style" << std::endl;
     }
 

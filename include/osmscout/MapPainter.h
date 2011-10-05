@@ -446,8 +446,8 @@ namespace osmscout {
     /**
       Draw the Icon as defined by the IconStyle at the givcen pixel coordinate.
      */
-    virtual void DrawIcon(const IconStyle* style,
-                          double x, double y) = 0;
+    virtual void DrawIcon2(const IconStyle* style,
+                         double x, double y) = 0;
 
     /**
       Draw the Symbol as defined by the SymbolStyle at the givcen pixel coordinate.

@@ -24,10 +24,10 @@
 
 #include <stddef.h>
 
-#if defined(OSMSCOUT_HAVE_STDINT_H)
+#if OSMSCOUT_HAVE_STDINT_H
   // will be <cstdint> in c++0x
   #include <stdint.h>
-#elif defined(__WIN32__) || defined(WIN32)
+#else
   #include <stdio.h>
 
   typedef          __int8 int8_t;

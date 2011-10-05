@@ -228,17 +228,17 @@ namespace osmscout {
     delete typeConfig;
   }
 
-  bool Database::Open(const std::string& path,
+  bool Database::Open(const QString& path,
                       std::string (*hashFunction) (std::string))
   {
-    assert(!path.empty());
-
-    this->path=path;
+	  assert(!path.isEmpty());
+std::string l((const char*)path.toAscii());
+	  this->path=l;
     this->hashFunction=hashFunction;
 
     typeConfig=new TypeConfig();
 
-    if (!LoadTypeData(path,*typeConfig)) {
+    if (!LoadTypeData(l,*typeConfig)) {
       std::cerr << "Cannot load 'types.dat'!" << std::endl;
       delete typeConfig;
       typeConfig=NULL;
@@ -246,7 +246,7 @@ namespace osmscout {
     }
 
     FileScanner scanner;
-    std::string file=AppendFileToDir(path,"bounding.dat");
+    std::string file=AppendFileToDir(this->path,"bounding.dat");
 
     if (!scanner.Open(file)) {
       std::cerr << "Cannot open 'bounding.dat'" << std::endl;
@@ -280,7 +280,7 @@ namespace osmscout {
 //    std::cout << "Data bounding box: [" << minLat << "," << minLon << "] - [" << maxLat << "," << maxLon << "]" << std::endl;
 
 //    std::cout << "Opening 'nodes.dat'..." << std::endl;
-    if (!nodeDataFile.Open(path)) {
+    if (!nodeDataFile.Open(l)) {
 //      std::cerr << "Cannot open 'nodes.dat'!" << std::endl;
       delete typeConfig;
       typeConfig=NULL;
@@ -289,7 +289,7 @@ namespace osmscout {
 //    std::cout << "Opening 'nodes.dat' done." << std::endl;
 
 //    std::cout << "Opening 'ways.dat'..." << std::endl;
-    if (!wayDataFile.Open(path)) {
+    if (!wayDataFile.Open(this->path)) {
 //      std::cerr << "Cannot open 'ways.dat'!" << std::endl;
       delete typeConfig;
       typeConfig=NULL;
@@ -298,7 +298,7 @@ namespace osmscout {
 //    std::cout << "Opening 'ways.dat' done." << std::endl;
 
 //    std::cout << "Opening 'relations.dat'..." << std::endl;
-    if (!relationDataFile.Open(path)) {
+    if (!relationDataFile.Open(this->path)) {
       std::cerr << "Cannot open 'relations.dat'!" << std::endl;
       delete typeConfig;
       typeConfig=NULL;
@@ -307,7 +307,7 @@ namespace osmscout {
 //    std::cout << "Opening 'relations.dat' done." << std::endl;
 
 //    std::cout << "Loading low zoom optimizations..." << std::endl;
-    if (!optimizeLowZoom.Open(path)) {
+    if (!optimizeLowZoom.Open(this->path)) {
 //      std::cerr << "Cannot load low zoom optimizations!" << std::endl;
       delete typeConfig;
       typeConfig=NULL;
@@ -316,7 +316,7 @@ namespace osmscout {
 //    std::cout << "Loading water index done." << std::endl;
 
 //    std::cout << "Loading area area index..." << std::endl;
-    if (!areaAreaIndex.Load(path)) {
+    if (!areaAreaIndex.Load(this->path)) {
       std::cerr << "Cannot load area area index!" << std::endl;
       delete typeConfig;
       typeConfig=NULL;
@@ -325,7 +325,7 @@ namespace osmscout {
 //    std::cout << "Loading area index done." << std::endl;
 
 //    std::cout << "Loading area node index..." << std::endl;
-    if (!areaNodeIndex.LoadAreaNodeIndex(path)) {
+    if (!areaNodeIndex.LoadAreaNodeIndex(this->path)) {
 //      std::cerr << "Cannot load area node index!" << std::endl;
       delete typeConfig;
       typeConfig=NULL;
@@ -334,7 +334,7 @@ namespace osmscout {
 //    std::cout << "Loading area node index done." << std::endl;
 
 //    std::cout << "Loading area way index..." << std::endl;
-    if (!areaWayIndex.Load(path)) {
+    if (!areaWayIndex.Load(this->path)) {
       std::cerr << "Cannot load area way index!" << std::endl;
       delete typeConfig;
       typeConfig=NULL;
@@ -343,7 +343,7 @@ namespace osmscout {
 //    std::cout << "Loading area way index done." << std::endl;
 
 //    std::cout << "Loading city street index..." << std::endl;
-    if (!cityStreetIndex.Load(path, hashFunction)) {
+    if (!cityStreetIndex.Load(this->path, hashFunction)) {
       std::cerr << "Cannot load city street index!" << std::endl;
       delete typeConfig;
       typeConfig=NULL;
@@ -352,7 +352,7 @@ namespace osmscout {
 //    std::cout << "Loading city street index done." << std::endl;
 
 //    std::cout << "Loading water index..." << std::endl;
-    if (!waterIndex.Load(path)) {
+    if (!waterIndex.Load(this->path)) {
       std::cerr << "Cannot load water index!" << std::endl;
       delete typeConfig;
       typeConfig=NULL;
