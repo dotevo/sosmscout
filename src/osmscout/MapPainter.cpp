@@ -1608,7 +1608,7 @@ namespace osmscout {
     labelRefs.resize(xCellCount*yCellCount);
 
     transBuffer.Reset();
-
+/*
     if (parameter.IsDebugPerformance()) {
       std::cout << "Draw ";
       std::cout << projection.GetLat() <<", ";
@@ -1616,28 +1616,28 @@ namespace osmscout {
       std::cout << projection.GetMagnification() << "x" << "/" << log(projection.GetMagnification())/log(2.0);
       std::cout << " area " << projection.GetWidth() << "x" << projection.GetHeight() << std::endl;
     }
-
+*/
     //
     // Setup and Precalculation
     //
 
-    StopClock prepareAreasTimer;
+    //StopClock prepareAreasTimer;
 
     PrepareAreas(styleConfig,
                  projection,
                  parameter,
                  data);
 
-    prepareAreasTimer.Stop();
+    //prepareAreasTimer.Stop();
 
-    StopClock prepareWaysTimer;
+    //StopClock prepareWaysTimer;
 
     PrepareWays(styleConfig,
                 projection,
                 parameter,
                 data);
 
-    prepareWaysTimer.Stop();
+    //prepareWaysTimer.Stop();
 
     //
     // Clear area with background color
@@ -1652,27 +1652,26 @@ namespace osmscout {
     // Draw areas
     //
 
-    StopClock areasTimer;
+    //StopClock areasTimer;
 
     DrawAreas(styleConfig,
-              projection,
-              parameter,
-              data);
-
-    areasTimer.Stop();
+          projection,
+          parameter,
+          data);
+    //areasTimer.Stop();
 
     //
     // Drawing ways
     //
 
-    StopClock pathsTimer;
+    //StopClock pathsTimer;
 
     DrawWays(styleConfig,
              projection,
              parameter,
              data);
 
-    pathsTimer.Stop();
+    //pathsTimer.Stop();
 
     //
     // Path labels
@@ -1681,62 +1680,61 @@ namespace osmscout {
     // TODO: Draw labels only if there is a style for the current zoom level
     // that requires labels
 
-    StopClock pathLabelsTimer;
+//    StopClock pathLabelsTimer;
 
     DrawWayLabels(styleConfig,
                   projection,
                   parameter,
                   data);
-
-    pathLabelsTimer.Stop();
+//    pathLabelsTimer.Stop();
 
     //
     // Nodes symbols & Node labels
     //
 
-    StopClock nodesTimer;
+    //StopClock nodesTimer;
 
     DrawNodes(styleConfig,
               projection,
               parameter,
               data);
 
-    nodesTimer.Stop();
+    //nodesTimer.Stop();
 
     //
     // Area labels
     //
 
-    StopClock areaLabelsTimer;
+    //StopClock areaLabelsTimer;
 
     DrawAreaLabels(styleConfig,
                    projection,
-                   parameter,
-                   data);
+                       parameter,
+                       data);
 
-    areaLabelsTimer.Stop();
+    //areaLabelsTimer.Stop();
 
     //
     // POI Nodes
     //
 
-    StopClock poisTimer;
+    //StopClock poisTimer;
 
     DrawPOINodes(styleConfig,
                  projection,
                  parameter,
                  data);
 
-    poisTimer.Stop();
+    //poisTimer.Stop();
 
-    StopClock labelsTimer;
+    //StopClock labelsTimer;
 
     DrawLabels(styleConfig,
                projection,
                parameter);
 
-    labelsTimer.Stop();
-
+    //labelsTimer.Stop();
+/*
     if (parameter.IsDebugPerformance()) {
 
       std::cout << "Paths: ";
@@ -1751,5 +1749,6 @@ namespace osmscout {
       std::cout << "POIs: " << poisTimer << " ";
       std::cout << "Labels: " << labelsTimer << std::endl;
     }
+    */
   }
 }

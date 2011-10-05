@@ -36,7 +36,6 @@ namespace osmscout {
     for (size_t i=0; i<sin.size(); i++) {
       sin[i]=std::sin(M_PI/180*i/(sin.size()/360));
     }
-
   }
 
   MapPainterQt::~MapPainterQt()

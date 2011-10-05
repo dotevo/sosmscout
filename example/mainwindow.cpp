@@ -34,12 +34,14 @@ MainWindow::~MainWindow()
 
 void MainWindow::init()
 {
+    moving = false;
+    scaling = false;
+
     map = "";
     style = "";
 
 #ifdef Q_OS_UNIX
-   // map = "/home/bartek/QtProjects/OSMNavi/map/";
-    map = "/home/bartek/osmscout-map/montenegro/";
+     map = "/home/bartek/osmscout-map/3poland/";
     style = "/home/bartek/QtProjects/OSMNavi/styles/standard.oss.xml";
 #endif
 
@@ -48,17 +50,42 @@ void MainWindow::init()
     style = "c:/map/standard.oss.xml";
 #endif
 
+    translatePoint = QPoint(0, 0);
+    lastPoint = QPoint(0, 0);
+
     width = 640;
     height = 480;
-    lon = -26.52;
-
-    lat = 38.05;
+    lat = 51.1;
+    lon = 17.03;
     zoom = 10000;
+
+    pixmap = QPixmap(width, height);
+    pixmap.fill(QColor(200, 200, 200));
+
+    zoomLevels.append(100);
+    zoomLevels.append(200);
+    zoomLevels.append(300);
+    zoomLevels.append(400);
+    zoomLevels.append(500);
+    zoomLevels.append(600);
+    zoomLevels.append(700);
+    zoomLevels.append(800);
+    zoomLevels.append(900);
+    zoomLevels.append(1000);
+    zoomLevels.append(5000);
+    zoomLevels.append(10000);
+    zoomLevels.append(20000);
+    zoomLevels.append(40000);
+    zoomLevels.append(50000);
+    zoomLevels.append(60000);
+    zoomLevels.append(70000);
+    zoomLevels.append(80000);
+    zoomLevels.append(90000);
+    zoomLevels.append(100000);
 
     this->ui->zoomSlider->setValue(zoom);
     this->ui->zoomSlider->setMinimum(100);
     this->ui->zoomSlider->setMaximum(100000);
-    this->ui->zoomSlider->setSingleStep(1000);
 }
 
 void MainWindow::paintEvent(QPaintEvent *)
@@ -71,27 +98,33 @@ void MainWindow::mousePressEvent(QMouseEvent *e)
 {
     moving = true;
     startPoint = e->globalPos();
+    lastPoint = e->globalPos();
 }
 
-void MainWindow::mouseReleaseEvent(QMouseEvent *)
+void MainWindow::mouseReleaseEvent(QMouseEvent *e)
 {
     moving = false;
+
+    finishPoint = e->globalPos();
+    QLineF line(startPoint, finishPoint);
+
+    double dx = line.dx();
+    double dy = line.dy();
+
+    lon -= dx/zoom;
+    lat += dy/zoom;
+
+    translatePoint = QPoint(0, 0);
+    startPoint = QPoint(0, 0);
+
+    repaint();
 }
 
 void MainWindow::mouseMoveEvent(QMouseEvent *e)
 {
     if (moving)
     {
-        finishPoint = e->globalPos();
-        QLineF line(startPoint, finishPoint);
-
-        double dx = line.dx();
-        double dy = line.dy();
-
-        lon -= dx/zoom;
-        lat += dy/zoom;
-
-        startPoint = finishPoint;
+        translatePoint = e->globalPos() - startPoint;
 
         repaint();
     }
@@ -102,21 +135,37 @@ int MainWindow::DrawMap()
     // std::cerr << "DrawMapQt <map directory> <style-file> <width> <height> <lon> <lat> <zoom> <output>" << std::endl;
 //    std::cerr << "Default values!";
 
-    osmscout::DatabaseParameter databaseParameter;
-    osmscout::Database          database(databaseParameter);
+    if (moving)
+    {
+        int x = translatePoint.x();
+        int y = translatePoint.y();
 
-    if (!database.Open(map.c_str())) {
-        std::cerr << "Cannot open database" << std::endl;
-        return 1;
+        QPainter *windowPainter = new QPainter(this);
+        windowPainter->drawPixmap(x, y, pixmap);
     }
 
-    osmscout::StyleConfig styleConfig(database.GetTypeConfig());
+    else if (scaling)
+    {
 
-    if (!osmscout::LoadStyleConfig(style.c_str(),styleConfig)) {
-        std::cerr << "Cannot open style" << std::endl;
     }
 
-    QPainter* painter=new QPainter(this);
+    else
+    {
+        osmscout::DatabaseParameter databaseParameter;
+        osmscout::Database          database(databaseParameter);
+
+        if (!database.Open(map.c_str())) {
+            std::cerr << "Cannot open database" << std::endl;
+            return 1;
+        }
+
+        osmscout::StyleConfig styleConfig(database.GetTypeConfig());
+
+        if (!osmscout::LoadStyleConfig(style.c_str(),styleConfig)) {
+            std::cerr << "Cannot open style" << std::endl;
+        }
+
+        QPainter* painter = new QPainter(&pixmap);
 
         if (painter!=NULL) {
             osmscout::MercatorProjection  projection;
@@ -156,14 +205,44 @@ int MainWindow::DrawMap()
             }
 
             delete painter;
+
+            QPainter *windowPainter = new QPainter(this);
+            windowPainter->drawPixmap(0, 0, pixmap);
         }
         else {
             std::cout << "Cannot create QPainter" << std::endl;
         }
+    }
 }
 
 void MainWindow::on_zoomSlider_valueChanged(int value)
 {
     zoom = value;
-    this->repaint();
+    repaint();
 }
+
+void MainWindow::on_plusZoom_clicked()
+{
+    int index = getIndexOfActualZoom(zoom);
+    if (index < zoomLevels.count() - 1)
+    {
+        MainWindow::ui->zoomSlider->setValue(zoomLevels.at(index + 1));
+    //    on_zoomSlider_valueChanged(zoomLevels.at(index + 1));
+    }
+}
+
+void MainWindow::on_minusZoom_clicked()
+{
+    int index = getIndexOfActualZoom(zoom);
+    if (index > 0)
+    {
+        MainWindow::ui->zoomSlider->setValue(zoomLevels.at(index + 1));
+    }
+}
+
+int MainWindow::getIndexOfActualZoom(int actZoom)
+{
+    return zoomLevels.lastIndexOf(actZoom);
+}
+
+

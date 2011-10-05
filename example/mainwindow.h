@@ -2,6 +2,10 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QList>
+#include <QPainter>
+#include <QPoint>
+#include <QPixmap>
 
 namespace Ui {
     class MainWindow;
@@ -23,17 +27,32 @@ public:
 private slots:
     void on_zoomSlider_valueChanged(int value);
 
+    void on_plusZoom_clicked();
+
+    void on_minusZoom_clicked();
+
 private:
     Ui::MainWindow *ui;
+
     std::string   map;
     std::string   style;
     std::string   output;
     size_t        width,height;
     double        lon,lat,zoom;
-    // map moving
+
+    QPixmap pixmap;
+    // map operations
     bool moving;
-    QPoint startPoint;
-    QPoint finishPoint;
+    bool scaling;
+
+    QPoint startPoint;  // mouse is pressed
+    QPoint finishPoint; // mouse is released
+    QPoint lastPoint;   // last position of mouse
+    QPoint translatePoint;  // translation point
+
+    QList<int> zoomLevels;
+    int getIndexOfActualZoom(int actZoom);
+
 
     void init();
 };

@@ -108,4 +108,6 @@ SOURCES += \
     ./src/osmscout/MapPainter.cpp
 INCLUDEPATH += include/
 
-
+TEMPLATE = subdirs
+SUBDIRS += \
+    example
