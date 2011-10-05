@@ -1,0 +1,23 @@
+
+build/*
+
+*Makefile*
+#Qt
+*.user
+*.creator
+*.includes
+*.config
+*.files
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+
+# Compiled Dynamic libraries
+*.so
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
