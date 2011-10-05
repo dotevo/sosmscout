@@ -3,4 +3,4 @@
 #define OSMSCOUT_EXPORT_SYMBOLS 1
 
 /* system header stdint.h is available */
-#define OSMSCOUT_HAVE_STDINT_H 1
+#define OSMSCOUT_HAVE_STDINT_H 0

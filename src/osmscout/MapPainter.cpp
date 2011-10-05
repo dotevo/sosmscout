@@ -704,7 +704,7 @@ namespace osmscout {
       }
 
       if (hasIcon) {
-        DrawIcon(iconStyle,x,y);
+        DrawIcon2(iconStyle,x,y);
       }
 
       if (hasSymbol) {
@@ -818,7 +818,7 @@ namespace osmscout {
       }
 
       if (hasIcon) {
-        DrawIcon(iconStyle,x,y);
+        DrawIcon2(iconStyle,x,y);
       }
 
       if (hasSymbol) {
@@ -908,7 +908,7 @@ namespace osmscout {
           }
 
           if (hasIcon) {
-            DrawIcon(iconStyle,x,y);
+            DrawIcon2(iconStyle,x,y);
           }
 
           if (hasSymbol) {

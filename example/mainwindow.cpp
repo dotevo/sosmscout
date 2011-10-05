@@ -46,17 +46,19 @@ void MainWindow::init()
 #endif
 
 #ifdef Q_OS_WIN
-    map = "c:/map/";
-    style = "c:/map/standard.oss.xml";
+    map = "/ResidentFlash/ZPI/map";
+    style = "/ResidentFlash/ZPI/standard.oss.xml";
 #endif
+
 
     translatePoint = QPoint(0, 0);
     lastPoint = QPoint(0, 0);
 
-    width = 640;
-    height = 480;
+    width = 480;
+    height = 272;
     lat = 51.1;
     lon = 17.03;
+
     zoom = 10000;
 
     pixmap = QPixmap(width, height);
@@ -140,8 +142,10 @@ int MainWindow::DrawMap()
         int x = translatePoint.x();
         int y = translatePoint.y();
 
+
         QPainter *windowPainter = new QPainter(this);
         windowPainter->drawPixmap(x, y, pixmap);
+
     }
 
     else if (scaling)
@@ -154,14 +158,14 @@ int MainWindow::DrawMap()
         osmscout::DatabaseParameter databaseParameter;
         osmscout::Database          database(databaseParameter);
 
-        if (!database.Open(map.c_str())) {
+		if (!database.Open((const char*)map.toAscii())) {
             std::cerr << "Cannot open database" << std::endl;
             return 1;
         }
 
         osmscout::StyleConfig styleConfig(database.GetTypeConfig());
 
-        if (!osmscout::LoadStyleConfig(style.c_str(),styleConfig)) {
+        if (!osmscout::LoadStyleConfig((const char*)style.toAscii(),styleConfig)) {
             std::cerr << "Cannot open style" << std::endl;
         }
 

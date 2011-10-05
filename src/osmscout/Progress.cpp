@@ -45,69 +45,34 @@ namespace osmscout {
     return outputDebug;
   }
 
-  void Progress::SetStep(const std::string& step)
-  {
-    // no code
-  }
-
-  void Progress::SetAction(const std::string& action)
-  {
-    // no code
-  }
-
-  void Progress::SetProgress(double current, double total)
-  {
-    // no code
-  }
-
-  void Progress::Debug(const std::string& text)
-  {
-    // no code
-  }
-
-  void Progress::Info(const std::string& text)
-  {
-    // no code
-  }
-
-  void Progress::Warning(const std::string& text)
-  {
-    // no code
-  }
-
-  void Progress::Error(const std::string& text)
-  {
-    // no code
-  }
-
 
   void ConsoleProgress::SetStep(const std::string& step)
   {
     std::cout << "+ " << step << "..." << std::endl;
 
-    lastProgressDump=0;
+    //lastProgressDump=0;
   }
 
   void ConsoleProgress::SetAction(const std::string& action)
   {
     std::cout << " - " << action << "..." << std::endl;
 
-    lastProgressDump=0;
+   // lastProgressDump=0;
   }
 
   void ConsoleProgress::SetProgress(double current, double total)
   {
-    if (lastProgressDump==0) {
-      lastProgressDump=time(NULL);
+    //if (lastProgressDump==0) {
+     // lastProgressDump=time(NULL);
       return;
-    }
+   // }
 
-    time_t now=time(NULL);
+    //time_t now=time(NULL);
 
-    if (now-lastProgressDump>=5) {
-      lastProgressDump=now;
-      std::cout << "   % " << std::setiosflags(std::ios::fixed) << std::setprecision(2) << current/total*100 << " (" << std::setprecision(0) << current << "/" << std::setprecision(0) << total << ")" << std::endl;
-    }
+    //if (now-lastProgressDump>=5) {
+   //   lastProgressDump=now;
+    //  std::cout << "   % " << std::setiosflags(std::ios::fixed) << std::setprecision(2) << current/total*100 << " (" << std::setprecision(0) << current << "/" << std::setprecision(0) << total << ")" << std::endl;
+    //}
 
   }
 
@@ -133,4 +98,3 @@ namespace osmscout {
     std::cout << "   !! " << text << std::endl;
   }
 }
-

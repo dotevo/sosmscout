@@ -24,6 +24,7 @@
 #include <iostream>
 #include <limits>
 #include <sstream>
+#include <QString>
 
 #include <osmscout/TypeConfig.h>
 #include <osmscout/Util.h>
@@ -122,13 +123,11 @@ std::string Destring(const char* str)
 
 bool StringToDouble(const char* string, double& value)
 {
-  std::istringstream buffer(string);
+  QString c(string);
 
-  buffer.imbue(std::locale::classic());
+  value=c.toDouble();
 
-  buffer >> value;
-
-  return !buffer.fail() && !buffer.bad() && buffer.eof();
+  return true;
 }
 
 size_t GetHexDigitValue(char c)

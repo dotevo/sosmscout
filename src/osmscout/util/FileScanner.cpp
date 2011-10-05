@@ -20,7 +20,9 @@
 #include <osmscout/util/FileScanner.h>
 
 #include <cassert>
+#ifndef WINCE
 #include <cerrno>
+#endif
 #include <cstring>
 #include <iostream>
 #include <limits>
@@ -32,7 +34,7 @@
   #include <sys/mman.h>
 #endif
 
-#ifdef Q_OS_WIN32
+#ifdef Q_OS_WIN32||WINCE
   #include<io.h>
 #endif
 
@@ -275,10 +277,11 @@ namespace osmscout {
     pos=ftell(file);
 
     hasError=pos==-1;
-
+#ifndef WINCE
     if (hasError) {
       std::cerr << "Cannot read file pos:" << strerror(errno) << std::endl;
     }
+#endif
 
     return !hasError;
   }

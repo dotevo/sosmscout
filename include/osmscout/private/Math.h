@@ -20,13 +20,18 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
 */
 
-
+#ifdef WINCE
+	#define M_PI 3.14
+	inline  int lround(double u){
+		return u;
+	}
+#endif
 #ifdef Q_OS_WIN
   #define _USE_MATH_DEFINES
 #endif
 
 #include <cmath>
-
+  
   inline double log2(double x)
   {
     return log(x)/log(2.0l);

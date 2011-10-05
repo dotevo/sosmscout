@@ -34,9 +34,10 @@ private slots:
 private:
     Ui::MainWindow *ui;
 
-    std::string   map;
-    std::string   style;
-    std::string   output;
+    QString   map;
+    QString   style;
+    QString   output;
+
     size_t        width,height;
     double        lon,lat,zoom;
 
