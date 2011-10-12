@@ -20,17 +20,20 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
 */
 
+#include <cmath>
+
 #ifndef M_PI
 	#define M_PI 3.14
+        #ifndef Q_OS_LINUX
 	inline  int lround(double u){
 		return u;
 	}
+#endif
 #endif
 #ifdef Q_OS_WIN
   #define _USE_MATH_DEFINES
 #endif
 
-#include <cmath>
   
   inline double log2(double x)
   {
