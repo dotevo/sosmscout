@@ -19,6 +19,7 @@
 #include <osmscout/StyleConfigLoader.h>
 #include <osmscout/Util.h>
 #include <osmscout/MapPainterQt.h>
+#include <osmscout/Partitioning.h>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -89,6 +90,10 @@ void MainWindow::init()
     this->ui->zoomSlider->setValue(zoom);
     this->ui->zoomSlider->setMinimum(100);
     this->ui->zoomSlider->setMaximum(100000);
+
+    double q;
+    osmscout::Partitioning part;
+    part.PartitionQuality(map, style, q);
 }
 
 void MainWindow::paintEvent(QPaintEvent *)
@@ -159,7 +164,7 @@ int MainWindow::DrawMap()
         osmscout::DatabaseParameter databaseParameter;
         osmscout::Database          database(databaseParameter);
 
-		if (!database.Open((const char*)map.toAscii())) {
+        if (!database.Open((const char*)map.toAscii())) {
             std::cerr << "Cannot open database" << std::endl;
             return 1;
         }
@@ -199,7 +204,11 @@ int MainWindow::DrawMap()
                                 data.relationWays,
                                 data.relationAreas);
 
-            qDebug() << data.nodes.size();
+            qDebug() << " minLon" << projection.GetLonMin()
+                    << " minLat" << projection.GetLatMin()
+                    << " maxLon" << projection.GetLonMax()
+                    << " maxLat" << projection.GetLatMax()
+                    << " mag " << projection.GetMagnification();
 
             if (mapPainter.DrawMap(styleConfig,
                                    projection,
