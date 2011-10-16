@@ -91,9 +91,10 @@ void MainWindow::init()
     this->ui->zoomSlider->setMinimum(100);
     this->ui->zoomSlider->setMaximum(100000);
 
-    double q;
-    osmscout::Partitioning part;
-    part.PartitionQuality(map, style, q);
+    //double q;
+    osmscout::Partitioning part(map, style);
+    //part.PartitionQuality(q);
+    //qDebug() << "q = " << q;
 }
 
 void MainWindow::paintEvent(QPaintEvent *)
@@ -204,12 +205,6 @@ int MainWindow::DrawMap()
                                 data.relationWays,
                                 data.relationAreas);
 
-            qDebug() << " minLon" << projection.GetLonMin()
-                    << " minLat" << projection.GetLatMin()
-                    << " maxLon" << projection.GetLonMax()
-                    << " maxLat" << projection.GetLatMax()
-                    << " mag " << projection.GetMagnification();
-
             if (mapPainter.DrawMap(styleConfig,
                                    projection,
                                    drawParameter,
@@ -229,6 +224,8 @@ int MainWindow::DrawMap()
             std::cout << "Cannot create QPainter" << std::endl;
         }
     }
+
+    return 0;
 }
 
 void MainWindow::on_zoomSlider_valueChanged(int value)

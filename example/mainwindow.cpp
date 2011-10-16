@@ -199,8 +199,6 @@ int MainWindow::DrawMap()
                                 data.relationWays,
                                 data.relationAreas);
 
-            qDebug() << data.nodes.size();
-
             if (mapPainter.DrawMap(styleConfig,
                                    projection,
                                    drawParameter,

@@ -35,7 +35,7 @@
 #endif
 
 #ifdef Q_OS_WIN32||WINCE
-  #include<io.h>
+  #include <io.h>
 #endif
 
 #include <osmscout/Util.h>

@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <math.h>
 
 #include <QFileInfo>
 #include <QDir>
@@ -20,39 +21,40 @@
 #include <osmscout/MapPainter.h>
 
 namespace osmscout {
-    Partitioning::Partitioning()
+    Partitioning::Partitioning(QString mapDir, QString style)
     {
+        this->mapDir = mapDir;
+        this->style = style;
+
+        init();
+
+        // prints values
+        qDebug() << "ways: " << partition.ways.size();
+        qDebug() << "nodesCount: " << partition.nodesCount;
+        qDebug() << "boundaryNodesCount: " << partition.boundaryNodesCount;
+        qDebug() << "boundaryEdgesCount: " << partition.boundaryEdgesCount;
+        qDebug() << "cellsCount: " << partition.cellsCount;
+        qDebug() << "cellsBoundaryNodesCount[0]: " << partition.cellsBoundaryNodesCount[0];
+        qDebug() << "cellsRouteEdgesCount[0]: " << partition.cellsRouteEdgesCount[0];
     }
 
-    bool Partitioning::PartitionQuality(QString map, QString style, double& result)
+    void Partitioning::init()
     {
-        qDebug() << "part!";
-
-        int nodesCount;
-        std::vector<int> cellNodesCount;
-        std::vector<int> cellEdgesCount;
-        std::vector<int> cellBoundaryNodesCount;
-        std::vector<int> cellRouteEdgesCount;
-        int boundaryEdgesCount;
-        int cellsCount;
-        double alpha;
-
         MapData data;
         AreaSearchParameter parameter;
 
         double lonMin, latMin, lonMax, latMax, magnification;
-        lonMin = -99;
-        latMin = -99;
-        lonMax = 99;
-        latMax = 99;
+        lonMin = 19.142;
+        latMin = 42.2725;
+        lonMax = 19.178;
+        latMax = 42.2875;
         magnification = 10000;
 
         osmscout::DatabaseParameter databaseParameter;
         osmscout::Database          database(databaseParameter);
 
-        if (!database.Open((const char*)map.toAscii())) {
+        if (!database.Open((const char*)mapDir.toAscii())) {
             std::cerr << "Cannot open database" << std::endl;
-            return 1;
         }
 
         osmscout::StyleConfig styleConfig(database.GetTypeConfig());
@@ -74,57 +76,133 @@ namespace osmscout {
                     data.relationWays,
                     data.relationAreas);
 
-        qDebug() << data.nodes.size();
-        qDebug() << "nodes " << data.nodes.size();
-
-        //int cell = 0;
+        // create partition ways
+        int idx = 0;
+        int maxCell = 0;
+        bool alreadyAdded;
         for (std::vector<WayRef>::const_iterator w = data.ways.begin(); w != data.ways.end(); ++w) {
-            const WayRef& way=*w;
-            qDebug() << "w " << way->GetId() << "\n";
-            /*std::vector<NodeRef>::const_iterator n = way->nodes.begin();
-            NodeRef& prevNode = *n;
-            NodeRef& node;
-            cell = prevNode->cell;
-            for(; n != way->nodes.end(); ++n) {
-                node = *n;
-                if(prevNode->boundary && node->boundary) {
-                    boundaryEdgesCount++;
+            const WayRef& way= *w;
+            //qDebug() << "way " << way->GetId();
+            PartWay partWay;
+            for(std::vector<Point>::const_iterator n = way->nodes.begin(); n != way->nodes.end(); ++n) {
+                const Point point = *n;
+                alreadyAdded = false;
+                for(unsigned int i=0; i<partition.nodes.size(); ++i) {
+                    const PartNode pNode= partition.nodes[i];
+                    if(pNode.lon == point.GetLon()&& pNode.lat == point.GetLat()) {
+                        alreadyAdded = true;
+                        idx = i;
+                        break;
+                    }
+                }
+                if(!alreadyAdded) {
+                    PartNode partNode;
+                    partNode.lon = point.GetLon();
+                    partNode.lat = point.GetLat();
+                    partNode.cell = maxCell;
+                    partNode.type = INTERNAL;
+                    partition.nodes.push_back(partNode);
+                    idx = maxCell;
+                    maxCell++;
+                }
+                partWay.nodes.push_back(idx);
+            }
+            partition.ways.push_back(partWay);
+        }
+
+        updatePartition();
+    }
+
+    void Partitioning::updatePartition()
+    {
+        // counts cells
+        partition.cellsCount = 0;
+        partition.boundaryEdgesCount = 0;
+        partition.boundaryNodesCount = 0;
+        partition.nodesCount = partition.nodes.size();
+        for (unsigned int i=0; i < partition.nodesCount; ++i) {
+            PartNode node = partition.nodes[i];
+            //qDebug() << " node " << node.ref->GetLon() << " " << node.ref->GetLat();
+            if(node.cell >= partition.cellsCount) { // ATTENTION!! It's important to take care that there's no missing cells number, ie. 1, 2, 4, 5, 8 <- WRONG!
+                partition.cellsCount = node.cell + 1; // cells are numbered starting from 0
+            }
+            node.type = INTERNAL;
+        }
+        partition.cellsBoundaryNodesCount.reserve(partition.cellsCount);
+        partition.cellsNodesCount.reserve(partition.cellsCount);
+        partition.cellsEdgesCount.reserve(partition.cellsCount);
+        partition.cellsRouteEdgesCount.reserve(partition.cellsCount);
+
+        for(unsigned int i=0; i<partition.cellsCount; ++i) {
+            partition.cellsBoundaryNodesCount[i] = 0;
+            partition.cellsNodesCount[i] = 0;
+            partition.cellsEdgesCount[i] = 0;
+            partition.cellsRouteEdgesCount[i] = 0;
+        }
+
+        // counts edges and adds boundary edges to list
+        for (unsigned int i=0; i < partition.ways.size(); ++i) {
+            const PartWay way = partition.ways[i];
+            //qDebug() << "w " << way->GetId() << "\n";
+            PartNode prevNode = partition.nodes[way.nodes[0]];
+            PartNode node;
+            int prevCell = prevNode.cell;
+            int cell;
+            for(unsigned int j=1; j < way.nodes.size(); ++j) {
+                node = partition.nodes[way.nodes[j]];
+                cell = node.cell;
+                if(cell == prevCell) {
+                    partition.cellsEdgesCount[cell]++;
                 } else {
-                    cellEdgesCount[node->cell]++;
+                    partition.nodes[way.nodes[j-1]].type = BOUNDARY;
+                    partition.nodes[way.nodes[j]].type = BOUNDARY;
+
+                    BoundaryEdge edge;
+                    edge.cellI = partition.nodes[way.nodes[j-1]].cell;
+                    edge.cellJ = partition.nodes[way.nodes[j]].cell;
+                    partition.boundaryEdges.push_back(edge);
                 }
                 prevNode = node;
-            }*/
-        }
-
-        nodesCount = data.nodes.size();
-        cellsCount = 0;
-        for (std::vector<NodeRef>::const_iterator n = data.nodes.begin(); n != data.nodes.end(); ++n) {
-            const NodeRef& node=*n;
-            qDebug() << "n " << node->GetId() << "\n";
-            /*cellNodesCount[node->cell]++;
-            if(node->boundary) {
-                cellBoundaryNodesCount[node->cell]++;
-                boundaryNodes++;
+                prevCell = cell;
             }
-            if(node->cell > cellsCount) { // ATTENTION!! It's important to take care that there's no missing cells number, ie. 1, 2, 4, 5, 8 <- WRONG!
-                cellsCount = node->cell;
-            }*/
         }
 
-        /*for(int i=0; i<cellBoundaryNodesCount.size(); i++) {
-            cellRouteEdgesCount[i] = cellBoundaryNodesCount[i] * (cellBoundaryNodesCount[i] - 1);
+        partition.boundaryEdgesCount = partition.boundaryEdges.size();
+
+        // counts nodes in cells and boundary nodes
+        for (unsigned int i=0; i<partition.nodesCount; ++i) {
+            PartNode node = partition.nodes[i];
+            //qDebug() << "partN " << nodeRef->GetId() << " cell " << node.cell;
+            partition.cellsNodesCount[node.cell]++;
+            if(node.type == BOUNDARY) {
+                partition.cellsBoundaryNodesCount[node.cell]++;
+            }
         }
+        for(unsigned int i=0; i<partition.cellsCount; ++i) {
+            partition.boundaryNodesCount += partition.cellsBoundaryNodesCount[i];
+        }
+
+        // calculates route edges in cells
+        for(unsigned int i=0; i<partition.cellsBoundaryNodesCount.size(); i++) {
+            partition.cellsRouteEdgesCount[i] = partition.cellsBoundaryNodesCount[i] * (partition.cellsBoundaryNodesCount[i] - 1);
+        }
+    }
+
+    double Partitioning::PartitionQuality()
+    {
+        double alpha;
 
         alpha = 0.5;
         double sumA;
         double sumB;
-        for(int i=0; i<cellsCount; i++) {
-            sumA += (cellNodesCount[i]/nodesCount)*(2 - (cellNodesCount[i]/nodesCount))*cellEdgesCount[i];
-            sumB += pow(1 - (cellNodesCount[i]/nodesCount), 2) * cellRouteEdgesCount[i];
+
+        for(unsigned int i=0; i<partition.cellsCount; i++) {
+            sumA += (partition.cellsNodesCount[i]/partition.nodesCount)*(2 - (partition.cellsNodesCount[i]/partition.nodesCount))*partition.cellsEdgesCount[i];
+            sumB += pow(1 - (partition.cellsNodesCount[i]/partition.nodesCount), 2) * partition.cellsRouteEdgesCount[i];
         }
 
-        result = sumA + (alpha * sumB) + boundaryEdgesCount;*/
+        double result = sumA + (alpha * sumB) + partition.boundaryEdgesCount;
 
-        return true;
+        return result;
     }
 }
