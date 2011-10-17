@@ -13,6 +13,8 @@
 #include <QtGui/QPixmap>
 #include <QtGui/QApplication>
 
+#include <QDebug>
+
 #include <osmscout/Database.h>
 #include <osmscout/StyleConfigLoader.h>
 #include <osmscout/Util.h>
@@ -46,8 +48,8 @@ void MainWindow::init()
 #endif
 
 #ifdef Q_OS_WIN
-    map = "/ResidentFlash/ZPI/map";
-    style = "/ResidentFlash/ZPI/standard.oss.xml";
+    map = "C:/map";
+    style = "C:/map/standard.oss.xml";
 #endif
 
 
@@ -56,8 +58,7 @@ void MainWindow::init()
 
     width = 480;
     height = 272;
-    lat = 51.1;
-    lon = 17.03;
+    lon = 19.16; lat = 42.28;
 
     zoom = 10000;
 
