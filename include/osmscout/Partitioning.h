@@ -25,16 +25,11 @@ namespace osmscout {
          */
         Partitioning(QString mapDir, QString style);
         /**
-         * @brief Calculates quality of current partition.
-         *
-         * @return value of quality function.
-         */
-        double PartitionQuality();
-        /**
          * @brief Finds the best (not really, but close enough) partition for graph.
          *
          */
-        void findPartition();
+        void FindPartition();
+        void TestAlgorithm();
     private:
         /**
          * @brief Type of node in graph. Can be on the border of the cell (BOUNDARY), or inside the cell (INTERNAL)
@@ -51,6 +46,7 @@ namespace osmscout {
          */
         struct PartNode
         {
+            Id id;
             int lon;
             int lat;
             PARTITION_NODE_TYPE type;
@@ -62,8 +58,8 @@ namespace osmscout {
          */
         struct BoundaryEdge
         {
-            unsigned int cellI;
-            unsigned int cellJ;
+            unsigned int nodeA;
+            unsigned int nodeB;
         };
         /**
          * @brief Simple structure that represents ways in graph (set of edges).
@@ -95,17 +91,40 @@ namespace osmscout {
         QString mapDir;
         QString style;
         Partition partition;
+        Partition bestPartition;
 
         /**
          * @brief Initializes all objects and fields.
          *
          */
-        void init();
+        void Init();
         /**
          * @brief Calculates all values in partition after some change in it (ie. merging cells).
          *
          */
-        void updatePartition();
+        void UpdatePartitionData();
+        /**
+         * @brief Calculates the value of priority for merging two cells.
+         *
+         * @param i index of the first cell
+         * @param j index of the seccond cell
+         *
+         * @return value of priority for merging cells i and j
+         */
+        double CalculatePriority(unsigned int i, unsigned int j);
+        /**
+         * @brief Merges two cells into one.
+         *
+         * @param i index of the first cell to merge
+         * @param j index of the second cell to merge
+         */
+        void MergeCells(unsigned int i, unsigned int j);
+        /**
+         * @brief Calculates quality of current partition.
+         *
+         * @return value of quality function.
+         */
+        double CalculateQuality();
     };
 }
 

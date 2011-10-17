@@ -63,7 +63,6 @@ HEADERS += \
     ../include/osmscout/Partitioning.h
 
 SOURCES += \
-    mappainterqt.cpp \
     mainwindow.cpp \
     main.cpp \
     ../src/osmscout/Database.cpp \
@@ -119,6 +118,7 @@ FORMS += \
 
 RESOURCES += \
     icons.qrc
+
 
 
 
