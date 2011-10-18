@@ -71,34 +71,58 @@ namespace osmscout {
         // create partition ways
         int idx = 0;
         int maxCell = 0;
-        bool alreadyAdded;
         for (std::vector<WayRef>::const_iterator w = data.ways.begin(); w != data.ways.end(); ++w) {
             const WayRef& way= *w;
             //qDebug() << "way " << way->GetId();
             PartWay partWay;
-            for(std::vector<Point>::const_iterator n = way->nodes.begin(); n != way->nodes.end(); ++n) {
-                const Point point = *n;
-                alreadyAdded = false;
-                for(unsigned int i=0; i<partition.nodes.size(); ++i) {
-                    const PartNode pNode= partition.nodes[i];
-                    if(pNode.lon == point.GetLon()&& pNode.lat == point.GetLat()) {
-                        alreadyAdded = true;
-                        idx = i;
-                        break;
+            for(std::vector<Point>::const_iterator p = way->nodes.begin(); p != way->nodes.end(); ++p) {
+                const Point point = *p;
+
+                // checks if this node is in any other way
+                int waysContainingNodeCount = 0;
+                if(p != way->nodes.begin() && p !=  way->nodes.end() - 1) {
+                    //qDebug() << "   point " << point.GetId();
+                    for (std::vector<WayRef>::const_iterator tmpW = data.ways.begin(); tmpW != data.ways.end(); ++tmpW) {
+                        const WayRef& tmpWay= *tmpW;
+                        for(std::vector<Point>::const_iterator tmpP = tmpWay->nodes.begin(); tmpP != tmpWay->nodes.end(); ++tmpP) {
+                            const Point tmpPoint = *tmpP;
+                            if((tmpPoint.GetLon() == point.GetLon()) && (tmpPoint.GetLat() == point.GetLat())) {
+                                waysContainingNodeCount++;
+                                // break; // is it posible that one node is twice in the same way?
+                            }
+                        }
+                        if(waysContainingNodeCount > 1)
+                            break;
                     }
+                } else {
+                    waysContainingNodeCount = 2; // just becouse way needs starting and end node
                 }
-                if(!alreadyAdded) {
-                    PartNode partNode;
-                    partNode.id = point.GetId();
-                    partNode.lon = point.GetLon();
-                    partNode.lat = point.GetLat();
-                    partNode.cell = maxCell;
-                    partNode.type = INTERNAL;
-                    partition.nodes.push_back(partNode);
-                    idx = maxCell;
-                    maxCell++;
+
+                if(waysContainingNodeCount > 1) {
+
+                    // checks if this node is already added to the nodes list
+                    bool alreadyAdded = false;
+                    for(unsigned int i=0; i<partition.nodes.size(); ++i) {
+                        const PartNode pNode= partition.nodes[i];
+                        if(pNode.lon == point.GetLon()&& pNode.lat == point.GetLat()) {
+                            alreadyAdded = true;
+                            idx = i;
+                            break;
+                        }
+                    }
+                    if(!alreadyAdded) {
+                        PartNode partNode;
+                        partNode.id = point.GetId();
+                        partNode.lon = point.GetLon();
+                        partNode.lat = point.GetLat();
+                        partNode.cell = maxCell;
+                        partNode.type = INTERNAL;
+                        partition.nodes.push_back(partNode);
+                        idx = maxCell;
+                        maxCell++;
+                    }
+                    partWay.nodes.push_back(idx);
                 }
-                partWay.nodes.push_back(idx);
             }
             partition.ways.push_back(partWay);
         }
@@ -261,7 +285,7 @@ namespace osmscout {
         quality = bestQuality = CalculateQuality();
         unsigned int cellI;
         unsigned int cellJ;
-        while(partition.cellsCount > 0) {
+        while(partition.cellsCount > 1) {
             maxPriority = 0;
             for(unsigned int i=0; i<partition.cellsCount-1; ++i) {
                 for(unsigned int j=i+1; j<partition.cellsCount; ++j) {

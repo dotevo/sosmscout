@@ -18,7 +18,7 @@ namespace osmscout {
     {
     public:
         /**
-         * @brief
+         * @brief Initializes all data and stuff.
          *
          * @param mapDir directory for map files
          * @param style directory for style file
@@ -29,6 +29,10 @@ namespace osmscout {
          *
          */
         void FindPartition();
+        /**
+         * @brief Simple temporary method for testing the algorithm.
+         *
+         */
         void TestAlgorithm();
     private:
         /**
