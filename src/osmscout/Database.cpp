@@ -22,6 +22,8 @@
 #include <cassert>
 #include <iostream>
 
+#include <QDebug>
+
 #include <osmscout/RoutingProfile.h>
 #include <osmscout/TypeConfigLoader.h>
 
@@ -1076,354 +1078,287 @@ std::string l((const char*)path.toAscii());
                                 Id targetWayId, Id targetNodeId,
                                 RouteData& route)
   {
-    TypeId              type;
-    std::map<Id,Way>    waysCache;
-    std::map<Id,Follower> candidatesCache;
-    std::vector<WayPtr> followWays;
-    WayPtr              startWay;
-    WayPtr              currentWay;
-    double              startLon=0.0L,startLat=0.0L;
-    WayPtr              targetWay;
-    double              targetLon=0.0L,targetLat=0.0L;
-    OpenList            openList;
-    std::map<Id,RNodeRef> openMap;
-    std::map<Id,RNode>  closeMap;
-    std::set<Id>        loaded;
-    std::vector<size_t> costs;
-    RoutingProfile      profile;
-    NodeUseCache        nodeUseCache(10);  //! Cache for node use data, seems like the cache is more expensive than direct loading!?
-    NodeUseIndex        nodeUseIndex;
-    WayIndex            wayIndex("way.idx",100000);
+      TypeId              type;
+      std::map<Id,Way>    waysCache;
+      std::map<Id,Follower> candidatesCache;
+      std::vector<WayPtr> followWays;
+      WayPtr              startWay;
+      WayPtr              currentWay;
+      double              startLon=0.0L,startLat=0.0L;
+      WayPtr              targetWay;
+      double              targetLon=0.0L,targetLat=0.0L;
+      OpenList            openList;
+      std::map<Id,RNodeRef> openMap;
+      std::map<Id,RNode>  closeMap;
+      std::set<Id>        loaded;
+      std::vector<size_t> costs;
+      RoutingProfile      profile;
+      NodeUseCache        nodeUseCache(10);  //! Cache for node use data, seems like the cache is more expensive than direct loading!?
+      NodeUseIndex        nodeUseIndex;
+      WayIndex            waysIndexed("way.idx",100000);
 
-    std::cout << "Loading node use index..." << std::endl;
-    if (!nodeUseIndex.LoadNodeUseIndex(path)) {
-      std::cerr << "Cannot load node use index!" << std::endl;
-      return false;
-    }
-    std::cout << "Loading node use index done." << std::endl;
 
-    std::cout << "Loading way index..." << std::endl;
-    if (!wayIndex.Load(path)) {
-      std::cerr << "Cannot load way index..." << std::endl;
-    }
-    std::cout << "Loading way index done." << std::endl;
+      // ==============================INITIALIZATION=======================================
 
-    std::cout << startWayId << " " << startNodeId << " => " << targetWayId << " " << targetNodeId << std::endl;
+      std::cout << "Loading node use index..." << std::endl;
+      if (!nodeUseIndex.LoadNodeUseIndex(path)) {
+        std::cerr << "Cannot load node use index!" << std::endl;
+        return false;
+      }
+      std::cout << "Loading node use index done." << std::endl;
 
-    std::cout << "=========== Routing start =============" << std::endl;
+      std::cout << "Loading way index..." << std::endl;
+      if (!waysIndexed.Load(path)) {
+        std::cerr << "Cannot load way index..." << std::endl;
+      }
+      std::cout << "Loading way index done." << std::endl;
 
-    StopClock clock;
+      std::cout << startWayId << " " << startNodeId << " => " << targetWayId << " " << targetNodeId << std::endl;
 
-    route.Clear();
+      std::cout << "=========== Routing start =============" << std::endl;
 
-    profile.SetTurnCostFactor(1/60/2); // 30 seconds
+      StopClock clock;
 
-    type=typeConfig->GetWayTypeId("highway_motorway");
-    assert(type!=typeIgnore);
-    profile.SetTypeCostFactor(type,1/110.0);
+      route.Clear();
 
-    type=typeConfig->GetWayTypeId("highway_motorway_link");
-    assert(type!=typeIgnore);
-    profile.SetTypeCostFactor(type,1/60.0);
+      // Setting cost values of specific road types and turns
+      profile.SetTurnCostFactor(1/60/2); // 30 seconds
 
-    type=typeConfig->GetWayTypeId("highway_trunk");
-    assert(type!=typeIgnore);
-    profile.SetTypeCostFactor(type,1/70.0);
+      type=typeConfig->GetWayTypeId("highway_motorway");
+      assert(type!=typeIgnore);
+      profile.SetTypeCostFactor(type,1/110.0);
 
-    type=typeConfig->GetWayTypeId("highway_trunk_link");
-    assert(type!=typeIgnore);
-    profile.SetTypeCostFactor(type,1/70.0);
+      type=typeConfig->GetWayTypeId("highway_motorway_link");
+      assert(type!=typeIgnore);
+      profile.SetTypeCostFactor(type,1/60.0);
 
-    type=typeConfig->GetWayTypeId("highway_primary");
-    assert(type!=typeIgnore);
-    profile.SetTypeCostFactor(type,1/70.0);
+      type=typeConfig->GetWayTypeId("highway_trunk");
+      assert(type!=typeIgnore);
+      profile.SetTypeCostFactor(type,1/70.0);
 
-    type=typeConfig->GetWayTypeId("highway_primary_link");
-    assert(type!=typeIgnore);
-    profile.SetTypeCostFactor(type,1/60.0);
+      type=typeConfig->GetWayTypeId("highway_trunk_link");
+      assert(type!=typeIgnore);
+      profile.SetTypeCostFactor(type,1/70.0);
 
-    type=typeConfig->GetWayTypeId("highway_secondary");
-    assert(type!=typeIgnore);
-    profile.SetTypeCostFactor(type,1/60.0);
+      type=typeConfig->GetWayTypeId("highway_primary");
+      assert(type!=typeIgnore);
+      profile.SetTypeCostFactor(type,1/70.0);
 
-    type=typeConfig->GetWayTypeId("highway_secondary_link");
-    assert(type!=typeIgnore);
-    profile.SetTypeCostFactor(type,1/50.0);
+      type=typeConfig->GetWayTypeId("highway_primary_link");
+      assert(type!=typeIgnore);
+      profile.SetTypeCostFactor(type,1/60.0);
 
-    type=typeConfig->GetWayTypeId("highway_tertiary");
-    assert(type!=typeIgnore);
-    profile.SetTypeCostFactor(type,1/55.0);
+      type=typeConfig->GetWayTypeId("highway_secondary");
+      assert(type!=typeIgnore);
+      profile.SetTypeCostFactor(type,1/60.0);
 
-    type=typeConfig->GetWayTypeId("highway_unclassified");
-    assert(type!=typeIgnore);
-    profile.SetTypeCostFactor(type,1/50.0);
+      type=typeConfig->GetWayTypeId("highway_secondary_link");
+      assert(type!=typeIgnore);
+      profile.SetTypeCostFactor(type,1/50.0);
 
-    type=typeConfig->GetWayTypeId("highway_road");
-    assert(type!=typeIgnore);
-    profile.SetTypeCostFactor(type,1/50.0);
+      type=typeConfig->GetWayTypeId("highway_tertiary");
+      assert(type!=typeIgnore);
+      profile.SetTypeCostFactor(type,1/55.0);
 
-    type=typeConfig->GetWayTypeId("highway_residential");
-    assert(type!=typeIgnore);
-    profile.SetTypeCostFactor(type,1/40.0);
+      type=typeConfig->GetWayTypeId("highway_unclassified");
+      assert(type!=typeIgnore);
+      profile.SetTypeCostFactor(type,1/50.0);
 
-    type=typeConfig->GetWayTypeId("highway_living_street");
-    assert(type!=typeIgnore);
-    profile.SetTypeCostFactor(type,1/10.0);
+      type=typeConfig->GetWayTypeId("highway_road");
+      assert(type!=typeIgnore);
+      profile.SetTypeCostFactor(type,1/50.0);
 
-    type=typeConfig->GetWayTypeId("highway_service");
-    assert(type!=typeIgnore);
-    profile.SetTypeCostFactor(type,1/30.0);
+      type=typeConfig->GetWayTypeId("highway_residential");
+      assert(type!=typeIgnore);
+      profile.SetTypeCostFactor(type,1/40.0);
 
-    if (!osmscout::GetWay(wayIndex,
-                          path,
-                          waysCache,
-                          startWayId,
-                          startWay)) {
-      std::cerr << "Cannot get start way!" << std::endl;
-      return false;
-    }
+      type=typeConfig->GetWayTypeId("highway_living_street");
+      assert(type!=typeIgnore);
+      profile.SetTypeCostFactor(type,1/10.0);
 
-    if (!osmscout::GetWay(wayIndex,
-                          path,
-                          waysCache,
-                          targetWayId,
-                          targetWay)) {
-      std::cerr << "Cannot get end way!" << std::endl;
-      return false;
-    }
+      type=typeConfig->GetWayTypeId("highway_service");
+      assert(type!=typeIgnore);
+      profile.SetTypeCostFactor(type,1/30.0);
 
-    std::cout << "Searching for node " << startNodeId << " in way " << startWayId << "..." << std::endl;
-
-    size_t index=0;
-    while (index<startWay->nodes.size()) {
-      if (startWay->nodes[index].id==startNodeId) {
-        startLon=startWay->nodes[index].lon;
-        startLat=startWay->nodes[index].lat;
-        break;
+      // Get start way
+      if (!osmscout::GetWay(waysIndexed,
+                            path,
+                            waysCache,
+                            startWayId,
+                            startWay)) {
+        std::cerr << "Cannot get start way!" << std::endl;
+        return false;
       }
 
-      index++;
-    }
-
-    assert(index<startWay->nodes.size());
-
-    std::cout << "Searching for node " << targetNodeId << " in way " << targetWayId << "..." << std::endl;
-
-    index=0;
-    while (index<targetWay->nodes.size()) {
-      if (targetWay->nodes[index].id==targetNodeId) {
-        targetLon=targetWay->nodes[index].lon;
-        targetLat=targetWay->nodes[index].lat;
-        break;
+      // Get end way
+      if (!osmscout::GetWay(waysIndexed,
+                            path,
+                            waysCache,
+                            targetWayId,
+                            targetWay)) {
+        std::cerr << "Cannot get end way!" << std::endl;
+        return false;
       }
 
-      index++;
-    }
+      // Get start node
+      std::cout << "Searching for node " << startNodeId << " in way " << startWayId << "..." << std::endl;
 
-    assert(index<targetWay->nodes.size());
+      size_t index=0;
+      while (index<startWay->nodes.size()) {
+        if (startWay->nodes[index].id==startNodeId) {
+          startLon=startWay->nodes[index].lon;
+          startLat=startWay->nodes[index].lat;
+          break;
+        }
 
-    RNode node=RNode(startNodeId,
-                     startLon,
-                     startLat,
-                     ObjectRef(startWayId,refWay),
-                     0);
+        index++;
+      }
 
-    node.currentCost=0.0;
-    node.estimateCost=GetSphericalDistance(startLon,
-                                           startLat,
-                                           targetLon,
-                                           targetLat);
-    node.overallCost=node.currentCost+node.estimateCost;
+      assert(index<startWay->nodes.size());
 
-    openList.insert(node);
-    openMap[openList.begin()->id]=openList.begin();
+      // Get end node
+      std::cout << "Searching for node " << targetNodeId << " in way " << targetWayId << "..." << std::endl;
 
-    currentWay=startWay;
+      index=0;
+      while (index<targetWay->nodes.size()) {
+        if (targetWay->nodes[index].id==targetNodeId) {
+          targetLon=targetWay->nodes[index].lon;
+          targetLat=targetWay->nodes[index].lat;
+          break;
+        }
 
-    std::vector<RNode> follower;
+        index++;
+      }
 
-    follower.reserve(1000);
-
-    bool cachedFollower=false;
-
-    do {
-      //
-      // Take entry from open list with lowest cost
-      //
-
-      RNode current=*openList.begin();
+      assert(index<targetWay->nodes.size());
 
       /*
-      std::cout << "S:   " << openList.size() << std::endl;
-      std::cout << "ID:  " << current.id << std::endl;
-      std::cout << "REF: " << current.ref.id << std::endl;
-      std::cout << "PRV: " << current.prev << std::endl;
-      std::cout << "CC:  " << current.currentCost << std::endl;
-      std::cout << "EC:  " << current.estimateCost << std::endl;
-      std::cout << "OC:  " << current.overallCost << std::endl;
-        */
+      RNode(Id id,
+            double lon, double lat,
+            const ObjectRef& reference,
+            Id prev)
+       : id(id),
+         lon(lon),
+         lat(lat),
+         currentCost(0),
+         estimateCost(0),
+         overallCost(0),
+         ref(reference),
+         prev(prev)
+       */
+      // RNode - routingNode (?)
+      RNode node=RNode(startNodeId,
+                       startLon,
+                       startLat,
+                       ObjectRef(startWayId,refWay),
+                       0);
 
-      openList.erase(openList.begin());
-      openMap.erase(current.id);
+      node.currentCost=0.0;
+      node.estimateCost=GetSphericalDistance(startLon,
+                                             startLat,
+                                             targetLon,
+                                             targetLat);
+      node.overallCost=node.currentCost+node.estimateCost;
 
-      //
-      // Place all followers on list
-      //
+      openList.insert(node); // List of available nodes (?)
+      openMap[openList.begin()->id]=openList.begin();
 
-      follower.clear();
+      currentWay=startWay;
 
-      // Get joint nodes in same way/area
-      if (currentWay->GetId()!=current.ref.id) {
-        if (!osmscout::GetWay(wayIndex,
-                              path,
-                              waysCache,
-                              current.ref.id,
-                              currentWay)) {
-          return false;
-        }
+      std::vector<RNode> follower;
 
-        cachedFollower=false;
-      }
+      follower.reserve(1000);
 
-      if (!profile.CanUse(currentWay->GetType())) {
-        continue;
-      }
+      bool cachedFollower=false;
 
-      if (currentWay->IsArea()) {
-        for (size_t i=0; i<currentWay->nodes.size(); ++i) {
-          if (currentWay->nodes[i].id!=current.id) {
+      // ==============================/INITIALIZATION=======================================
 
-            std::map<Id,RNode>::iterator closeEntry=closeMap.find(currentWay->nodes[i].id);
 
-            if (closeEntry!=closeMap.end()) {
-              continue;
-            }
+      do {
+        //
+        // Take entry from open list with lowest cost
+        //
 
-            follower.push_back(RNode(currentWay->nodes[i].id,
-                                     currentWay->nodes[i].lon,
-                                     currentWay->nodes[i].lat,
-                                     ObjectRef(currentWay->GetId(),refWay),
-                                     current.id));
-          }
-        }
-      }
-      else {
-        for (size_t i=0; i<currentWay->nodes.size(); ++i) {
-          if (currentWay->nodes[i].id==current.id) {
-            if (i>0 && !currentWay->IsOneway()) {
-              std::map<Id,RNode>::iterator closeEntry=closeMap.find(currentWay->nodes[i-1].id);
+        RNode currentNode=*openList.begin();
 
-              if (closeEntry==closeMap.end()) {
-                follower.push_back(RNode(currentWay->nodes[i-1].id,
-                                         currentWay->nodes[i-1].lon,
-                                         currentWay->nodes[i-1].lat,
-                                         ObjectRef(currentWay->GetId(),refWay),
-                                         current.id));
-              }
-            }
+        /*
+        std::cout << "S:   " << openList.size() << std::endl;
+        std::cout << "ID:  " << current.id << std::endl;
+        std::cout << "REF: " << current.ref.id << std::endl;
+        std::cout << "PRV: " << current.prev << std::endl;
+        std::cout << "CC:  " << current.currentCost << std::endl;
+        std::cout << "EC:  " << current.estimateCost << std::endl;
+        std::cout << "OC:  " << current.overallCost << std::endl;
+          */
 
-            if (i<currentWay->nodes.size()-1) {
-              std::map<Id,RNode>::iterator closeEntry=closeMap.find(currentWay->nodes[i+1].id);
+        openList.erase(openList.begin());
+        openMap.erase(currentNode.id);
 
-              if (closeEntry==closeMap.end()) {
-                follower.push_back(RNode(currentWay->nodes[i+1].id,
-                                         currentWay->nodes[i+1].lon,
-                                         currentWay->nodes[i+1].lat,
-                                         ObjectRef(currentWay->GetId(),refWay),
-                                         current.id));
-              }
-            }
+        //
+        // Place all followers on list
+        //
 
-            break;
-          }
-        }
-      }
+        follower.clear();
 
-      // Get joint ways and areas
-
-      if (!cachedFollower) {
-        std::map<Id,Follower>::const_iterator cacheEntry=candidatesCache.find(current.ref.id);
-
-        if (cacheEntry==candidatesCache.end()) {
-          std::pair<std::map<Id,Follower >::iterator,bool> result;
-
-          result=candidatesCache.insert(std::pair<Id,Follower>(current.ref.id,Follower()));
-
-          if (!GetJoints(nodeUseIndex,
-                         nodeUseCache,
-                         current.ref.id,
-                         result.first->second.ways)) {
+        // Get joint nodes in same way/area
+        if (currentWay->GetId()!=currentNode.ref.id) {
+          if (!osmscout::GetWay(waysIndexed,
+                                path,
+                                waysCache,
+                                currentNode.ref.id,
+                                currentWay)) {
             return false;
           }
 
-          cacheEntry=result.first;
+          cachedFollower=false;
         }
 
-        if (!osmscout::GetWays(wayIndex,
-                               path,
-                               waysCache,
-                               cacheEntry->second.ways,
-                               followWays)) {
-          return false;
-        }
-
-        cachedFollower=true;
-      }
-
-      // Get joint nodes in joint way/area
-
-      for (std::vector<WayPtr>::const_iterator iter=followWays.begin();
-           iter!=followWays.end();
-           ++iter) {
-        const Way* way=*iter;
-
-        if (!profile.CanUse(way->GetType())) {
+        if (!profile.CanUse(currentWay->GetType())) {
           continue;
         }
 
-        if (way->IsArea()) {
-          for (size_t i=0; i<way->nodes.size(); i++) {
-            if (way->nodes[i].id!=current.id) {
-              std::map<Id,RNode>::iterator closeEntry=closeMap.find(way->nodes[i].id);
+        if (currentWay->IsArea()) {
+          for (size_t i=0; i<currentWay->nodes.size(); ++i) {
+            if (currentWay->nodes[i].id!=currentNode.id) {
+
+              std::map<Id,RNode>::iterator closeEntry=closeMap.find(currentWay->nodes[i].id); // Already used nodes (all of them and each has previous node id, so in the end one can go back from the end node to start)
 
               if (closeEntry!=closeMap.end()) {
                 continue;
               }
 
-              follower.push_back(RNode(way->nodes[i].id,
-                                       way->nodes[i].lon,
-                                       way->nodes[i].lat,
-                                       ObjectRef(way->GetId(),refWay),
-                                       current.id));
+              follower.push_back(RNode(currentWay->nodes[i].id,
+                                       currentWay->nodes[i].lon,
+                                       currentWay->nodes[i].lat,
+                                       ObjectRef(currentWay->GetId(),refWay),
+                                       currentNode.id));
             }
           }
         }
         else {
-          for (size_t i=0; i<way->nodes.size(); ++i) {
-            if (way->nodes[i].id==current.id  &&
-                CanBeTurnedInto(*currentWay,way->nodes[i].id,way->GetId())) {
-
-              if (i>0 && !way->IsOneway()) {
-                std::map<Id,RNode>::iterator closeEntry=closeMap.find(way->nodes[i-1].id);
+          for (size_t i=0; i<currentWay->nodes.size(); ++i) {
+            if (currentWay->nodes[i].id==currentNode.id) {
+              if (i>0 && !currentWay->IsOneway()) {
+                std::map<Id,RNode>::iterator closeEntry=closeMap.find(currentWay->nodes[i-1].id);
 
                 if (closeEntry==closeMap.end()) {
-                  follower.push_back(RNode(way->nodes[i-1].id,
-                                           way->nodes[i-1].lon,
-                                           way->nodes[i-1].lat,
-                                           ObjectRef(way->GetId(),refWay),
-                                           current.id));
+                  follower.push_back(RNode(currentWay->nodes[i-1].id,
+                                           currentWay->nodes[i-1].lon,
+                                           currentWay->nodes[i-1].lat,
+                                           ObjectRef(currentWay->GetId(),refWay),
+                                           currentNode.id));
                 }
               }
 
-              if (i<way->nodes.size()-1) {
-                std::map<Id,RNode>::iterator closeEntry=closeMap.find(way->nodes[i+1].id);
+              if (i<currentWay->nodes.size()-1) {
+                std::map<Id,RNode>::iterator closeEntry=closeMap.find(currentWay->nodes[i+1].id);
 
                 if (closeEntry==closeMap.end()) {
-                  follower.push_back(RNode(way->nodes[i+1].id,
-                                           way->nodes[i+1].lon,
-                                           way->nodes[i+1].lat,
-                                           ObjectRef(way->GetId(),refWay),
-                                           current.id));
+                  follower.push_back(RNode(currentWay->nodes[i+1].id,
+                                           currentWay->nodes[i+1].lon,
+                                           currentWay->nodes[i+1].lat,
+                                           ObjectRef(currentWay->GetId(),refWay),
+                                           currentNode.id));
                 }
               }
 
@@ -1431,122 +1366,215 @@ std::string l((const char*)path.toAscii());
             }
           }
         }
-      }
 
-      for (std::vector<RNode>::iterator iter=follower.begin();
-           iter!=follower.end();
-           ++iter) {
-        double currentCost=current.currentCost+
-                           profile.GetCostFactor(currentWay->GetType())*
-                           GetSphericalDistance(current.lon,
-                                                current.lat,
-                                                iter->lon,
-                                                iter->lat);
+        // Get joint ways and areas
 
-        if (currentWay->GetId()!=iter->id) {
-          currentCost+=profile.GetTurnCostFactor();
-        }
+        if (!cachedFollower) {
+          std::map<Id,Follower>::const_iterator cacheEntry=candidatesCache.find(currentNode.ref.id);
 
-        std::map<Id,RNodeRef>::iterator openEntry=openMap.find(iter->id);
+          if (cacheEntry==candidatesCache.end()) {
+            std::pair<std::map<Id,Follower >::iterator,bool> result;
 
-        if (openEntry!=openMap.end() &&
-            openEntry->second->currentCost<=currentCost) {
-          continue;
-        }
+            result=candidatesCache.insert(std::pair<Id,Follower>(currentNode.ref.id,Follower()));
 
-        double estimateCost=profile.GetMinCostFactor()*
-                            GetSphericalDistance(iter->lon,iter->lat,targetLon,targetLat);
-        double overallCost=currentCost+estimateCost;
-
-        if (openEntry!=openMap.end()) {
-          iter->prev=current.id;
-          iter->currentCost=currentCost;
-          iter->estimateCost=estimateCost;
-          iter->overallCost=overallCost;
-
-          openList.erase(openEntry->second);
-          std::pair<RNodeRef,bool> result=openList.insert(*iter);
-
-          openEntry->second=result.first;
-        }
-        else {
-          iter->currentCost=currentCost;
-          iter->estimateCost=estimateCost;
-          iter->overallCost=overallCost;
-
-          std::pair<RNodeRef,bool> result=openList.insert(*iter);
-          openMap[iter->id]=result.first;
-        }
-      }
-
-      //
-      // Added current node to close map
-      //
-
-      closeMap[current.id]=current;
-
-      //
-      // Check if finished
-      //
-
-      if (current.id==targetNodeId) {
-        /*
-        std::cout << "Final Path:" << std::endl;
-        std::cout << "-----------" << std::endl;
-        std::cout << current.currentCost << "Km" << std::endl;
-        std::cout << waysCache.size() << " ways cached" << std::endl;
-        std::cout << std::endl;*/
-
-        std::list<RouteStep> steps;
-
-        while (current.prev!=0) {
-          RouteStep step;
-
-          step.wayId=current.ref.id;
-          step.nodeId=current.id;
-
-          steps.push_back(step);
-          current=closeMap.find(current.prev)->second;
-        }
-
-        route.AddEntry(startWayId,startNodeId);
-        for (std::list<RouteStep>::reverse_iterator step=steps.rbegin();
-             step!=steps.rend();
-             ++step) {
-          route.AddEntry(step->wayId,step->nodeId);
-
-          /*
-          std::cout << "node " << step->nodeId << "( way " << step->wayId << ")";
-
-          Way way;
-
-          GetWay(step->wayId,way);
-
-          for (size_t i=0; i<way.tags.size(); i++) {
-            if (way.tags[i].key==tagName) {
-              std::cout << " " << way.tags[i].value;
+            if (!GetJoints(nodeUseIndex,
+                           nodeUseCache,
+                           currentNode.ref.id,
+                           result.first->second.ways)) {
+              return false;
             }
-            else if (way.tags[i].key==tagRef) {
-              std::cout << " " << way.tags[i].value;
-            }
+
+            cacheEntry=result.first;
           }
 
-          std::cout << std::endl;*/
+          if (!osmscout::GetWays(waysIndexed,
+                                 path,
+                                 waysCache,
+                                 cacheEntry->second.ways,
+                                 followWays)) {
+            return false;
+          }
+
+          cachedFollower=true;
         }
 
-        clock.Stop();
+        // Get joint nodes in joint way/area
 
-        std::cout << "Time: " << clock << std::endl;
+        for (std::vector<WayPtr>::const_iterator iter=followWays.begin();
+             iter!=followWays.end();
+             ++iter) {
+          const Way* way=*iter;
 
-        std::cout << "=========== Routing end ==============" << std::endl;
-        return true;
-      }
-    } while (!openList.empty());
+          if (!profile.CanUse(way->GetType())) {
+            continue;
+          }
 
-    std::cout << "No route found!" << std::endl;
-    std::cout << "=========== Routing end ==============" << std::endl;
+          if (way->IsArea()) {
+            for (size_t i=0; i<way->nodes.size(); i++) {
+              if (way->nodes[i].id!=currentNode.id) {
+                std::map<Id,RNode>::iterator closeEntry=closeMap.find(way->nodes[i].id);
 
-    return false;
+                if (closeEntry!=closeMap.end()) {
+                  continue;
+                }
+
+                follower.push_back(RNode(way->nodes[i].id,
+                                         way->nodes[i].lon,
+                                         way->nodes[i].lat,
+                                         ObjectRef(way->GetId(),refWay),
+                                         currentNode.id));
+              }
+            }
+          }
+          else {
+            for (size_t i=0; i<way->nodes.size(); ++i) {
+              if (way->nodes[i].id==currentNode.id  &&
+                  CanBeTurnedInto(*currentWay,way->nodes[i].id,way->GetId())) {
+
+                if (i>0 && !way->IsOneway()) {
+                  std::map<Id,RNode>::iterator closeEntry=closeMap.find(way->nodes[i-1].id);
+
+                  if (closeEntry==closeMap.end()) {
+                    follower.push_back(RNode(way->nodes[i-1].id,
+                                             way->nodes[i-1].lon,
+                                             way->nodes[i-1].lat,
+                                             ObjectRef(way->GetId(),refWay),
+                                             currentNode.id));
+                  }
+                }
+
+                if (i<way->nodes.size()-1) {
+                  std::map<Id,RNode>::iterator closeEntry=closeMap.find(way->nodes[i+1].id);
+
+                  if (closeEntry==closeMap.end()) {
+                    follower.push_back(RNode(way->nodes[i+1].id,
+                                             way->nodes[i+1].lon,
+                                             way->nodes[i+1].lat,
+                                             ObjectRef(way->GetId(),refWay),
+                                             currentNode.id));
+                  }
+                }
+
+                break;
+              }
+            }
+          }
+        }
+
+        for (std::vector<RNode>::iterator iter=follower.begin();
+             iter!=follower.end();
+             ++iter) {
+          double currentCost=currentNode.currentCost+
+                             profile.GetCostFactor(currentWay->GetType())*
+                             GetSphericalDistance(currentNode.lon,
+                                                  currentNode.lat,
+                                                  iter->lon,
+                                                  iter->lat);
+
+          if (currentWay->GetId()!=iter->id) {
+            currentCost+=profile.GetTurnCostFactor();
+          }
+
+          std::map<Id,RNodeRef>::iterator openEntry=openMap.find(iter->id);
+
+          if (openEntry!=openMap.end() &&
+              openEntry->second->currentCost<=currentCost) {
+            continue;
+          }
+
+          double estimateCost=profile.GetMinCostFactor()*
+                              GetSphericalDistance(iter->lon,iter->lat,targetLon,targetLat);
+          double overallCost=currentCost+estimateCost;
+
+          if (openEntry!=openMap.end()) {
+            iter->prev=currentNode.id;
+            iter->currentCost=currentCost;
+            iter->estimateCost=estimateCost;
+            iter->overallCost=overallCost;
+
+            openList.erase(openEntry->second);
+            std::pair<RNodeRef,bool> result=openList.insert(*iter);
+
+            openEntry->second=result.first;
+          }
+          else {
+            iter->currentCost=currentCost;
+            iter->estimateCost=estimateCost;
+            iter->overallCost=overallCost;
+
+            std::pair<RNodeRef,bool> result=openList.insert(*iter);
+            openMap[iter->id]=result.first;
+          }
+        }
+
+        //
+        // Added current node to close map
+        //
+
+        closeMap[currentNode.id]=currentNode;
+
+        //
+        // Check if finished
+        //
+
+        if (currentNode.id==targetNodeId) {
+          /*
+          std::cout << "Final Path:" << std::endl;
+          std::cout << "-----------" << std::endl;
+          std::cout << current.currentCost << "Km" << std::endl;
+          std::cout << waysCache.size() << " ways cached" << std::endl;
+          std::cout << std::endl;*/
+
+          std::list<RouteStep> steps;
+
+          while (currentNode.prev!=0) {
+            RouteStep step;
+
+            step.wayId=currentNode.ref.id;
+            step.nodeId=currentNode.id;
+
+            steps.push_back(step);
+            currentNode=closeMap.find(currentNode.prev)->second;
+          }
+
+          route.AddEntry(startWayId,startNodeId);
+          for (std::list<RouteStep>::reverse_iterator step=steps.rbegin();
+               step!=steps.rend();
+               ++step) {
+            route.AddEntry(step->wayId,step->nodeId);
+
+            /*
+            std::cout << "node " << step->nodeId << "( way " << step->wayId << ")";
+
+            Way way;
+
+            GetWay(step->wayId,way);
+
+            for (size_t i=0; i<way.tags.size(); i++) {
+              if (way.tags[i].key==tagName) {
+                std::cout << " " << way.tags[i].value;
+              }
+              else if (way.tags[i].key==tagRef) {
+                std::cout << " " << way.tags[i].value;
+              }
+            }
+
+            std::cout << std::endl;*/
+          }
+
+          clock.Stop();
+
+          std::cout << "Time: " << clock << std::endl;
+
+          std::cout << "=========== Routing end ==============" << std::endl;
+          return true;
+        }
+      } while (!openList.empty());
+
+      std::cout << "No route found!" << std::endl;
+      std::cout << "=========== Routing end ==============" << std::endl;
+
+      return false;
   }
 
   bool Database::TransformRouteDataToRouteDescription(const RouteData& data,
@@ -1691,4 +1719,3 @@ std::string l((const char*)path.toAscii());
     waterIndex.DumpStatistics();
   }
 }
-
