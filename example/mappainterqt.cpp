@@ -604,7 +604,7 @@ namespace osmscout {
                              const Projection& projection,
                              const MapParameter& parameter,
                              const MapData& data,
-                             QPainter* painter)
+                             QPainter* painter,bool a)
   {
     this->painter=painter;
 

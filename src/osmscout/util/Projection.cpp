@@ -36,21 +36,23 @@ namespace osmscout {
   : valid(false),
     lon(0),
     lat(0),
+    angle(0),
     magnification(1),
     width(0),
     height(0)
   {
-    Set(lon,lat,magnification,width,height);
+    Set(lon,lat,angle,magnification,width,height);
   }
 
   bool MercatorProjection::Set(double lon, double lat,
-                               double magnification,
+                               double angle, double magnification,
                                size_t width, size_t height)
   {
     valid=true;
   
     if (this->lon==lon &&
         this->lat==lat &&
+        this->angle==angle &&
         this->magnification==magnification &&
         this->width==width &&
         this->height==height) {
@@ -68,6 +70,7 @@ namespace osmscout {
     this->lat=lat;
     this->width=width;
     this->height=height;
+    this->angle=angle;
     this->magnification=magnification;
 
 
