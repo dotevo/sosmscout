@@ -32,6 +32,12 @@ namespace osmscout {
 
     void Partitioning::Init()
     {
+        qDebug() << "Initializing data...";
+
+        // setting alpha factor for quality function
+        alpha = 0.9;
+
+        // getting data from database
         MapData data;
         AreaSearchParameter parameter;
 
@@ -71,20 +77,20 @@ namespace osmscout {
         // create partition ways
         int idx = 0;
         int maxCell = 0;
-        for (std::vector<WayRef>::const_iterator w = data.ways.begin(); w != data.ways.end(); ++w) {
+        for (std::vector< WayRef >::const_iterator w = data.ways.begin(); w != data.ways.end(); ++w) {
             const WayRef& way= *w;
             //qDebug() << "way " << way->GetId();
             PartWay partWay;
-            for(std::vector<Point>::const_iterator p = way->nodes.begin(); p != way->nodes.end(); ++p) {
+            for(std::vector< Point >::const_iterator p = way->nodes.begin(); p != way->nodes.end(); ++p) {
                 const Point point = *p;
 
                 // checks if this node is in any other way
                 int waysContainingNodeCount = 0;
                 if(p != way->nodes.begin() && p !=  way->nodes.end() - 1) {
                     //qDebug() << "   point " << point.GetId();
-                    for (std::vector<WayRef>::const_iterator tmpW = data.ways.begin(); tmpW != data.ways.end(); ++tmpW) {
+                    for (std::vector< WayRef >::const_iterator tmpW = data.ways.begin(); tmpW != data.ways.end(); ++tmpW) {
                         const WayRef& tmpWay= *tmpW;
-                        for(std::vector<Point>::const_iterator tmpP = tmpWay->nodes.begin(); tmpP != tmpWay->nodes.end(); ++tmpP) {
+                        for(std::vector< Point >::const_iterator tmpP = tmpWay->nodes.begin(); tmpP != tmpWay->nodes.end(); ++tmpP) {
                             const Point tmpPoint = *tmpP;
                             if((tmpPoint.GetLon() == point.GetLon()) && (tmpPoint.GetLat() == point.GetLat())) {
                                 waysContainingNodeCount++;
@@ -124,16 +130,36 @@ namespace osmscout {
                     partWay.nodes.push_back(idx);
                 }
             }
+            partWay.id = way->GetId();
             partition.ways.push_back(partWay);
         }
 
         UpdatePartitionData();
+
+        // calculates initial priorities
+        qDebug() << "Reserving space for priorities...";
+        partition.priorities.reserve(partition.cellsCount * partition.cellsCount);
+        for(unsigned int i=0; i<partition.cellsCount; ++i) {
+            //qDebug() << i;
+            for(unsigned int j=0; j<partition.cellsCount; ++j) {
+                partition.priorities[i].push_back(0);
+                //partition.priorities[i].reserve(partition.cellsCount);
+            }
+        }
+        qDebug() << "Calculating priorities...";
+        for(unsigned int i=0; i<partition.cellsCount; ++i) {
+            for(unsigned int j=i+1; j<partition.cellsCount; ++j) {
+                partition.priorities[i][j] = CalculatePriority(i, j);
+            }
+        }
     }
 
     void Partitioning::UpdatePartitionData()
     {
-        qDebug() << "Updating partition...";
+        qDebug() << "Updating partition data...";
+
         // counts cells
+        //qDebug() << "Counting cells...";
         partition.cellsCount = 0;
         partition.boundaryEdgesCount = 0;
         partition.boundaryNodesCount = 0;
@@ -160,13 +186,14 @@ namespace osmscout {
         partition.boundaryEdges.reserve(partition.cellsCount);
 
         for(unsigned int i=0; i<partition.cellsCount; ++i) {
-            partition.cellsBoundaryNodesCount[i] = 0;
-            partition.cellsNodesCount[i] = 0;
-            partition.cellsEdgesCount[i] = 0;
-            partition.cellsRouteEdgesCount[i] = 0;
+            partition.cellsBoundaryNodesCount.push_back(0);
+            partition.cellsNodesCount.push_back(0);
+            partition.cellsEdgesCount.push_back(0);
+            partition.cellsRouteEdgesCount.push_back(0);
         }
 
         // counts edges and adds boundary edges to list
+        //qDebug() << "Counting edges...";
         for (unsigned int i=0; i < partition.ways.size(); ++i) {
             const PartWay way = partition.ways[i];
             //qDebug() << "w " << way->GetId() << "\n";
@@ -178,7 +205,7 @@ namespace osmscout {
                 node = partition.nodes[way.nodes[j]];
                 cell = node.cell;
                 if(cell == prevCell) {
-                    partition.cellsEdgesCount[cell]++;
+                    partition.cellsEdgesCount[cell] += 1;
                 } else {
                     partition.nodes[way.nodes[j-1]].type = BOUNDARY;
                     partition.nodes[way.nodes[j]].type = BOUNDARY;
@@ -196,12 +223,13 @@ namespace osmscout {
         partition.boundaryEdgesCount = partition.boundaryEdges.size();
 
         // counts nodes in cells and boundary nodes
+        //qDebug() << "Counting nodes...";
         for (unsigned int i=0; i<partition.nodesCount; ++i) {
             PartNode node = partition.nodes[i];
             //qDebug() << "partN " << nodeRef->GetId() << " cell " << node.cell;
-            partition.cellsNodesCount[node.cell]++;
+            partition.cellsNodesCount[node.cell] += 1;
             if(node.type == BOUNDARY) {
-                partition.cellsBoundaryNodesCount[node.cell]++;
+                partition.cellsBoundaryNodesCount[node.cell] += 1;
             }
         }
         for(unsigned int i=0; i<partition.cellsCount; ++i) {
@@ -209,37 +237,78 @@ namespace osmscout {
         }
 
         // calculates route edges in cells
+        //qDebug() << "Counting route edges...";
         for(unsigned int i=0; i<partition.cellsBoundaryNodesCount.size(); i++) {
             partition.cellsRouteEdgesCount[i] = partition.cellsBoundaryNodesCount[i] * (partition.cellsBoundaryNodesCount[i] - 1);
         }
 
         // prints values
-        qDebug() << "ways: " << partition.ways.size();
+        qDebug() << "CELLS: " << partition.cellsCount;
+        /*qDebug() << "ways: " << partition.ways.size();
         qDebug() << "nodesCount: " << partition.nodesCount;
         qDebug() << "boundaryNodesCount: " << partition.boundaryNodesCount;
         qDebug() << "boundaryEdgesCount: " << partition.boundaryEdgesCount;
         qDebug() << "cellsCount: " << partition.cellsCount;
         qDebug() << "cellsBoundaryNodesCount[0]: " << partition.cellsBoundaryNodesCount[0];
-        qDebug() << "cellsRouteEdgesCount[0]: " << partition.cellsRouteEdgesCount[0];
+        qDebug() << "cellsRouteEdgesCount[0]: " << partition.cellsRouteEdgesCount[0];*/
+    }
+
+    void Partitioning::UpdatePriorities(unsigned int i, unsigned int j)
+    {
+        qDebug() << "Updating priorities...";
+        // updates lines for merged cell
+        for(unsigned int k=0; k<i; ++k) {
+            partition.priorities[k][i] = CalculatePriority(k, i);
+        }
+        for(unsigned int l=i+1; l<partition.cellsCount; ++l) {
+            partition.priorities[i][l] = CalculatePriority(i, l);
+        }
+
+        // moves lines to delete those for deleted cell
+        for(unsigned int k = j; k<partition.cellsCount; ++k) {
+            partition.priorities[k] = partition.priorities[k+1];
+        }
+        for(unsigned int k = 0; k<partition.cellsCount; ++k) {
+            for(unsigned int l=j; l<partition.cellsCount; ++l) {
+                partition.priorities[k][l] = partition.priorities[k][l+1];
+            }
+        }
+
+        // resets last rows
+        for(unsigned int k = 0; k<partition.cellsCount; ++k) {
+            partition.priorities[k][partition.cellsCount] = 0;
+        }
+        for(unsigned int l = 0; l<partition.cellsCount+1; ++l) {
+            partition.priorities[partition.cellsCount][l] = 0;
+        }
+        /*
+        // moves lines to delete those for deleted cell
+        for(unsigned int k = j; k<(partition.cellsCount-1); ++k) {
+            partition.priorities[k] = partition.priorities[k+1];
+        }
+        for(unsigned int k = 0; k<partition.cellsCount; ++k) {
+            for(unsigned int l=j; l<(partition.cellsCount-1); ++l) {
+                partition.priorities[k][l] = partition.priorities[k][l+1];
+            }
+        }*/
     }
 
     double Partitioning::CalculateQuality()
     {
-        //qDebug() << "Calculating quality...";
-        double alpha;
-
-        alpha = 0.5;
-        double sumA;
-        double sumB;
+        qDebug() << "Calculating quality of partition...";
+        double sumA = 0;
+        double sumB = 0;
 
         for(unsigned int i=0; i<partition.cellsCount; i++) {
-            sumA += (partition.cellsNodesCount[i]/partition.nodesCount)*(2 - (partition.cellsNodesCount[i]/partition.nodesCount))*partition.cellsEdgesCount[i];
-            sumB += pow(1 - (partition.cellsNodesCount[i]/partition.nodesCount), 2) * partition.cellsRouteEdgesCount[i];
+            double fraction = (double)partition.cellsNodesCount[i]/(double)partition.nodesCount;
+            sumA += (fraction) * (2 - fraction) * (double)partition.cellsEdgesCount[i];
+            sumB += pow(1 - fraction, 2) * (double)partition.cellsRouteEdgesCount[i];
         }
 
-        double result = sumA + (alpha * sumB) + partition.boundaryEdgesCount;
+        double result = sumA
+                + alpha * (sumB + (double)partition.boundaryEdgesCount);
 
-        qDebug() << "Quality = " << result;
+        qDebug() << "Q: " << result;
         return result;
     }
 
@@ -249,7 +318,6 @@ namespace osmscout {
         double priority;
         double quality;
         quality = CalculateQuality();
-        qDebug() << "";
         unsigned int cellI;
         unsigned int cellJ;
         for(int x=0; x<3; ++x) {
@@ -270,7 +338,6 @@ namespace osmscout {
             MergeCells(cellI, cellJ);
 
             quality = CalculateQuality();
-            qDebug() << "";
         }
 
     }
@@ -278,40 +345,56 @@ namespace osmscout {
     void Partitioning::FindPartition()
     {
         qDebug() << "Finding partition...";
+
         double priority;
         double maxPriority;
         double quality;
         double bestQuality;
-        quality = bestQuality = CalculateQuality();
+        unsigned int bestCellsCount;
         unsigned int cellI;
         unsigned int cellJ;
+
+        quality = CalculateQuality();
+        bestQuality = quality;
+        bestCellsCount = partition.cellsCount;
+
         while(partition.cellsCount > 1) {
             maxPriority = 0;
             for(unsigned int i=0; i<partition.cellsCount-1; ++i) {
                 for(unsigned int j=i+1; j<partition.cellsCount; ++j) {
-                    priority = CalculatePriority(i, j);
+                    priority = partition.priorities[i][j] * (1+(qrand()/32767./100));
                     if(priority > maxPriority) {
                         cellI = i;
                         cellJ = j;
-                        maxPriority = priority;
+                        maxPriority = partition.priorities[i][j];
                     }
                 }
             }
-            MergeCells(cellI, cellJ);
 
-            quality = CalculateQuality();
-            if(quality < bestQuality) {
-                bestQuality = quality;
+            if(maxPriority > 0) {
+                MergeCells(cellI, cellJ);
+                UpdatePriorities(cellI, cellJ);
+
+                quality = CalculateQuality();
+                if(quality < bestQuality) {
+                    bestQuality = quality;
+                    bestCellsCount = partition.cellsCount;
+                }
+            } else {
+                qDebug() << "best quality: " << bestQuality;
+                qDebug() << "best cells count: " << bestCellsCount;
+                break;
             }
+            qDebug() << "";
         }
     }
 
     double Partitioning::CalculatePriority(unsigned int i, unsigned int j)
     {
-        //qDebug() << "Calculating priority for " << i << " and " << j << "...";
+        //qDebug() << "Calculating priority for merging cells " << i << " and " << j << "...";
         // counts boundary edges and nodes of cell after merging
         int boundaryEdgesIJ = 0;
-        std::vector<unsigned int> boundaryNodesIJ;
+        std::vector< unsigned int > boundaryNodesIJ;
         for(unsigned int k=0; k<partition.boundaryEdges.size(); ++k) {
             BoundaryEdge edge = partition.boundaryEdges[k];
 
@@ -354,12 +437,10 @@ namespace osmscout {
         // calculates the value of priority
         double numerator = boundaryEdgesIJ * (1 + partition.cellsBoundaryNodesCount[i] + partition.cellsBoundaryNodesCount[j] - boundaryNodesIJ.size());
         double denominator = partition.cellsNodesCount[i] * partition.cellsNodesCount[j];
-        double result = ((double)numerator/(double)denominator) * (1+(qrand()/32767./100));
+        double result = (double)numerator/(double)denominator;
 
         if(boundaryEdgesIJ != 0) {
-            qDebug() << "Cell " << i
-                << " and  " << j
-                << " with priority = " << result;
+            //qDebug() << "Cell " << i << " and  " << j << " with priority = " << result;
             /*qDebug() << "boundaryEdgesIJ = " << boundaryEdgesIJ
                 << " BoundaryNodesCount[i] = " << partition.cellsBoundaryNodesCount[i]
                 << " BoundaryNodesCount[j] = " << partition.cellsBoundaryNodesCount[j]
@@ -373,7 +454,7 @@ namespace osmscout {
 
     void Partitioning::MergeCells(unsigned int i, unsigned int j)
     {
-        qDebug() << "Merging cells " << i << " and " << j << "...";
+        qDebug() << "Merging cells " << i << " and " << j << " with priority = " << partition.priorities[i][j] << " ...";
         for(unsigned int k=0; k<partition.nodes.size(); ++k) {
             if(partition.nodes[k].cell == j) {
                 partition.nodes[k].cell = i;

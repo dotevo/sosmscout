@@ -51,8 +51,8 @@ namespace osmscout {
         struct PartNode
         {
             Id id;
-            int lon;
-            int lat;
+            double lon;
+            double lat;
             PARTITION_NODE_TYPE type;
             unsigned int cell;
         };
@@ -71,6 +71,7 @@ namespace osmscout {
          */
         struct PartWay
         {
+            Id id;
             std::vector<unsigned int> nodes;
         };
         /**
@@ -79,23 +80,25 @@ namespace osmscout {
          */
         struct Partition
         {
-            std::vector<PartNode> nodes;
-            std::vector<PartWay> ways;
-            std::vector<BoundaryEdge> boundaryEdges;
+            std::vector< PartNode > nodes;
+            std::vector< PartWay > ways;
+            std::vector< BoundaryEdge > boundaryEdges;
             unsigned int nodesCount;
             unsigned int cellsCount;
-            std::vector<unsigned int> cellsNodesCount;
-            std::vector<unsigned int> cellsEdgesCount;
-            std::vector<unsigned int> cellsBoundaryNodesCount;
-            std::vector<unsigned int> cellsRouteEdgesCount;
+            std::vector< unsigned int > cellsNodesCount;
+            std::vector< unsigned int > cellsEdgesCount;
+            std::vector< unsigned int > cellsBoundaryNodesCount;
+            std::vector< unsigned int > cellsRouteEdgesCount;
             unsigned int boundaryEdgesCount;
             unsigned int boundaryNodesCount;
+            std::vector< std::vector< double > > priorities;
         };
 
         QString mapDir;
         QString style;
         Partition partition;
         Partition bestPartition;
+        double alpha;
 
         /**
          * @brief Initializes all objects and fields.
@@ -107,6 +110,13 @@ namespace osmscout {
          *
          */
         void UpdatePartitionData();
+        /**
+         * @brief Updates priorities table after merging two cells.
+         *
+         * @param i index of the first cell
+         * @param j index of the seccond cell
+         */
+        void UpdatePriorities(unsigned int i, unsigned int j);
         /**
          * @brief Calculates the value of priority for merging two cells.
          *
