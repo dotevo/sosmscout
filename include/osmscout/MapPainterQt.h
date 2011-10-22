@@ -21,10 +21,24 @@
 */
 
 #include <QPainter>
+#include <QList>
 
 #include <osmscout/MapPainter.h>
 
 namespace osmscout {
+
+    struct pNode{
+        int no;
+        double lat;
+        double lon;
+        int cellNo;
+    };
+
+    struct pWay{
+        int no;
+        int nodesCount;
+        QList<int> nodes;
+    };
 
   class MapPainterQt : public MapPainter
   {
@@ -34,6 +48,12 @@ namespace osmscout {
     std::vector<QBrush>    patterns; //! vector of QBrush for fill patterns
     std::map<size_t,QFont> fonts;    //! Cached fonts
     std::vector<double>    sin;      //! Lookup table for sin calculation
+
+    //! variables for partition resutlts rendering
+    QList<pNode> pNodes;
+    QList<pWay> pWays;
+    QList<QColor> pColors;
+    QString pDatasourcePath;
 
   private:
     QFont GetFont(const MapParameter& parameter,
@@ -108,13 +128,17 @@ namespace osmscout {
     MapPainterQt();
     virtual ~MapPainterQt();
 
-
     bool DrawMap(const StyleConfig& styleConfig,
                  const Projection& projection,
                  const MapParameter& parameter,
                  const MapData& data,
                  QPainter* painter,
                  bool showMarker);
+
+    void PreparePartitionData(QString partitionOutPath);
+
+    void RenderPartitionResults(const Projection& projection,
+                                QPainter* painter);
   };
 }
 
