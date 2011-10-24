@@ -182,6 +182,7 @@ int MainWindow::DrawMap()
 
             projection.Set(lon,
                            lat,
+                           0,
                            zoom,
                            width,
                            height);
@@ -205,7 +206,7 @@ int MainWindow::DrawMap()
                                    projection,
                                    drawParameter,
                                    data,
-                                   painter)) {
+                                   painter,false)) {
  //               std::cerr << "Drawing!" << std::endl;
  //               std::cerr << "Zoom: " << zoom << std::endl;
 

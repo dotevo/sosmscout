@@ -32,6 +32,9 @@ namespace osmscout {
 
     virtual double GetLon() const = 0;
     virtual double GetLat() const = 0;
+    virtual double GetMarkerLon() const = 0;
+    virtual double GetMarkerLat() const = 0;
+    virtual double GetAngle() const = 0;
     virtual size_t GetWidth() const = 0;
     virtual size_t GetHeight() const = 0;
     virtual double GetLonMin() const = 0;
@@ -41,7 +44,8 @@ namespace osmscout {
     virtual double GetMagnification() const = 0;
 
     virtual bool Set(double lon, double lat,
-                     double magnification,
+                     double markerLon, double markerLat,
+                     double angle, double magnification,
                      size_t width, size_t height) = 0;
 
     virtual bool GeoIsIn(double lon, double lat) const = 0;
@@ -65,6 +69,9 @@ namespace osmscout {
     bool                valid;         //! projects is valid
     double              lon;           //! Longitude coordinate of the center of the image
     double              lat;           //! Latitude coordinate of the center of the image
+    double              markerLon;     //! Longitude coordinate of position marker
+    double              markerLat;     //! Latitude coordinate of position marker
+    double              angle;         //! Current travel angle
     double              lonMin;        //! Longitude of the upper left corner of the image
     double              latMin;        //! Latitude of the upper left corner of the image
     double              lonMax;        //! Longitude of the lower right corner of the image
@@ -93,6 +100,21 @@ namespace osmscout {
     inline double GetLat() const
     {
       return lat;
+    }
+
+    inline double GetMarkerLon() const
+    {
+      return markerLon;
+    }
+
+    inline double GetMarkerLat() const
+    {
+      return markerLat;
+    }
+
+    inline double GetAngle() const
+    {
+      return angle;
     }
 
     inline size_t GetWidth() const
@@ -131,7 +153,8 @@ namespace osmscout {
     }
 
     bool Set(double lon, double lat,
-             double magnification,
+             double markerLon, double markerLat,
+             double angle, double magnification,
              size_t width, size_t height);
 
     bool GeoIsIn(double lon, double lat) const;

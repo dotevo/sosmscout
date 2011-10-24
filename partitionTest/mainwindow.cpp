@@ -28,8 +28,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     init();
-
-    close();
 }
 
 MainWindow::~MainWindow()
@@ -53,7 +51,7 @@ void MainWindow::init()
 #endif
 
     osmscout::Partitioning part(map, style);
-    part.TestAlgorithm();
-    //part.FindPartition();
+    //part.TestAlgorithm();
+    part.FindPartition();
 }
 
