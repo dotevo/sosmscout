@@ -19,6 +19,7 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
 */
+#include <QString>
 
 #include <list>
 #include <set>
@@ -47,7 +48,7 @@ namespace osmscout {
     {
       ObjectRef   reference;       //! Reference to the object defining the region
       FileOffset  offset;          //! Offset into the region datafile
-      std::string name;            //! name of the region
+      QString name;            //! name of the region
     };
 
     struct Loc
@@ -59,7 +60,7 @@ namespace osmscout {
 
     struct LocationVisitor
     {
-      std::string               name;
+      QString               name;
       bool                      startWith;
       size_t                    limit;
       bool                      limitReached;
@@ -73,7 +74,7 @@ namespace osmscout {
 
       LocationVisitor(FileScanner& scanner);
 
-      bool Visit(const std::string& locationName,
+      bool Visit(const QString& locationName,
                  const Loc &location);
     };
 
@@ -95,14 +96,14 @@ namespace osmscout {
     bool Load(const std::string& path,
               std::string (*hashFunction) (std::string) = NULL);
 
-    bool GetMatchingAdminRegions(const std::string& name,
+    bool GetMatchingAdminRegions(const QString& name,
                                  std::list<AdminRegion>& regions,
                                  size_t limit,
                                  bool& limitReached,
                                  bool startWith) const;
 
     bool GetMatchingLocations(const AdminRegion& region,
-                              const std::string& name,
+                              const QString& name,
                               std::list<Location>& locations,
                               size_t limit,
                               bool& limitReached,

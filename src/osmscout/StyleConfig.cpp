@@ -778,6 +778,7 @@ namespace osmscout {
         types.push_back(i);
       }
     }
+
   }
 }
 

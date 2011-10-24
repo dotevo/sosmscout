@@ -44,7 +44,7 @@ void MainWindow::init()
 
 #ifdef Q_OS_UNIX
      map = "/home/bartek/osmscout-map/3poland/";
-    style = "/home/bartek/QtProjects/OSMNavi/styles/standard.oss.xml";
+    style = "/home/bartek/QtProjects/OSMNavi/styles/standard.oss2.xml";
 #endif
 
 #ifdef Q_OS_WIN

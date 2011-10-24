@@ -242,11 +242,23 @@ namespace osmscout {
     bool GetBoundingBox(double& minLat,double& minLon,
                         double& maxLat,double& maxLon) const;
 
+    /**
+      @brief Returns objects from files.
+      @param styleConfig configuration of style
+      @param lonMin minimum length
+      @param latMin minimum latitude
+      @param lonMax maximum length
+      @param latMax maximum latitude
+      @param magnification zoom level
+      @param parameter searching paramaters
+      @param allObjects defines loading all objects
+    */
     bool GetObjects(const StyleConfig& styleConfig,
                     double lonMin, double latMin,
                     double lonMax, double latMax,
                     double magnification,
                     const AreaSearchParameter& parameter,
+                    bool allObjects,
                     std::vector<NodeRef>& nodes,
                     std::vector<WayRef>& ways,
                     std::vector<WayRef>& areas,
@@ -274,14 +286,14 @@ namespace osmscout {
     bool GetRelations(const std::vector<Id>& ids,
                       std::vector<RelationRef>& relations) const;
 
-    bool GetMatchingAdminRegions(const std::string& name,
+    bool GetMatchingAdminRegions(const QString& name,
                                  std::list<AdminRegion>& regions,
                                  size_t limit,
                                  bool& limitReached,
                                  bool startWith) const;
 
     bool GetMatchingLocations(const AdminRegion& region,
-                              const std::string& name,
+                              const QString& name,
                               std::list<Location>& locations,
                               size_t limit,
                               bool& limitReached,

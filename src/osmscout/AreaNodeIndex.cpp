@@ -155,12 +155,12 @@ namespace osmscout {
     nodeOffsets.clear();
     nodeOffsets.reserve(std::min(100000u,(uint32_t)maxNodeCount));
     newNodeOffsets.reserve(std::min(100000u,(uint32_t)maxNodeCount));
-
+/*
     minlon+=180;
     maxlon+=180;
     minlat+=90;
     maxlat+=90;
-
+*/
     stop=false;
     for (std::vector<TypeId>::const_iterator type=types.begin();
          !stop && type!=types.end();

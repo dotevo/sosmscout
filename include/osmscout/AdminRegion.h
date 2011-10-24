@@ -20,6 +20,8 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
 */
 
+#include <QString>
+
 #include <osmscout/ObjectRef.h>
 
 namespace osmscout {
@@ -37,7 +39,7 @@ namespace osmscout {
   {
     ObjectRef              reference; //! Reference to the object defining the region
     FileOffset             offset;    //! Offset into the region datafile
-    std::string            name;      //! name of the region
+    QString                name;      //! name of the region
     std::list<std::string> path;      //! Admin region names higher up in the hierarchy
   };
 }

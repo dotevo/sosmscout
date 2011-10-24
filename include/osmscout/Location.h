@@ -19,6 +19,7 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
 */
+#include <QString>
 
 #include <osmscout/ObjectRef.h>
 
@@ -32,9 +33,9 @@ namespace osmscout {
   class Location
   {
   public:
-    std::string            name;
-    std::list<std::string> path;
-    std::list<ObjectRef>   references;
+    QString            name;
+    std::list<QString> path;
+    std::list<ObjectRef>   reference;
 
   public:
     Location();

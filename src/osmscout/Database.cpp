@@ -234,13 +234,13 @@ namespace osmscout {
                       std::string (*hashFunction) (std::string))
   {
 	  assert(!path.isEmpty());
-std::string l((const char*)path.toAscii());
-	  this->path=l;
-    this->hashFunction=hashFunction;
+          QString l((const char*)path.toAscii());
+          this->path = l.toStdString();
+    this->hashFunction  = hashFunction;
 
     typeConfig=new TypeConfig();
 
-    if (!LoadTypeData(l,*typeConfig)) {
+    if (!LoadTypeData(l.toStdString(),*typeConfig)) {
       std::cerr << "Cannot load 'types.dat'!" << std::endl;
       delete typeConfig;
       typeConfig=NULL;
@@ -282,7 +282,7 @@ std::string l((const char*)path.toAscii());
 //    std::cout << "Data bounding box: [" << minLat << "," << minLon << "] - [" << maxLat << "," << maxLon << "]" << std::endl;
 
 //    std::cout << "Opening 'nodes.dat'..." << std::endl;
-    if (!nodeDataFile.Open(l)) {
+    if (!nodeDataFile.Open(l.toStdString())) {
 //      std::cerr << "Cannot open 'nodes.dat'!" << std::endl;
       delete typeConfig;
       typeConfig=NULL;
@@ -345,6 +345,7 @@ std::string l((const char*)path.toAscii());
 //    std::cout << "Loading area way index done." << std::endl;
 
 //    std::cout << "Loading city street index..." << std::endl;
+
     if (!cityStreetIndex.Load(this->path, hashFunction)) {
       std::cerr << "Cannot load city street index!" << std::endl;
       delete typeConfig;
@@ -413,6 +414,7 @@ std::string l((const char*)path.toAscii());
                             double lonMax, double latMax,
                             double magnification,
                             const AreaSearchParameter& parameter,
+                            bool allObjects,
                             std::vector<NodeRef>& nodes,
                             std::vector<WayRef>& ways,
                             std::vector<WayRef>& areas,
@@ -431,7 +433,7 @@ std::string l((const char*)path.toAscii());
     std::vector<FileOffset> relationWayOffsets;
     std::vector<FileOffset> wayAreaOffsets;
     std::vector<FileOffset> relationAreaOffsets;
-    double                  magLevel=log2(magnification);
+    double                  magLevel=log2(allObjects ? osmscout::magVeryClose:magnification);
 
     nodes.clear();
     ways.clear();
@@ -441,8 +443,9 @@ std::string l((const char*)path.toAscii());
 
     StopClock nodeIndexTimer;
 
-    styleConfig.GetNodeTypesWithMag(magnification,
-                                    nodeTypes);
+    styleConfig.GetNodeTypesWithMag(allObjects ? osmscout::magVeryClose : magnification, nodeTypes);
+
+    std::cerr << "Node types size: " << nodeTypes.size() << std::endl;
 
     if (!areaNodeIndex.GetOffsets(styleConfig,
                                   lonMin,latMin,lonMax,latMax,
@@ -453,14 +456,16 @@ std::string l((const char*)path.toAscii());
       return false;
     }
 
+    std::cerr << "Node offset size: " << nodeOffsets.size() << std::endl;
+    std::cerr << "Node maximum size: " << parameter.GetMaximumNodes() << std::endl;
+
     nodeIndexTimer.Stop();
 
     StopClock wayIndexTimer;
 
-    styleConfig.GetWayTypesByPrioWithMag(magnification,
-                                         wayTypes);
+    styleConfig.GetWayTypesByPrioWithMag(allObjects ? osmscout::magVeryClose : magnification, wayTypes);
 
-    if (optimizeLowZoom.HasOptimizations(magnification)) {
+    if (optimizeLowZoom.HasOptimizations(allObjects ? osmscout::magVeryClose : magnification)) {
       optimizeLowZoom.GetWays(styleConfig,
                               lonMin,
                               latMin,
@@ -495,8 +500,7 @@ std::string l((const char*)path.toAscii());
 
     wayTypes.clear();
 
-    styleConfig.GetAreaTypesWithMag(magnification,
-                                    areaTypes);
+    styleConfig.GetAreaTypesWithMag(allObjects ? osmscout::magVeryClose : magnification, areaTypes);
 
     if (!areaAreaIndex.GetOffsets(styleConfig,
                                   lonMin,
@@ -748,7 +752,7 @@ std::string l((const char*)path.toAscii());
     return relationDataFile.Get(ids,relations);
   }
 
-  bool Database::GetMatchingAdminRegions(const std::string& name,
+  bool Database::GetMatchingAdminRegions(const QString& name,
                                          std::list<AdminRegion>& regions,
                                          size_t limit,
                                          bool& limitReached,
@@ -766,7 +770,7 @@ std::string l((const char*)path.toAscii());
   }
 
   bool Database::GetMatchingLocations(const AdminRegion& region,
-                                      const std::string& name,
+                                      const QString& name,
                                       std::list<Location>& locations,
                                       size_t limit,
                                       bool& limitReached,
@@ -775,6 +779,7 @@ std::string l((const char*)path.toAscii());
     if (!IsOpen()) {
       return false;
     }
+
 
     return cityStreetIndex.GetMatchingLocations(region,
                                                 name,

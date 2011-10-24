@@ -159,7 +159,8 @@ int MainWindow::DrawMap()
         osmscout::DatabaseParameter databaseParameter;
         osmscout::Database          database(databaseParameter);
 
-		if (!database.Open((const char*)map.toAscii())) {
+
+                if (!database.Open((const char*)map.toAscii())) {
             std::cerr << "Cannot open database" << std::endl;
             return 1;
         }
@@ -193,6 +194,7 @@ int MainWindow::DrawMap()
                                 projection.GetLatMax(),
                                 projection.GetMagnification(),
                                 searchParameter,
+                                false,
                                 data.nodes,
                                 data.ways,
                                 data.areas,

@@ -33,24 +33,25 @@ namespace osmscout {
     // no code
   }
 
-  bool CityStreetIndex::LocationVisitor::Visit(const std::string& locationName,
+  bool CityStreetIndex::LocationVisitor::Visit(const QString& locationName,
                                                const Loc &loc)
   {
-    std::string::size_type pos;
-    bool                   found;
+    int pos;
+    bool found;
 
     if (hashFunction!=NULL) {
-      std::string hash=(*hashFunction)(locationName);
+      std::string hash = (*hashFunction)(locationName.toStdString());
 
       if (!hash.empty()) {
-        pos=hash.find(nameHash);
+       // pos=hash.find(nameHash);
+          pos = QString::fromStdString(hash).indexOf(QString::fromStdString(nameHash), 0, Qt::CaseInsensitive);
       }
       else {
-        pos=locationName.find(name);
+        pos = locationName.indexOf(name, 0, Qt::CaseInsensitive);
       }
     }
     else {
-      pos=locationName.find(name);
+      pos = locationName.indexOf(name, 0, Qt::CaseInsensitive);
     }
 
     if (startWith) {
@@ -98,10 +99,11 @@ namespace osmscout {
 
     while (!scanner.HasError() &&
            regionOffset!=0) {
-      std::string name;
+      QString name;
+      std::string nameStd = name.toStdString();
 
       scanner.SetPos(regionOffset);
-      scanner.Read(name);
+      scanner.Read(nameStd);
       scanner.ReadNumber(regionOffset);
 
       if (location.path.empty()) {
@@ -219,7 +221,7 @@ namespace osmscout {
     for (std::map<std::string,Loc>::const_iterator l=locations.begin();
          l!=locations.end();
          ++l) {
-      if (!visitor.Visit(l->first,l->second)) {
+      if (!visitor.Visit(QString::fromStdString(l->first), l->second)) {
         return true;
       }
     }
@@ -246,7 +248,7 @@ namespace osmscout {
   }
 
 
-  bool CityStreetIndex::GetMatchingAdminRegions(const std::string& name,
+  bool CityStreetIndex::GetMatchingAdminRegions(const QString& name,
                                                 std::list<AdminRegion>& regions,
                                                 size_t limit,
                                                 bool& limitReached,
@@ -259,7 +261,7 @@ namespace osmscout {
 
     // if the user supplied a special hash function call it and use the result
     if (hashFunction!=NULL) {
-      nameHash=(*hashFunction)(name);
+      nameHash = (*hashFunction)(name.toStdString());
     }
 
     FileScanner   scanner;
@@ -277,16 +279,19 @@ namespace osmscout {
     }
 
     for (size_t i=0; i<areaRefs; i++) {
-      std::string regionName;
+      QString regionName;
+      std::string regionNameStd;
       uint32_t    entries;
 
-      if (!scanner.Read(regionName)) {
+      if (!scanner.Read(regionNameStd)) {
         return false;
       }
 
       if (!scanner.ReadNumber(entries)) {
         return false;
       }
+
+      regionName = QString::fromStdString(regionNameStd);
 
       for (size_t j=0; j<entries; j++) {
         Region   region;
@@ -315,17 +320,17 @@ namespace osmscout {
         // Calculate match
 
         if (hashFunction!=NULL) {
-          std::string hash=(*hashFunction)(region.name);
+          std::string hash = (*hashFunction)(regionNameStd);
 
           if (!hash.empty()) {
-            loc=hash.find(nameHash);
+            loc = QString::fromStdString(hash).indexOf(QString::fromStdString(nameHash), 0, Qt::CaseInsensitive);
           }
           else {
-            loc=region.name.find(name);
+            loc = region.name.indexOf(name, 0, Qt::CaseInsensitive);
           }
         }
         else {
-          loc=region.name.find(name);
+          loc = region.name.indexOf(name, 0, Qt::CaseInsensitive);
         }
 
         if (startWith) {
@@ -378,19 +383,20 @@ namespace osmscout {
       FileOffset offset=area->offset;
 
       while (offset!=0) {
-        std::string name;
+        QString name;
+        std::string nameStd = name.toStdString();
 
         scanner.SetPos(offset);
-        scanner.Read(name);
+        scanner.Read(nameStd);
         scanner.ReadNumber(offset);
 
         if (area->path.empty()) {
           if (name!=area->name) {
-            area->path.push_back(name);
+            area->path.push_back(nameStd);
           }
         }
         else {
-          area->path.push_back(name);
+          area->path.push_back(nameStd);
         }
       }
     }
@@ -399,7 +405,7 @@ namespace osmscout {
   }
 
   bool CityStreetIndex::GetMatchingLocations(const AdminRegion& region,
-                                             const std::string& name,
+                                             const QString& name,
                                              std::list<Location>& locations,
                                              size_t limit,
                                              bool& limitReached,
@@ -423,7 +429,7 @@ namespace osmscout {
     locVisitor.hashFunction=hashFunction;
 
     if (hashFunction!=NULL) {
-      locVisitor.nameHash=(*hashFunction)(name);
+      locVisitor.nameHash=(*hashFunction)(name.toStdString());
     }
 
 
@@ -446,4 +452,3 @@ namespace osmscout {
     std::cout << "CityStreetIndex: Memory " << memory << std::endl;
   }
 }
-
