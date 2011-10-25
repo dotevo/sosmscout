@@ -414,7 +414,6 @@ namespace osmscout {
                             double lonMax, double latMax,
                             double magnification,
                             const AreaSearchParameter& parameter,
-                            bool allObjects,
                             std::vector<NodeRef>& nodes,
                             std::vector<WayRef>& ways,
                             std::vector<WayRef>& areas,
@@ -433,7 +432,7 @@ namespace osmscout {
     std::vector<FileOffset> relationWayOffsets;
     std::vector<FileOffset> wayAreaOffsets;
     std::vector<FileOffset> relationAreaOffsets;
-    double                  magLevel=log2(allObjects ? osmscout::magVeryClose:magnification);
+    double                  magLevel=log2(magnification);
 
     nodes.clear();
     ways.clear();
@@ -443,7 +442,7 @@ namespace osmscout {
 
     StopClock nodeIndexTimer;
 
-    styleConfig.GetNodeTypesWithMag(allObjects ? osmscout::magVeryClose : magnification, nodeTypes);
+    styleConfig.GetNodeTypesWithMag(magnification, nodeTypes);
 
     std::cerr << "Node types size: " << nodeTypes.size() << std::endl;
 
@@ -463,9 +462,9 @@ namespace osmscout {
 
     StopClock wayIndexTimer;
 
-    styleConfig.GetWayTypesByPrioWithMag(allObjects ? osmscout::magVeryClose : magnification, wayTypes);
+    styleConfig.GetWayTypesByPrioWithMag(magnification, wayTypes);
 
-    if (optimizeLowZoom.HasOptimizations(allObjects ? osmscout::magVeryClose : magnification)) {
+    if (optimizeLowZoom.HasOptimizations(magnification)) {
       optimizeLowZoom.GetWays(styleConfig,
                               lonMin,
                               latMin,
@@ -500,7 +499,7 @@ namespace osmscout {
 
     wayTypes.clear();
 
-    styleConfig.GetAreaTypesWithMag(allObjects ? osmscout::magVeryClose : magnification, areaTypes);
+    styleConfig.GetAreaTypesWithMag(magnification, areaTypes);
 
     if (!areaAreaIndex.GetOffsets(styleConfig,
                                   lonMin,

@@ -114,5 +114,4 @@ INCLUDEPATH += include/
 
 TEMPLATE = subdirs
 SUBDIRS += \
-    example \
     partitionTest

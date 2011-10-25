@@ -258,7 +258,6 @@ namespace osmscout {
                     double lonMax, double latMax,
                     double magnification,
                     const AreaSearchParameter& parameter,
-                    bool allObjects,
                     std::vector<NodeRef>& nodes,
                     std::vector<WayRef>& ways,
                     std::vector<WayRef>& areas,

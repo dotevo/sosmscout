@@ -19,6 +19,8 @@
 
 #include <osmscout/CityStreetIndex.h>
 
+#include <QDebug>
+
 #include <cassert>
 #include <iostream>
 
@@ -38,6 +40,10 @@ namespace osmscout {
   {
     int pos;
     bool found;
+
+    qDebug() << locationName;
+    //std::string locationNameString = locationName.toUtf8();
+    //std::cout << locationName.toUtf8();
 
     if (hashFunction!=NULL) {
       std::string hash = (*hashFunction)(locationName.toStdString());
@@ -73,7 +79,11 @@ namespace osmscout {
 
     Location location;
 
-    location.name=locationName;
+    std::string locationNameStd = locationName.toStdString();
+    //qDebug() << locationName;
+    location.name = QString::fromUtf8(locationNameStd.c_str());
+
+    //location.name=QString::fromUtf8(locationName.toStdString().c_str());
 
     for (std::list<Id>::const_iterator i=loc.nodes.begin();
          i!=loc.nodes.end();
@@ -99,12 +109,15 @@ namespace osmscout {
 
     while (!scanner.HasError() &&
            regionOffset!=0) {
-      QString name;
-      std::string nameStd = name.toStdString();
+      std::string nameStd;
 
       scanner.SetPos(regionOffset);
       scanner.Read(nameStd);
       scanner.ReadNumber(regionOffset);
+
+      //std::cerr << nameStd << std::endl;
+
+      QString name = QString::fromUtf8(nameStd.c_str());
 
       if (location.path.empty()) {
         // We dot not want something like "'Dortmund' in 'Dortmund'"!
@@ -118,6 +131,7 @@ namespace osmscout {
     }
 
     locations.push_back(location);
+    //qDebug() << location.name;
 
     return scanner.SetPos(currentOffset);
   }
@@ -221,7 +235,7 @@ namespace osmscout {
     for (std::map<std::string,Loc>::const_iterator l=locations.begin();
          l!=locations.end();
          ++l) {
-      if (!visitor.Visit(QString::fromStdString(l->first), l->second)) {
+        if (!visitor.Visit(QString::fromUtf8(l->first.c_str()), l->second)) {
         return true;
       }
     }
@@ -291,7 +305,7 @@ namespace osmscout {
         return false;
       }
 
-      regionName = QString::fromStdString(regionNameStd);
+      regionName = QString::fromUtf8(regionNameStd.c_str());
 
       for (size_t j=0; j<entries; j++) {
         Region   region;
@@ -431,7 +445,6 @@ namespace osmscout {
     if (hashFunction!=NULL) {
       locVisitor.nameHash=(*hashFunction)(name.toStdString());
     }
-
 
     if (!LoadRegion(locVisitor.scanner,
                     region.offset,

@@ -35,7 +35,7 @@ namespace osmscout {
   public:
     QString            name;
     std::list<QString> path;
-    std::list<ObjectRef>   reference;
+    std::list<ObjectRef>   references;
 
   public:
     Location();

@@ -28,14 +28,14 @@ namespace osmscout {
 
   bool Location::IsValid() const
   {
-    return reference.size()>0;
+    return references.size()>0;
   }
 
   void Location::Invalidate()
   {
     name.clear();
     path.clear();
-    reference.clear();
+    references.clear();
   }
 
 }
