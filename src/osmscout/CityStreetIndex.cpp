@@ -19,7 +19,7 @@
 
 #include <osmscout/CityStreetIndex.h>
 
-#include <QDebug>
+#include <QTextCodec>
 
 #include <cassert>
 #include <iostream>
@@ -35,29 +35,30 @@ namespace osmscout {
     // no code
   }
 
-  bool CityStreetIndex::LocationVisitor::Visit(const QString& locationName,
+  bool CityStreetIndex::LocationVisitor::Visit(const std::string& locationName,
                                                const Loc &loc)
   {
     int pos;
     bool found;
-
-    qDebug() << locationName;
-    //std::string locationNameString = locationName.toUtf8();
-    //std::cout << locationName.toUtf8();
+    CityStreetIndex c;
 
     if (hashFunction!=NULL) {
-      std::string hash = (*hashFunction)(locationName.toStdString());
+      std::string hash = (*hashFunction)(locationName);
 
       if (!hash.empty()) {
        // pos=hash.find(nameHash);
-          pos = QString::fromStdString(hash).indexOf(QString::fromStdString(nameHash), 0, Qt::CaseInsensitive);
+          //pos = QString::fromStdString(hash).indexOf(QString::fromStdString(nameHash), 0, Qt::CaseInsensitive);
+
+          pos = QString::fromUtf8(hash.c_str()).indexOf(QString::fromUtf8(nameHash.c_str()), 0, Qt::CaseInsensitive);
       }
       else {
-        pos = locationName.indexOf(name, 0, Qt::CaseInsensitive);
+        //pos = QString::fromStdString(locationName).indexOf(name, 0, Qt::CaseInsensitive);
+          pos = c.modifyCharacters(QString::fromUtf8(locationName.c_str())).indexOf(c.modifyCharacters(name), 0, Qt::CaseInsensitive);
       }
     }
     else {
-      pos = locationName.indexOf(name, 0, Qt::CaseInsensitive);
+      //pos = QString::fromStdString(locationName).indexOf(name, 0, Qt::CaseInsensitive);
+      pos = c.modifyCharacters(QString::fromUtf8(locationName.c_str())).indexOf(c.modifyCharacters(name), 0, Qt::CaseInsensitive);
     }
 
     if (startWith) {
@@ -79,11 +80,8 @@ namespace osmscout {
 
     Location location;
 
-    std::string locationNameStd = locationName.toStdString();
-    //qDebug() << locationName;
-    location.name = QString::fromUtf8(locationNameStd.c_str());
-
-    //location.name=QString::fromUtf8(locationName.toStdString().c_str());
+    QString nameQ = QString::fromUtf8(locationName.c_str());
+    location.name = nameQ;
 
     for (std::list<Id>::const_iterator i=loc.nodes.begin();
          i!=loc.nodes.end();
@@ -115,13 +113,11 @@ namespace osmscout {
       scanner.Read(nameStd);
       scanner.ReadNumber(regionOffset);
 
-      //std::cerr << nameStd << std::endl;
-
       QString name = QString::fromUtf8(nameStd.c_str());
 
       if (location.path.empty()) {
         // We dot not want something like "'Dortmund' in 'Dortmund'"!
-        if (name!=locationName) {
+        if (name!=location.name) {
           location.path.push_back(name);
         }
       }
@@ -131,7 +127,6 @@ namespace osmscout {
     }
 
     locations.push_back(location);
-    //qDebug() << location.name;
 
     return scanner.SetPos(currentOffset);
   }
@@ -235,7 +230,7 @@ namespace osmscout {
     for (std::map<std::string,Loc>::const_iterator l=locations.begin();
          l!=locations.end();
          ++l) {
-        if (!visitor.Visit(QString::fromUtf8(l->first.c_str()), l->second)) {
+        if (!visitor.Visit(l->first, l->second)) {
         return true;
       }
     }
@@ -337,14 +332,17 @@ namespace osmscout {
           std::string hash = (*hashFunction)(regionNameStd);
 
           if (!hash.empty()) {
-            loc = QString::fromStdString(hash).indexOf(QString::fromStdString(nameHash), 0, Qt::CaseInsensitive);
+            //loc = modifyCharacters(QString::fromStdString(hash)).indexOf(modifyCharacters(QString::fromStdString(nameHash)), 0, Qt::CaseInsensitive);
+              loc = QString::fromStdString(hash).indexOf(QString::fromStdString(nameHash), 0, Qt::CaseInsensitive);
           }
           else {
-            loc = region.name.indexOf(name, 0, Qt::CaseInsensitive);
+              loc = modifyCharacters(region.name).indexOf(modifyCharacters(name), 0, Qt::CaseInsensitive);
+            //  loc = region.name.indexOf(name, 0, Qt::CaseInsensitive);
           }
         }
         else {
-          loc = region.name.indexOf(name, 0, Qt::CaseInsensitive);
+            loc = modifyCharacters(region.name).indexOf(modifyCharacters(name), 0, Qt::CaseInsensitive);
+          //  loc = region.name.indexOf(name, 0, Qt::CaseInsensitive);
         }
 
         if (startWith) {
@@ -463,5 +461,22 @@ namespace osmscout {
     size_t memory=0;
 
     std::cout << "CityStreetIndex: Memory " << memory << std::endl;
+  }
+
+  QString CityStreetIndex::modifyCharacters(QString text) const
+  {
+      text = text.toUtf8();
+
+      text = text.replace("ą", "a", Qt::CaseInsensitive);
+      text = text.replace("ć", "c", Qt::CaseInsensitive);
+      text = text.replace("ę", "e", Qt::CaseInsensitive);
+      text = text.replace("ł", "l", Qt::CaseInsensitive);
+      text = text.replace("ń", "n", Qt::CaseInsensitive);
+      text = text.replace("ó", "o", Qt::CaseInsensitive);
+      text = text.replace("ś", "s", Qt::CaseInsensitive);
+      text = text.replace("ź", "z", Qt::CaseInsensitive);
+      text = text.replace("ż", "z", Qt::CaseInsensitive);
+
+      return text;
   }
 }

@@ -1,6 +1,7 @@
 #include "osmscout/Searching.h"
 
 #include <QList>
+#include <QDebug>
 
 #include <osmscout/Database.h>
 #include <osmscout/StyleConfigLoader.h>
@@ -28,7 +29,7 @@ Searching::Searching()
 void Searching::searchAllRegions()
 {
     const QString searchName = "";
-    size_t size = 10000000;
+    size_t size = 1000000;
     bool reached;
 
     if (!database->GetMatchingAdminRegions(searchName, regions, size, reached, false)) {
@@ -47,7 +48,7 @@ void Searching::searchAllRegions()
 
 QList<AdminRegion> Searching::searchRegion(QString name)
 {
-    size_t size = 10000000;
+    size_t size = 100;
     std::list<osmscout::AdminRegion> regions;
     bool reached;
 
@@ -71,7 +72,7 @@ QList<AdminRegion> Searching::searchRegion(QString name)
 QList<Location> Searching::searchLocation(QString name, AdminRegion region)
 {
     std::list<Location> locations;
-    size_t max_size = 1000;
+    size_t max_size = 100;
     bool reached;
 
     database->GetMatchingLocations(region, name, locations, max_size, reached, false);
@@ -92,7 +93,16 @@ QList<Location> Searching::searchLocation(QString name, AdminRegion region)
 
 void Searching::searchNode(const int id, NodeRef &node)
 {
-    database->GetNode(id, node);
+   /* for (int i = 100000000; i < 1000000000; i++) {
+        NodeRef noderef;
+        //database->GetNode(id, node);
+        database->GetNode(i, noderef);
+
+
+
+        if (noderef.Valid())
+            qDebug() << noderef.Get()->GetId();
+    }*/
 }
 
 void Searching::searchWay(const int id, WayRef &wayRef)
