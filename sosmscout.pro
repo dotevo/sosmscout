@@ -109,7 +109,7 @@ SOURCES += \
     ./src/osmscout/ost/ScannerT.cpp \
     ./src/osmscout/MapPainter.cpp \
     ./src/osmscout/Searching.cpp \
-    ./src/osmscout/partitioning.cpp \
+    ./src/osmscout/Partitioning.cpp \
 INCLUDEPATH += include/
 
 TEMPLATE = subdirs
