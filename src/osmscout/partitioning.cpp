@@ -32,20 +32,20 @@ namespace osmscout {
 
     void Partitioning::Init()
     {
-        qDebug() << "Initializing data...";
+        qDebug() << "Reading data...";
 
         // setting alpha factor for quality function
-        alpha = 0.9;
+        alpha = 0.3;
 
         // getting data from database
         MapData data;
         AreaSearchParameter parameter;
 
         double lonMin, latMin, lonMax, latMax, magnification;
-        lonMin = 19.142;
-        latMin = 42.2725;
-        lonMax = 19.178;
-        latMax = 42.2875;
+        lonMin = -20;
+        latMin = -20;
+        lonMax = 99;
+        latMax = 99;
         magnification = 10000;
 
         osmscout::DatabaseParameter databaseParameter;
@@ -74,12 +74,17 @@ namespace osmscout {
                     data.relationWays,
                     data.relationAreas);
 
+        qDebug() << "Initializing data...";
+        qDebug() << "ways " << data.ways.size();
+
         // create partition ways
         int idx = 0;
         int maxCell = 0;
+        int wayCntr = 0;
         for (std::vector< WayRef >::const_iterator w = data.ways.begin(); w != data.ways.end(); ++w) {
             const WayRef& way= *w;
-            //qDebug() << "way " << way->GetId();
+            qDebug() << "way " << wayCntr << " nodes " << partition.nodes.size();
+            wayCntr++;
             PartWay partWay;
             for(std::vector< Point >::const_iterator p = way->nodes.begin(); p != way->nodes.end(); ++p) {
                 const Point point = *p;
@@ -152,11 +157,22 @@ namespace osmscout {
                 partition.priorities[i][j] = CalculatePriority(i, j);
             }
         }
+
+        qDebug() << "Writing priorities to the file...";
+
+        QFile file("priorities.txt");
+        if (!file.open(QIODevice::ReadWrite | QIODevice::Text)) {
+            return;
+        }
+        QTextStream out(&file);
+        out << "xxx";
+
+        // TODO: writing to file
     }
 
     void Partitioning::UpdatePartitionData()
     {
-        qDebug() << "Updating partition data...";
+        //qDebug() << "Updating partition data...";
 
         // counts cells
         //qDebug() << "Counting cells...";
@@ -243,7 +259,7 @@ namespace osmscout {
         }
 
         // prints values
-        qDebug() << "CELLS: " << partition.cellsCount;
+        //qDebug() << "CELLS: " << partition.cellsCount;
         /*qDebug() << "ways: " << partition.ways.size();
         qDebug() << "nodesCount: " << partition.nodesCount;
         qDebug() << "boundaryNodesCount: " << partition.boundaryNodesCount;
@@ -255,7 +271,7 @@ namespace osmscout {
 
     void Partitioning::UpdatePriorities(unsigned int i, unsigned int j)
     {
-        qDebug() << "Updating priorities...";
+        //qDebug() << "Updating priorities...";
         // updates lines for merged cell
         for(unsigned int k=0; k<i; ++k) {
             partition.priorities[k][i] = CalculatePriority(k, i);
@@ -295,7 +311,7 @@ namespace osmscout {
 
     double Partitioning::CalculateQuality()
     {
-        qDebug() << "Calculating quality of partition...";
+        //qDebug() << "Calculating quality of partition...";
         double sumA = 0;
         double sumB = 0;
 
@@ -308,7 +324,8 @@ namespace osmscout {
         double result = sumA
                 + alpha * (sumB + (double)partition.boundaryEdgesCount);
 
-        qDebug() << "Q: " << result;
+        //qDebug() << "Q: " << result;
+        qDebug() << result;
         return result;
     }
 
@@ -379,10 +396,61 @@ namespace osmscout {
                 if(quality < bestQuality) {
                     bestQuality = quality;
                     bestCellsCount = partition.cellsCount;
+
+                    bestPartition.nodes.clear();
+                    for(unsigned int i=0; i<partition.nodes.size(); ++i) {
+                        bestPartition.nodes[i] = partition.nodes[i];
+                    }
+                    bestPartition.ways.clear();
+                    for(unsigned int i=0; i<partition.ways.size(); ++i) {
+                        bestPartition.ways[i] = partition.ways[i];
+                    }
                 }
             } else {
                 qDebug() << "best quality: " << bestQuality;
                 qDebug() << "best cells count: " << bestCellsCount;
+
+                // preparing format for writing to file
+                FilePartition fPart;
+                fPart.nodes = bestPartition.nodes;
+                for (unsigned int i=0; i < partition.ways.size(); ++i) {
+                    const PartWay way = partition.ways[i];
+
+                    PartWay fWay;
+                    fWay.id = way.id;
+                    fWay.nodes.push_back(way.nodes[0]);
+                    PartNode node = partition.nodes[way.nodes[0]];
+                    int prevCell = node.cell;
+                    int cell;
+                    for(unsigned int j=1; j < way.nodes.size(); ++j) {
+                        node = partition.nodes[way.nodes[j]];
+                        cell = node.cell;
+                        if(cell == prevCell) {
+                            fWay.nodes.push_back(way.nodes[j]);
+                        } else {
+                            if(fWay.nodes.size()>1) {
+                                fPart.innerWays.push_back(fWay);
+                                int tmp = fWay.nodes[fWay.nodes.size()-1];
+                                fWay.nodes.clear();
+                                fWay.nodes.push_back(tmp);
+                                fWay.nodes.push_back(way.nodes[j]);
+                                fPart.boundaryWays.push_back(fWay);
+                                fWay.nodes.clear();
+                                fWay.nodes.push_back(way.nodes[j]);
+                            } else {
+                                fWay.nodes.push_back(way.nodes[j]);
+                                fPart.boundaryWays.push_back(fWay);
+                                fWay.nodes.clear();
+                                fWay.nodes.push_back(way.nodes[j]);
+                            }
+                        }
+                        prevCell = cell;
+                    }
+                    if(fWay.nodes.size()>1) {
+                        fPart.innerWays.push_back(fWay);
+                    }
+                }
+
                 break;
             }
             qDebug() << "";
@@ -454,7 +522,7 @@ namespace osmscout {
 
     void Partitioning::MergeCells(unsigned int i, unsigned int j)
     {
-        qDebug() << "Merging cells " << i << " and " << j << " with priority = " << partition.priorities[i][j] << " ...";
+        //qDebug() << "Merging cells " << i << " and " << j << " with priority = " << partition.priorities[i][j] << " ...";
         for(unsigned int k=0; k<partition.nodes.size(); ++k) {
             if(partition.nodes[k].cell == j) {
                 partition.nodes[k].cell = i;

@@ -444,7 +444,7 @@ namespace osmscout {
 
     styleConfig.GetNodeTypesWithMag(magnification, nodeTypes);
 
-    std::cerr << "Node types size: " << nodeTypes.size() << std::endl;
+    //std::cerr << "Node types size: " << nodeTypes.size() << std::endl;
 
     if (!areaNodeIndex.GetOffsets(styleConfig,
                                   lonMin,latMin,lonMax,latMax,
@@ -455,8 +455,8 @@ namespace osmscout {
       return false;
     }
 
-    std::cerr << "Node offset size: " << nodeOffsets.size() << std::endl;
-    std::cerr << "Node maximum size: " << parameter.GetMaximumNodes() << std::endl;
+    //std::cerr << "Node offset size: " << nodeOffsets.size() << std::endl;
+    //std::cerr << "Node maximum size: " << parameter.GetMaximumNodes() << std::endl;
 
     nodeIndexTimer.Stop();
 
