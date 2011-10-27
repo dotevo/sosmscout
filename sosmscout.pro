@@ -62,7 +62,7 @@ HEADERS += \
     ./include/osmscout/ost/ParserT.h \
     ./include/osmscout/ost/ScannerT.h \
     ./include/osmscout/Searching.h \
-    ./include/osmscout/Partitioning.h
+    ./include/osmscout/Partitioning.h \
 SOURCES += \
     ./src/osmscout/Database.cpp \
     ./src/osmscout/StyleConfigLoader.cpp \
@@ -109,7 +109,7 @@ SOURCES += \
     ./src/osmscout/ost/ScannerT.cpp \
     ./src/osmscout/MapPainter.cpp \
     ./src/osmscout/Searching.cpp \
-    ./src/osmscout/partitioning.cpp
+    ./src/osmscout/Partitioning.cpp \
 INCLUDEPATH += include/
 
 TEMPLATE = subdirs

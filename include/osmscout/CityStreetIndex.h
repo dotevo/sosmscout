@@ -74,7 +74,7 @@ namespace osmscout {
 
       LocationVisitor(FileScanner& scanner);
 
-      bool Visit(const QString& locationName,
+      bool Visit(const std::string& locationName,
                  const Loc &location);
     };
 
@@ -110,6 +110,8 @@ namespace osmscout {
                               bool startWith) const;
 
     void DumpStatistics();
+
+    QString modifyCharacters(QString text) const;
   };
 }
 
