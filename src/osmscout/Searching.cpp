@@ -3,11 +3,14 @@
 #include <QList>
 #include <QDebug>
 
+#include "settings.h"
+
 #include <osmscout/Database.h>
 #include <osmscout/StyleConfigLoader.h>
 #include <osmscout/util/Projection.h>
 #include <osmscout/MapPainter.h>
 #include <osmscout/AdminRegion.h>
+#include <osmscout/StyleConfig.h>
 
 namespace osmscout {
 
@@ -15,12 +18,19 @@ Searching::Searching()
 {
     database = new Database(databaseParameter);
 
-    QString map = "/home/bartek/osmscout-map/3poland/";
+    QString map = Settings::getInstance()->getMapPath();
+    QString style = Settings::getInstance()->getMapStylePath();
 
     if (!database->Open((const char*)map.toAscii())) {
         std::cerr << "Cannot open database" << std::endl;
     } else {
         std::cerr << "Database is open!" << std::endl;
+    }
+
+    styleConfig = new osmscout::StyleConfig(database->GetTypeConfig());
+
+    if (!osmscout::LoadStyleConfig((const char*)style.toAscii(),*(styleConfig))) {
+        std::cerr << "Cannot open style" << std::endl;
     }
 
 //    searchAllRegions();
@@ -93,6 +103,7 @@ QList<Location> Searching::searchLocation(QString name, AdminRegion region)
 
 void Searching::searchNode(const int id, NodeRef &node)
 {
+    database->GetNode(id, node);
    /* for (int i = 100000000; i < 1000000000; i++) {
         NodeRef noderef;
         //database->GetNode(id, node);
@@ -108,6 +119,19 @@ void Searching::searchNode(const int id, NodeRef &node)
 void Searching::searchWay(const int id, WayRef &wayRef)
 {
     database->GetWay(id, wayRef);
+}
+
+void Searching::searchRelation(const int id, RelationRef &relationRef)
+{
+    database->GetRelation(id, relationRef);
+}
+
+void Searching::searchObjects(double lonMin, double latMin, double lonMax, double latMax, std::vector<osmscout::NodeRef> &nodes, std::vector<osmscout::WayRef> &ways, std::vector<osmscout::WayRef> &areas, std::vector<osmscout::RelationRef> &relationWays, std::vector<osmscout::RelationRef> &relationAreas)
+{
+    osmscout::AreaSearchParameter areaSearchParameter;
+
+    database->GetObjects(*(styleConfig), lonMin, latMin, lonMax, latMax, osmscout::magVeryClose, areaSearchParameter,
+                         nodes, ways, areas, relationWays, relationAreas);
 }
 
 }
