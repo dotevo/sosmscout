@@ -16,24 +16,6 @@ namespace osmscout {
      */
     class Partitioning
     {
-    public:
-        /**
-         * @brief Initializes all data and stuff.
-         *
-         * @param mapDir directory for map files
-         * @param style directory for style file
-         */
-        Partitioning(QString mapDir, QString style);
-        /**
-         * @brief Finds the best (not really, but close enough) partition for graph.
-         *
-         */
-        void FindPartition();
-        /**
-         * @brief Simple temporary method for testing the algorithm.
-         *
-         */
-        void TestAlgorithm();
     private:
         /**
          * @brief Type of node in graph. Can be on the border of the cell (BOUNDARY), or inside the cell (INTERNAL)
@@ -139,6 +121,31 @@ namespace osmscout {
          * @return value of quality function.
          */
         double CalculateQuality();
+
+    public:
+        struct FilePartition {
+            std::vector< PartNode > nodes;
+            std::vector< PartWay > innerWays;
+            std::vector< PartWay > boundaryWays;
+        };
+
+        /**
+         * @brief Initializes all data and stuff.
+         *
+         * @param mapDir directory for map files
+         * @param style directory for style file
+         */
+        Partitioning(QString mapDir, QString style);
+        /**
+         * @brief Finds the best (not really, but close enough) partition for graph.
+         *
+         */
+        void FindPartition();
+        /**
+         * @brief Simple temporary method for testing the algorithm.
+         *
+         */
+        void TestAlgorithm();
     };
 }
 
