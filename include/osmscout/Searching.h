@@ -21,6 +21,7 @@ class Searching
 private:
     osmscout::DatabaseParameter databaseParameter;
     osmscout::Database          *database;
+    osmscout::StyleConfig       *styleConfig;
 
     std::list<AdminRegion> regions;
 
@@ -33,6 +34,11 @@ public:
 
     void searchNode(const int id, NodeRef &nodeRef);
     void searchWay(const int id, WayRef &wayRef);
+    void searchRelation(const int id, RelationRef &relationRef);
+    void searchObjects(double lonMin, double latMin, double lonMax, double latMax,
+                       std::vector<osmscout::NodeRef> &nodes, std::vector<osmscout::WayRef> &ways,
+                       std::vector<osmscout::WayRef> &areas, std::vector<osmscout::RelationRef>& relationWays,
+                       std::vector<osmscout::RelationRef>& relationAreas);
 };
 
 }

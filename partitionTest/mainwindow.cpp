@@ -40,18 +40,11 @@ void MainWindow::init()
     map = "";
     style = "";
 
-#ifdef Q_OS_UNIX
-     map = "/home/bartek/osmscout-map/3poland/";
-    style = "/home/bartek/QtProjects/OSMNavi/styles/standard.oss2.xml";
-#endif
-
-#ifdef Q_OS_WIN
-    map = "C:/map";
-    style = "C:/map/standard.oss.xml";
-#endif
+    map = "C:\\map\\";
+    style = "C:\\map\\style\\standard.oss.xml";
 
     osmscout::Partitioning part(map, style);
-    //part.TestAlgorithm();
-    part.FindPartition();
+    part.TestAlgorithm();
+    //part.FindPartition();
 }
 
