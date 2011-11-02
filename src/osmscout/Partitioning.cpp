@@ -20,6 +20,7 @@
 #include <osmscout/StyleConfigLoader.h>
 #include <osmscout/Util.h>
 #include <osmscout/MapPainter.h>
+#include <osmscout/Partitionmodel.h>
 
 namespace osmscout {
     Partitioning::Partitioning(QString mapDir, QString style)
@@ -356,7 +357,13 @@ namespace osmscout {
 
             quality = CalculateQuality();
         }
+    }
 
+    void Partitioning::saveToDatabase(QString name){
+
+        PartitionModel pm;
+        pm.open(name);
+        pm.exportToDatabase(partition.ways,partition.nodes,partition.boundaryEdges);
     }
 
     void Partitioning::FindPartition()
