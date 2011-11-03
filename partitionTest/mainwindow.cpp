@@ -21,6 +21,7 @@
 #include <osmscout/MapPainterQt.h>
 #include <osmscout/Partitioning.h>
 #include <osmscout/Partitionmodel.h>
+#include <osmscout/Routing.h>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -71,5 +72,8 @@ void MainWindow::init()
     pm.open("c:\\map\\partition.db");
     pm.exportToDatabase(ways,nodes,edges);
     */
+
+    osmscout::Routing r;
+    r.CalculateRoute(258184089, 60145225);
 }
 

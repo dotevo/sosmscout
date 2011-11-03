@@ -100,7 +100,7 @@ bool PartitionModel::dbInsert(bool forceInsert)
 }
 
 
-std::vector<Partitioning::PartWay> PartitionModel::getWays( long NodeId ){
+std::vector<Partitioning::PartWay> PartitionModel::getWaysWithNode( long NodeId ){
     std::vector<Partitioning::PartWay> ways;
 
     QSqlQuery query(db);
@@ -126,7 +126,7 @@ std::vector<Partitioning::PartWay> PartitionModel::getWays( long NodeId ){
     return ways;
 }
 
-std::vector<Partitioning::PartNode> PartitionModel::getNodes( long WayId ){
+std::vector<Partitioning::PartNode> PartitionModel::getNodesInWay( long WayId ){
     std::vector<Partitioning::PartNode> nodes;
 
     QSqlQuery query(db);

@@ -15,11 +15,11 @@ namespace osmscout {
 class PartitionModel
 {
 public:
-/**
- * @brief
- *
- * @fn PartitionModel
- */
+    /**
+     * @brief
+     *
+     * @fn PartitionModel
+     */
     PartitionModel();
     /**
      * @brief
@@ -29,21 +29,57 @@ public:
      */
     bool open(QString name);
     /**
-     * @brief
+     * @brief Finds all ways that are in database.
      *
-     * @fn getWays
+     * @return vector of all PartWays in database
+     */
+    std::vector<Partitioning::PartWay> getAllWays(); // TODO
+    /**
+     * @brief Finds way with given id.
+     *
+     * @param WayId id of way to find
+     *
+     * @return one PartWay
+     */
+    Partitioning::PartWay getWay( long WayId ); // TODO
+    /**
+     * @brief Finds all ways that contains given node.
+     *
+     * @fn getWaysWithNode
      * @param NodeId id node in database
      * @return vector of PartWays with nodes id in.
      */
-    std::vector<Partitioning::PartWay> getWays( long NodeId );
+    std::vector<Partitioning::PartWay> getWaysWithNode( long NodeId );
     /**
-     * @brief
+     * @brief Finds all boundary edges that contains given node.
      *
-     * @fn getNodes
+     * @fn getBoundaryEdgesWithNode
+     * @param NodeId id node in database
+     * @return vector of BoundaryEdges with nodes id in.
+     */
+    std::vector<Partitioning::BoundaryEdge> getBoundaryEdgesWithNode( long NodeId ); // TODO
+    /**
+     * @brief Finds all nodes that are in database.
+     *
+     * @return vector of all PartNodes in database
+     */
+    std::vector<Partitioning::PartNode> getAllNodes(); // TODO
+    /**
+     * @brief Finds node with given id.
+     *
+     * @param NodeId id of node to find
+
+     * @return one PartNode
+     */
+    Partitioning::PartNode getNode( long NodeId); // TODO
+    /**
+     * @brief Returns all nodes in given way.
+     *
+     * @fn getNodesInWay
      * @param WayId id way in database
      * @return vector of PartNodes in Way
      */
-    std::vector<Partitioning::PartNode> getNodes( long WayId );
+    std::vector<Partitioning::PartNode> getNodesInWay( long WayId );
     /**
      * @brief
      *

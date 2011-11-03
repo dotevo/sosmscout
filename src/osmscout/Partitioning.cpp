@@ -89,7 +89,7 @@ namespace osmscout {
             PartWay partWay;
             for(std::vector< Point >::const_iterator p = way->nodes.begin(); p != way->nodes.end(); ++p) {
                 const Point point = *p;
-
+                qDebug() << point.GetId();
                 // checks if this node is in any other way
                 int waysContainingNodeCount = 0;
                 if(p != way->nodes.begin() && p !=  way->nodes.end() - 1) {
