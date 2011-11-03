@@ -16,7 +16,7 @@ namespace osmscout {
      */
     class Partitioning
     {
-    private:
+    public:
         /**
          * @brief Type of node in graph. Can be on the border of the cell (BOUNDARY), or inside the cell (INTERNAL)
          *
@@ -60,6 +60,7 @@ namespace osmscout {
          * @brief Simple structure that holds all nodes, ways and calculated values needed during partitioning process.
          *
          */
+    private:
         struct Partition
         {
             std::vector< PartNode > nodes;
@@ -146,6 +147,11 @@ namespace osmscout {
          *
          */
         void TestAlgorithm();
+        /**
+         * @brief Save data by PartitionModel
+         *
+         */
+        void saveToDatabase(QString name);
     };
 }
 

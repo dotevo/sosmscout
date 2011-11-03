@@ -1,4 +1,4 @@
-QT       += core gui
+QT       += core gui sql
 
 TARGET = build/example-build
 TEMPLATE = lib
@@ -63,6 +63,7 @@ HEADERS += \
     ./include/osmscout/ost/ScannerT.h \
     ./include/osmscout/Searching.h \
     ./include/osmscout/Partitioning.h \
+    ./include/osmscout/PartitionModel.h
 SOURCES += \
     ./src/osmscout/Database.cpp \
     ./src/osmscout/StyleConfigLoader.cpp \
@@ -110,6 +111,7 @@ SOURCES += \
     ./src/osmscout/MapPainter.cpp \
     ./src/osmscout/Searching.cpp \
     ./src/osmscout/Partitioning.cpp \
+    ./src/osmscout/PartitionModel.cpp
 INCLUDEPATH += include/
 
 TEMPLATE = subdirs
