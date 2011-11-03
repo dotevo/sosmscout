@@ -7,10 +7,16 @@ namespace osmscout {
     }
     std::vector< Routing::RouteNode > Routing::CalculateRoute(Id startId, Id endId)
     {
+        // initialization
         PartitionModel *pm = new PartitionModel();
         pm->open("C:\\pilocik\\map\\partition.db");
 
-        pm->getNodesInWay(192);
+        //Partitioning::PartNode startNode = pm->getNode(startId);
+        //Partitioning::PartNode endNode = pm->getNode(endId);
+        //unsigned int startCell = startNode.cell;
+        //unsigned int endCell = endNode.cell;
+        //Partitioning::PartNode currentNode = startNode;
+
 /*
         long startID=10020;
         std::vector<PartWay> ways=pm->getWaysID(id);

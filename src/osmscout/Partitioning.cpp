@@ -47,7 +47,7 @@ namespace osmscout {
         latMin = -20;
         lonMax = 99;
         latMax = 99;
-        magnification = 18000;
+        magnification = 300000;
 
         osmscout::DatabaseParameter databaseParameter;
         osmscout::Database          database(databaseParameter);
@@ -89,7 +89,6 @@ namespace osmscout {
             PartWay partWay;
             for(std::vector< Point >::const_iterator p = way->nodes.begin(); p != way->nodes.end(); ++p) {
                 const Point point = *p;
-                qDebug() << point.GetId();
                 // checks if this node is in any other way
                 int waysContainingNodeCount = 0;
                 if(p != way->nodes.begin() && p !=  way->nodes.end() - 1) {
@@ -159,14 +158,14 @@ namespace osmscout {
             }
         }
 
-        qDebug() << "Writing priorities to the file...";
+        /*qDebug() << "Writing priorities to the file...";
 
         QFile file("priorities.txt");
         if (!file.open(QIODevice::ReadWrite | QIODevice::Text)) {
             return;
         }
         QTextStream out(&file);
-        out << "xxx";
+        out << "xxx";*/
 
         // TODO: writing to file
     }
@@ -359,9 +358,9 @@ namespace osmscout {
         }
     }
 
-    void Partitioning::saveToDatabase(QString name){
+    void Partitioning::saveToDatabase(QString name, DatabasePartition databasePart){
 
-        PartitionModel pm;
+        osmscout::PartitionModel pm;
         pm.open(name);
         pm.exportToDatabase(partition.ways,partition.nodes,partition.boundaryEdges);
     }
@@ -417,46 +416,54 @@ namespace osmscout {
                 qDebug() << "best quality: " << bestQuality;
                 qDebug() << "best cells count: " << bestCellsCount;
 
-                // preparing format for writing to file
-                FilePartition fPart;
-                fPart.nodes = bestPartition.nodes;
-                for (unsigned int i=0; i < partition.ways.size(); ++i) {
-                    const PartWay way = partition.ways[i];
+                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                // Next +/-50 lines needs to be put into another method (maybe even savaToDatabase) and then it needs adding routing edges.
+                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-                    PartWay fWay;
-                    fWay.id = way.id;
-                    fWay.nodes.push_back(way.nodes[0]);
-                    PartNode node = partition.nodes[way.nodes[0]];
+                // preparing format for writing to database
+                DatabasePartition databasePart;
+                databasePart.nodes = bestPartition.nodes;
+
+                for (unsigned int i=0; i < bestPartition.ways.size(); ++i) {
+                    const PartWay way = bestPartition.ways[i];
+
+                    PartWay databaseWay;
+                    databaseWay.id = way.id;
+                    databaseWay.nodes.push_back(way.nodes[0]);
+                    PartNode node = bestPartition.nodes[way.nodes[0]];
                     int prevCell = node.cell;
                     int cell;
                     for(unsigned int j=1; j < way.nodes.size(); ++j) {
-                        node = partition.nodes[way.nodes[j]];
+                        node = bestPartition.nodes[way.nodes[j]];
                         cell = node.cell;
                         if(cell == prevCell) {
-                            fWay.nodes.push_back(way.nodes[j]);
+                            databaseWay.nodes.push_back(way.nodes[j]);
                         } else {
-                            if(fWay.nodes.size()>1) {
-                                fPart.innerWays.push_back(fWay);
-                                int tmp = fWay.nodes[fWay.nodes.size()-1];
-                                fWay.nodes.clear();
-                                fWay.nodes.push_back(tmp);
-                                fWay.nodes.push_back(way.nodes[j]);
-                                fPart.boundaryWays.push_back(fWay);
-                                fWay.nodes.clear();
-                                fWay.nodes.push_back(way.nodes[j]);
+                            if(databaseWay.nodes.size()>1) {
+                                databasePart.innerWays.push_back(databaseWay);
+                                int tmp = databaseWay.nodes[databaseWay.nodes.size()-1];
+                                databaseWay.nodes.clear();
+                                databaseWay.nodes.push_back(tmp);
+                                databaseWay.nodes.push_back(way.nodes[j]);
+                                databasePart.boundaryWays.push_back(databaseWay);
+                                databaseWay.nodes.clear();
+                                databaseWay.nodes.push_back(way.nodes[j]);
                             } else {
-                                fWay.nodes.push_back(way.nodes[j]);
-                                fPart.boundaryWays.push_back(fWay);
-                                fWay.nodes.clear();
-                                fWay.nodes.push_back(way.nodes[j]);
+                                databaseWay.nodes.push_back(way.nodes[j]);
+                                databasePart.boundaryWays.push_back(databaseWay);
+                                databaseWay.nodes.clear();
+                                databaseWay.nodes.push_back(way.nodes[j]);
                             }
                         }
                         prevCell = cell;
                     }
-                    if(fWay.nodes.size()>1) {
-                        fPart.innerWays.push_back(fWay);
+                    if(databaseWay.nodes.size()>1) {
+                        databasePart.innerWays.push_back(databaseWay);
                     }
                 }
+
+                // saving to database
+                saveToDatabase("C:\\pilocik\\map\\partition.db", databasePart);
 
                 break;
             }

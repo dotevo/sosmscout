@@ -124,10 +124,11 @@ namespace osmscout {
         double CalculateQuality();
 
     public:
-        struct FilePartition {
+        struct DatabasePartition {
             std::vector< PartNode > nodes;
             std::vector< PartWay > innerWays;
             std::vector< PartWay > boundaryWays;
+            //std::vector< PartWay > routingWays;
         };
 
         /**
@@ -151,7 +152,7 @@ namespace osmscout {
          * @brief Save data by PartitionModel
          *
          */
-        void saveToDatabase(QString name);
+        void saveToDatabase(QString name, DatabasePartition databasePartition);
     };
 }
 

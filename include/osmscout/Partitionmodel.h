@@ -71,7 +71,7 @@ public:
 
      * @return one PartNode
      */
-    Partitioning::PartNode getNode( long NodeId); // TODO
+    Partitioning::PartNode getNode( long NodeId ); // TODO
     /**
      * @brief Returns all nodes in given way.
      *

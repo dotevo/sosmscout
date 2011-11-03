@@ -43,9 +43,9 @@ void MainWindow::init()
     style = "";
 
     map = "C:\\pilocik\\map\\";
-    style = "C:\\pilocik\\style\\defaultMapStyle.xml";
+    style = "C:\\pilocik\\style\\partitionMapStyle.xml";
 
-    //osmscout::Partitioning part(map, style);
+    osmscout::Partitioning part(map, style);
     //part.TestAlgorithm();
     //part.saveToDatabase("c:\\map\\partition.db");
 
