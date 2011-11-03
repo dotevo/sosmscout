@@ -40,8 +40,8 @@ void MainWindow::init()
     map = "";
     style = "";
 
-    map = "C:\\map\\";
-    style = "C:\\map\\style\\standard.oss.xml";
+    map = "C:\\pilocik\\map\\";
+    style = "C:\\pilocik\\style\\defaultMapStyle.xml";
 
     osmscout::Partitioning part(map, style);
     part.TestAlgorithm();
