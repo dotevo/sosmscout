@@ -124,16 +124,6 @@ QList<Location> Searching::searchLocation(QString name, AdminRegion region)
 void Searching::searchNode(const int id, NodeRef &node)
 {
     database->GetNode(id, node);
-   /* for (int i = 100000000; i < 1000000000; i++) {
-        NodeRef noderef;
-        //database->GetNode(id, node);
-        database->GetNode(i, noderef);
-
-
-
-        if (noderef.Valid())
-            qDebug() << noderef.Get()->GetId();
-    }*/
 }
 
 void Searching::searchWay(const int id, WayRef &wayRef)
@@ -189,7 +179,7 @@ void Searching::searchPoi(double x, double y, double distance, QString type, QVe
                         //qDebug() << k << QString::fromStdString(node.Get()->GetTagValue(k));
                         if (QString::fromStdString(node.Get()->GetTagValue(k)).compare(type) == 0) {
                             poiRef.append(node);
-                            qDebug() << type << " = " << QString::fromStdString(node.Get()->GetTagValue(k));
+                        //    qDebug() << type << " = " << QString::fromStdString(node.Get()->GetTagValue(k));
                         }
                     }
                 }
