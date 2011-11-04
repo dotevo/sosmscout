@@ -44,8 +44,6 @@ void Searching::insertPoiTypes()
 
     poi.insert("-choose", "--choose--");
     poi.insert("bus_stop", "Bus stop");
-
-    poi.insert("tram_stop", "Tram stop");
 }
 
 QMap<QString, QString> Searching::getPOIS()

@@ -50,7 +50,10 @@ namespace osmscout {
    magSuburb    =       2*2*1014, // 12
    magDetail    =     2*2*2*1024, // 13
    magClose     =   2*2*2*2*1024, // 14
-   magVeryClose = 2*2*2*2*2*1024  // 15
+   magVeryClose = 2*2*2*2*2*1024,  // 15
+   magStreet    = 2*2*2*2*2*2*1024, // 16
+   magBuilding  = 2*2*2*2*2*2*2*1024 // 17
+
   };
 
   class TypeSet
