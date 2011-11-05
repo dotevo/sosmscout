@@ -35,17 +35,29 @@ namespace osmscout {
             Id id;
             double lon;
             double lat;
-            PARTITION_NODE_TYPE type;
+            PARTITION_NODE_TYPE type; // ignore in writing to database
             unsigned int cell;
         };
         /**
-         * @brief Simple structure that represents boundary edge (which cells it connects).
+         * @brief Simple structure that represents boundary edge.
          *
          */
         struct BoundaryEdge
         {
+            Id wayId;
             unsigned int nodeA;
             unsigned int nodeB;
+            double priority;
+        };
+        /**
+         * @brief Simple structure that represents route edge.
+         *
+         */
+        struct RouteEdge
+        {
+            unsigned int nodeA;
+            unsigned int nodeB;
+            double cost;
         };
         /**
          * @brief Simple structure that represents ways in graph (set of edges).
@@ -127,8 +139,8 @@ namespace osmscout {
         struct DatabasePartition {
             std::vector< PartNode > nodes;
             std::vector< PartWay > innerWays;
-            std::vector< PartWay > boundaryWays;
-            //std::vector< PartWay > routingWays;
+            std::vector< BoundaryEdge > boundaryEdges;
+            std::vector< RouteEdge > routeEdges;
         };
 
         /**

@@ -84,7 +84,7 @@ namespace osmscout {
         int wayCntr = 0;
         for (std::vector< WayRef >::const_iterator w = data.ways.begin(); w != data.ways.end(); ++w) {
             const WayRef& way= *w;
-            qDebug() << "way " << wayCntr << " nodes " << partition.nodes.size();
+            //qDebug() << "way " << wayCntr << " nodes " << partition.nodes.size();
             wayCntr++;
             PartWay partWay;
             for(std::vector< Point >::const_iterator p = way->nodes.begin(); p != way->nodes.end(); ++p) {
@@ -358,7 +358,7 @@ namespace osmscout {
         }
     }
 
-    void Partitioning::saveToDatabase(QString name, DatabasePartition databasePart){
+    void Partitioning::saveToDatabase(QString name, DatabasePartition databasePartition){
 
         osmscout::PartitionModel pm;
         pm.open(name);
@@ -421,15 +421,16 @@ namespace osmscout {
                 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
                 // preparing format for writing to database
-                DatabasePartition databasePart;
-                databasePart.nodes = bestPartition.nodes;
+                DatabasePartition databasePartition;
+                databasePartition.nodes = bestPartition.nodes;
 
+                // adding inner ways and boundary edges
                 for (unsigned int i=0; i < bestPartition.ways.size(); ++i) {
                     const PartWay way = bestPartition.ways[i];
 
                     PartWay databaseWay;
                     databaseWay.id = way.id;
-                    databaseWay.nodes.push_back(way.nodes[0]);
+                    databaseWay.nodes.push_back(bestPartition.nodes[way.nodes[0]].id);
                     PartNode node = bestPartition.nodes[way.nodes[0]];
                     int prevCell = node.cell;
                     int cell;
@@ -437,33 +438,36 @@ namespace osmscout {
                         node = bestPartition.nodes[way.nodes[j]];
                         cell = node.cell;
                         if(cell == prevCell) {
-                            databaseWay.nodes.push_back(way.nodes[j]);
+                            // if still in the same cell then continue building inner way
+                            databaseWay.nodes.push_back(bestPartition.nodes[way.nodes[j]].id);
                         } else {
-                            if(databaseWay.nodes.size()>1) {
-                                databasePart.innerWays.push_back(databaseWay);
-                                int tmp = databaseWay.nodes[databaseWay.nodes.size()-1];
-                                databaseWay.nodes.clear();
-                                databaseWay.nodes.push_back(tmp);
-                                databaseWay.nodes.push_back(way.nodes[j]);
-                                databasePart.boundaryWays.push_back(databaseWay);
-                                databaseWay.nodes.clear();
-                                databaseWay.nodes.push_back(way.nodes[j]);
-                            } else {
-                                databaseWay.nodes.push_back(way.nodes[j]);
-                                databasePart.boundaryWays.push_back(databaseWay);
-                                databaseWay.nodes.clear();
-                                databaseWay.nodes.push_back(way.nodes[j]);
+                            // if went to another cell than push inner way created so far to database partition, push boundary edge and start new inner way
+                            if(databaseWay.nodes.size() > 1) {
+                                // if it's not just the start of way than push inner way to database partition
+                                databasePartition.innerWays.push_back(databaseWay);
                             }
+                            BoundaryEdge bEdge;
+                            bEdge.wayId = way.id;
+                            bEdge.nodeA = bestPartition.nodes[way.nodes[j-1]].id;
+                            bEdge.nodeB = bestPartition.nodes[way.nodes[j]].id;
+                            bEdge.priority = 1; // TODO: calculating priority by way id
+                            databasePartition.boundaryEdges.push_back(bEdge);
+                            databaseWay.nodes.clear();
+                            databaseWay.nodes.push_back(bestPartition.nodes[way.nodes[j]].id);
                         }
                         prevCell = cell;
                     }
                     if(databaseWay.nodes.size()>1) {
-                        databasePart.innerWays.push_back(databaseWay);
+                        // if database way contains only one node than it means that last step detected boundary way and we should not push inner way to database
+                        databasePartition.innerWays.push_back(databaseWay);
                     }
                 }
 
+                // adding routing edges
+                // TODO: adding routing edges to database partition
+
                 // saving to database
-                saveToDatabase("C:\\pilocik\\map\\partition.db", databasePart);
+                saveToDatabase("C:\\pilocik\\map\\partition.db", databasePartition);
 
                 break;
             }

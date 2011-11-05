@@ -99,8 +99,22 @@ bool PartitionModel::dbInsert(bool forceInsert)
     return ret;
 }
 
+std::vector<Partitioning::PartWay> PartitionModel::getAllWays()
+{
+    // TODO: Implementation
+}
 
-std::vector<Partitioning::PartWay> PartitionModel::getWaysWithNode( long NodeId ){
+Partitioning::PartWay PartitionModel::getWay( long WayId )
+{
+    // TODO: Implementation
+}
+
+Partitioning::PartWay PartitionModel::getWays( std::vector< long > WayIds )
+{
+    // TODO: Implementation
+}
+
+std::vector<Partitioning::PartWay> PartitionModel::getInnerWaysWithNode( long NodeId ){
     std::vector<Partitioning::PartWay> ways;
 
     QSqlQuery query(db);
@@ -124,6 +138,31 @@ std::vector<Partitioning::PartWay> PartitionModel::getWaysWithNode( long NodeId 
     ways.push_back(wayL);
 
     return ways;
+}
+
+std::vector<Partitioning::BoundaryEdge> PartitionModel::getBoundaryEdgesWithNode( long NodeId )
+{
+    // TODO: Implementation
+}
+
+std::vector<Partitioning::BoundaryEdge> PartitionModel::getRouteEdgesWithNode( long NodeId )
+{
+    // TODO: Implementation
+}
+
+std::vector<Partitioning::PartNode> PartitionModel::getAllNodes()
+{
+    // TODO: Implementation
+}
+
+Partitioning::PartNode PartitionModel::getNode( long NodeId )
+{
+    // TODO: Implementation
+}
+
+Partitioning::PartNode PartitionModel::getNodes( std::vector< long > NodeIds )
+{
+    // TODO: Implementation
 }
 
 std::vector<Partitioning::PartNode> PartitionModel::getNodesInWay( long WayId ){
