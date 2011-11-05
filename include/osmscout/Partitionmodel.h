@@ -125,6 +125,8 @@ private:
      */
     bool dbInsert(bool forceInsert);
     QStringList queriesBuffer; /**< TODO */
+    std::vector<Partitioning::PartNode> getNodesByQuery( QString queryStr );
+    std::vector<Partitioning::PartWay> getInnerWaysByQuery( QString queryStr );
 };
 
 }
