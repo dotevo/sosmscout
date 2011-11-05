@@ -49,7 +49,7 @@ public:
      *
      * @return list of PartWays
      */
-    Partitioning::PartWay getWays( std::vector< long > WayIds ); // TODO
+    std::vector< Partitioning::PartWay > getWays( std::vector< long > WaysIds ); // TODO
     /**
      * @brief Finds all inner ways that contains given node.
      *
@@ -95,7 +95,7 @@ public:
 
      * @return list of PartNodes
      */
-    Partitioning::PartNode getNodes( std::vector< long > NodeIds ); // TODO
+    std::vector< Partitioning::PartNode > getNodes( std::vector< long > NodesIds ); // TODO
     /**
      * @brief Returns all nodes in given way.
      *

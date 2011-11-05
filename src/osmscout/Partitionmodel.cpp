@@ -100,7 +100,8 @@ bool PartitionModel::dbInsert(bool forceInsert)
 }
 
 std::vector<Partitioning::PartWay> PartitionModel::getAllWays(){
-    return getNodesByQuery("SELECT way,node FROM way_nodes ORDER BY way,num;");
+    // TODO: Needs to return ways not nodes...
+    //return getNodesByQuery("SELECT way,node FROM way_nodes ORDER BY way,num;");
 }
 
 Partitioning::PartWay PartitionModel::getWay( long WayId ){
@@ -112,12 +113,12 @@ Partitioning::PartWay PartitionModel::getWay( long WayId ){
     return empty;
 }
 
-Partitioning::PartWay PartitionModel::getWays( std::vector< long > WayIds ){
+std::vector< Partitioning::PartWay > PartitionModel::getWays( std::vector< long > WaysIds ){
     QString ways;
-    for(int i=0;i<WayIds.size();i++){
+    for(int i=0;i<WaysIds.size();i++){
         if(i!=0)
             ways+=", ";
-        ways+=QString::number(WayIds[i]);
+        ways+=QString::number(WaysIds[i]);
     }
     return getInnerWaysByQuery("SELECT way,node FROM way_nodes WHERE way IN ("+ways+") ORDER BY way,num;");
 }
@@ -141,7 +142,7 @@ std::vector<Partitioning::PartNode> PartitionModel::getAllNodes(){
 }
 
 Partitioning::PartNode PartitionModel::getNode( long NodeId ){
-    std::vector<Partitioning::PartNode> n=getNodesByQuery("SELECT DISTINCT * FROM nodes WHERE id IN (SELECT node FROM ways_nodes WHERE way = "+QString::number(WayId)+" ) ");
+    std::vector<Partitioning::PartNode> n=getNodesByQuery("SELECT DISTINCT * FROM nodes WHERE id IN (SELECT node FROM ways_nodes WHERE id = "+QString::number(NodeId)+" ) ");
     if(n.size()>0)
         return n[0];
 
@@ -149,7 +150,7 @@ Partitioning::PartNode PartitionModel::getNode( long NodeId ){
     return empty;
 }
 
-Partitioning::PartNode PartitionModel::getNodes( std::vector< long > NodeIds ){
+std::vector< Partitioning::PartNode > PartitionModel::getNodes( std::vector< long > NodesIds ){
     QString nodes;
     for(int i=0;i<NodesIds.size();i++){
         if(i!=0)
