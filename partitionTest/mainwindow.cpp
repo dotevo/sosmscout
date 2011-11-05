@@ -39,19 +39,19 @@ MainWindow::~MainWindow()
 
 void MainWindow::init()
 {
-    map = "";
-    style = "";
+    map = "/home/dotevo/Projekt/map";
+    style = "/home/dotevo/Projekt/map/standard.oss.xml";
 
-    map = "C:\\pilocik\\map\\";
-    style = "C:\\pilocik\\style\\partitionMapStyle.xml";
+    //map = "C:\\pilocik\\map\\";
+    //style = "C:\\pilocik\\style\\partitionMapStyle.xml";
 
     osmscout::Partitioning part(map, style);
     //part.TestAlgorithm();
 
 
-    part.FindPartition();
+    osmscout::Partitioning::DatabasePartition dbPart=part.FindPartition();
 
-    //part.saveToDatabase("partition.db");
+    part.saveToDatabase("partition.db",dbPart);
 
     /*TEST CODE
     std::vector <osmscout::Partitioning::PartNode> nodes;

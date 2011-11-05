@@ -366,7 +366,7 @@ namespace osmscout {
         pm.exportToDatabase(databasePartition);
     }
 
-    void Partitioning::FindPartition()
+    Partitioning::DatabasePartition  Partitioning::FindPartition()
     {
         qDebug() << "Finding partition...";
 
@@ -469,12 +469,14 @@ namespace osmscout {
                 // TODO: adding routing edges to database partition
 
                 // saving to database
-                saveToDatabase("C:\\pilocik\\map\\partition.db", databasePartition);
+                return databasePartition;
 
                 break;
             }
             qDebug() << "";
         }
+        DatabasePartition empty;
+        return empty;
     }
 
     double Partitioning::CalculatePriority(unsigned int i, unsigned int j)

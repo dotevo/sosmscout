@@ -157,7 +157,7 @@ namespace osmscout {
          * @brief Finds the best (not really, but close enough) partition for graph.
          *
          */
-        void FindPartition();
+        DatabasePartition FindPartition();
         /**
          * @brief Simple temporary method for testing the algorithm.
          *

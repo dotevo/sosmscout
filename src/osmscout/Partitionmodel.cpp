@@ -9,6 +9,10 @@ PartitionModel::PartitionModel(){
     this->db=QSqlDatabase::addDatabase("QSQLITE");
 }
 
+PartitionModel::~PartitionModel(){
+    this->db.close();
+}
+
 
 bool PartitionModel::open(QString name){
     db.setDatabaseName(name);
@@ -23,9 +27,8 @@ bool PartitionModel::open(QString name){
 bool PartitionModel::createTables()
 {
     bool ret = false;
-    if (db.isOpen())
-    {
-        QSqlQuery query;
+    if (db.isOpen()){
+        QSqlQuery query(db);
         QString strQuery =
                 "CREATE TABLE [boundaryEdges] ("
                 "[node1] INTEGER  NOT NULL,"
@@ -58,7 +61,7 @@ bool PartitionModel::createTables()
                 "[way] INTEGER  NULL,"
                 "[node] INTEGER  NULL,"
                 "[num] INTEGER  NULL"
-                ");";
+                ")";
 
         foreach(QString q, strQuery.split(';'))
         {
@@ -72,11 +75,6 @@ bool PartitionModel::createTables()
 
 
 bool PartitionModel::exportToDatabase(Partitioning::DatabasePartition &dbpart){
-    //std::vector< PartNode > nodes;
-    //std::vector< PartWay > innerWays;
-    //std::vector< BoundaryEdge > boundaryEdges;
-    //std::vector< RouteEdge > routeEdges;
-
 
     //Add nodes
     for(unsigned int i=0;i<dbpart.nodes.size();i++){
@@ -174,14 +172,46 @@ std::vector<Partitioning::PartWay> PartitionModel::getInnerWaysWithNode( long No
     return getInnerWaysByQuery("SELECT way,node FROM way_nodes WHERE way IN (SELECT way FROM ways_nodes WHERE node = "+QString::number(NodeId)+" ) ORDER BY way,num;");
 }
 
+
+//TODO
 std::vector<Partitioning::BoundaryEdge> PartitionModel::getBoundaryEdgesWithNode( long NodeId )
 {
-    // TODO: Implementation
+    std::vector<Partitioning::BoundaryEdge> edges;
+
+    QSqlQuery query(db);
+    query.prepare("SELECT node1,node2,prio_car,wayId FROM boundaryEdges WHERE node1="+QString::number(NodeId)+" OR node2="+QString::number(NodeId));
+    query.exec();
+
+    while(query.next()){
+        Partitioning::BoundaryEdge edge;
+        edge.nodeA=query.value(0).toInt();
+        edge.nodeB=query.value(1).toInt();
+        edge.priority=query.value(2).toDouble();
+        edge.wayId=query.value(3).toInt();
+        edges.push_back(edge);
+    }
+    return edges;
 }
 
+//TODO
 std::vector<Partitioning::RouteEdge> PartitionModel::getRouteEdgesWithNode( long NodeId )
 {
-    // TODO: Implementation
+    std::vector<Partitioning::RouteEdge> edges;
+
+    QSqlQuery query(db);
+    query.prepare("SELECT node1,node2,cost_car,lastWayId,lastNodeId FROM routingEdges WHERE node1="+QString::number(NodeId)+" OR node2="+QString::number(NodeId));
+    query.exec();
+
+    while(query.next()){
+        Partitioning::RouteEdge edge;
+        edge.nodeA=query.value(0).toInt();
+        edge.nodeB=query.value(1).toInt();
+        edge.cost=query.value(2).toDouble();
+        edge.lastWayId=query.value(3).toInt();
+        edge.lastNodeId=query.value(3).toInt();
+        edges.push_back(edge);
+    }
+    return edges;
 }
 
 std::vector<Partitioning::PartNode> PartitionModel::getAllNodes(){

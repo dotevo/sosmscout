@@ -24,6 +24,12 @@ public:
     /**
      * @brief
      *
+     * @fn
+     */
+    ~PartitionModel();
+    /**
+     * @brief
+     *
      * @fn open
      * @param name
      */
