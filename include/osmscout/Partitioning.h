@@ -55,6 +55,7 @@ namespace osmscout {
          */
         struct RouteEdge
         {
+            Id lastWayId;
             unsigned int nodeA;
             unsigned int nodeB;
             double cost;
@@ -67,6 +68,7 @@ namespace osmscout {
         {
             Id id;
             std::vector<unsigned int> nodes;
+            double priority;
         };
         /**
          * @brief Simple structure that holds all nodes, ways and calculated values needed during partitioning process.

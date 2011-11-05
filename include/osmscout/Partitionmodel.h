@@ -73,7 +73,7 @@ public:
      * @param NodeId id node in database
      * @return vector of RouteEdges with nodes id in.
      */
-    std::vector<Partitioning::BoundaryEdge> getRouteEdgesWithNode( long NodeId ); // TODO
+    std::vector<Partitioning::RouteEdge> getRouteEdgesWithNode( long NodeId ); // TODO
     /**
      * @brief Finds all nodes that are in database.
      *

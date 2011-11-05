@@ -145,7 +145,7 @@ std::vector<Partitioning::BoundaryEdge> PartitionModel::getBoundaryEdgesWithNode
     // TODO: Implementation
 }
 
-std::vector<Partitioning::BoundaryEdge> PartitionModel::getRouteEdgesWithNode( long NodeId )
+std::vector<Partitioning::RouteEdge> PartitionModel::getRouteEdgesWithNode( long NodeId )
 {
     // TODO: Implementation
 }

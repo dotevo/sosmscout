@@ -430,6 +430,7 @@ namespace osmscout {
 
                     PartWay databaseWay;
                     databaseWay.id = way.id;
+                    databaseWay.priority = 1; // TODO: calculating priority somehow
                     databaseWay.nodes.push_back(bestPartition.nodes[way.nodes[0]].id);
                     PartNode node = bestPartition.nodes[way.nodes[0]];
                     int prevCell = node.cell;
@@ -450,7 +451,7 @@ namespace osmscout {
                             bEdge.wayId = way.id;
                             bEdge.nodeA = bestPartition.nodes[way.nodes[j-1]].id;
                             bEdge.nodeB = bestPartition.nodes[way.nodes[j]].id;
-                            bEdge.priority = 1; // TODO: calculating priority by way id
+                            bEdge.priority = databaseWay.priority;
                             databasePartition.boundaryEdges.push_back(bEdge);
                             databaseWay.nodes.clear();
                             databaseWay.nodes.push_back(bestPartition.nodes[way.nodes[j]].id);
