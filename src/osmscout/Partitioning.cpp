@@ -47,7 +47,7 @@ namespace osmscout {
         latMin = -20;
         lonMax = 99;
         latMax = 99;
-        magnification = 300000;
+        magnification = 10000;
 
         osmscout::DatabaseParameter databaseParameter;
         osmscout::Database          database(databaseParameter);

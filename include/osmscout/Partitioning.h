@@ -56,6 +56,7 @@ namespace osmscout {
         struct RouteEdge
         {
             Id lastWayId;
+            Id lastNodeId;
             unsigned int nodeA;
             unsigned int nodeB;
             double cost;
