@@ -1,4 +1,4 @@
-#include <osmscout\Partitionmodel.h>
+#include <osmscout/Partitionmodel.h>
 #include <QDebug>
 #include <QtSql/QSqlError>
 #include <QtSql/QSqlQuery>
@@ -99,26 +99,97 @@ bool PartitionModel::dbInsert(bool forceInsert)
     return ret;
 }
 
-std::vector<Partitioning::PartWay> PartitionModel::getAllWays()
-{
-    // TODO: Implementation
+std::vector<Partitioning::PartWay> PartitionModel::getAllWays(){
+    return getNodesByQuery("SELECT way,node FROM way_nodes ORDER BY way,num;");
 }
 
-Partitioning::PartWay PartitionModel::getWay( long WayId )
-{
-    // TODO: Implementation
+Partitioning::PartWay PartitionModel::getWay( long WayId ){
+    std::vector<Partitioning::PartWay> n=getInnerWaysByQuery("SELECT way,node FROM way_nodes WHERE way ="+QString::number(WayId)+" ORDER BY way,num;");
+    if(n.size()>0)
+        return n[0];
+
+    Partitioning::PartWay empty;
+    return empty;
 }
 
-Partitioning::PartWay PartitionModel::getWays( std::vector< long > WayIds )
-{
-    // TODO: Implementation
+Partitioning::PartWay PartitionModel::getWays( std::vector< long > WayIds ){
+    QString ways;
+    for(int i=0;i<WayIds.size();i++){
+        if(i!=0)
+            ways+=", ";
+        ways+=QString::number(WayIds[i]);
+    }
+    return getInnerWaysByQuery("SELECT way,node FROM way_nodes WHERE way IN ("+ways+") ORDER BY way,num;");
 }
 
 std::vector<Partitioning::PartWay> PartitionModel::getInnerWaysWithNode( long NodeId ){
+    return getInnerWaysByQuery("SELECT way,node FROM way_nodes WHERE way IN (SELECT way FROM ways_nodes WHERE node = "+QString::number(NodeId)+" ) ORDER BY way,num;");
+}
+
+std::vector<Partitioning::BoundaryEdge> PartitionModel::getBoundaryEdgesWithNode( long NodeId )
+{
+    // TODO: Implementation
+}
+
+std::vector<Partitioning::BoundaryEdge> PartitionModel::getRouteEdgesWithNode( long NodeId )
+{
+    // TODO: Implementation
+}
+
+std::vector<Partitioning::PartNode> PartitionModel::getAllNodes(){
+    return getNodesByQuery("SELECT * FROM nodes");
+}
+
+Partitioning::PartNode PartitionModel::getNode( long NodeId ){
+    std::vector<Partitioning::PartNode> n=getNodesByQuery("SELECT DISTINCT * FROM nodes WHERE id IN (SELECT node FROM ways_nodes WHERE way = "+QString::number(WayId)+" ) ");
+    if(n.size()>0)
+        return n[0];
+
+    Partitioning::PartNode empty;
+    return empty;
+}
+
+Partitioning::PartNode PartitionModel::getNodes( std::vector< long > NodeIds ){
+    QString nodes;
+    for(int i=0;i<NodesIds.size();i++){
+        if(i!=0)
+            nodes+=", ";
+        nodes+=QString::number(NodesIds[i]);
+    }
+
+    return getNodesByQuery("SELECT * FROM nodes WHERE id IN( "+nodes+" )");
+}
+
+std::vector<Partitioning::PartNode> PartitionModel::getNodesInWay( long WayId ){
+    return getNodesByQuery("SELECT DISTINCT * FROM nodes WHERE id IN (SELECT node FROM ways_nodes WHERE way = "+QString::number(WayId)+" ) ");
+}
+
+std::vector<Partitioning::PartNode> PartitionModel::getNodesByQuery( QString queryStr ){
+    std::vector<Partitioning::PartNode> nodes;
+
+    QSqlQuery query(db);
+    query.prepare(queryStr);
+    query.exec();
+
+    while (query.next()) {
+        Partitioning::PartNode node;
+        node.id=query.value(0).toLongLong();
+        node.lon=query.value(1).toDouble();
+        node.lat=query.value(2).toDouble();
+        //node.type=(query.value(3).toInt()==0)?Partitioning::BOUNDARY:Partitioning::INTERNAL;
+        node.cell=query.value(3).toInt();
+        nodes.push_back(node);
+    }
+
+    return nodes;
+}
+
+
+std::vector<Partitioning::PartWay> PartitionModel::getInnerWaysByQuery( QString queryStr ){
     std::vector<Partitioning::PartWay> ways;
 
     QSqlQuery query(db);
-    query.prepare("SELECT way,node FROM way_nodes WHERE way IN (SELECT way FROM ways_nodes WHERE node = "+QString::number(NodeId)+" ) ORDER BY way,num;");
+    query.prepare(queryStr);
     query.exec();
 
     Partitioning::PartWay wayL;
@@ -138,51 +209,6 @@ std::vector<Partitioning::PartWay> PartitionModel::getInnerWaysWithNode( long No
     ways.push_back(wayL);
 
     return ways;
-}
-
-std::vector<Partitioning::BoundaryEdge> PartitionModel::getBoundaryEdgesWithNode( long NodeId )
-{
-    // TODO: Implementation
-}
-
-std::vector<Partitioning::BoundaryEdge> PartitionModel::getRouteEdgesWithNode( long NodeId )
-{
-    // TODO: Implementation
-}
-
-std::vector<Partitioning::PartNode> PartitionModel::getAllNodes()
-{
-    // TODO: Implementation
-}
-
-Partitioning::PartNode PartitionModel::getNode( long NodeId )
-{
-    // TODO: Implementation
-}
-
-Partitioning::PartNode PartitionModel::getNodes( std::vector< long > NodeIds )
-{
-    // TODO: Implementation
-}
-
-std::vector<Partitioning::PartNode> PartitionModel::getNodesInWay( long WayId ){
-    std::vector<Partitioning::PartNode> nodes;
-
-    QSqlQuery query(db);
-    query.prepare("SELECT DISTINCT * FROM nodes WHERE id IN (SELECT node FROM ways_nodes WHERE way = "+QString::number(WayId)+" ) ");
-    query.exec();
-
-    while (query.next()) {
-        Partitioning::PartNode node;
-        node.id=query.value(0).toLongLong();
-        node.lon=query.value(1).toDouble();
-        node.lat=query.value(2).toDouble();
-        node.type=(query.value(3).toInt()==0)?Partitioning::BOUNDARY:Partitioning::INTERNAL;
-        node.cell=query.value(4).toInt();
-        nodes.push_back(node);
-    }
-
-    return nodes;
 }
 
 }
