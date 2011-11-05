@@ -19,6 +19,8 @@ namespace osmscout {
             Id wayId; // by which one came to this node from prevNode
             unsigned int cell;
             double rating;
+            bool routing;
+            Id lastRoutingNodeId;
         };
         /**
          * @brief Calculates distance from given node to end node.

@@ -3,13 +3,18 @@
 
 #include "math.h"
 
+#include <QDebug>
+
 namespace osmscout {
     Routing::Routing()
     {
     }
+
     std::vector< Routing::RouteNode > Routing::CalculateRoute(Id startId, Id endId)
     {
+        //
         // initialization
+        //
         PartitionModel *partitionModel = new PartitionModel();
         partitionModel->open("C:\\pilocik\\map\\partition.db");
 
@@ -68,6 +73,7 @@ namespace osmscout {
                             newNode.lat = pNode.lat;
                             newNode.wayId = innerWays[i].id;
                             newNode.cell = pNode.cell;
+                            newNode.routing = false;
                             // TODO: getting combined priorities
                             newNode.rating = (innerWays[i].priority // priority of way on which one should go
                                                   * distance(pNode.lon, pNode.lat, currentNode.lon, currentNode.lat)) // distance from current node
@@ -85,6 +91,7 @@ namespace osmscout {
                             newNode.lat = pNode.lat;
                             newNode.wayId = innerWays[i].id;
                             newNode.cell = pNode.cell;
+                            newNode.routing = false;
                             // TODO: getting combined priorities
                             newNode.rating = (innerWays[i].priority // priority of way on which one should go
                                                   * distance(pNode.lon, pNode.lat, currentNode.lon, currentNode.lat)) // distance from current node
@@ -110,6 +117,7 @@ namespace osmscout {
                 newNode.lat = pNode.lat;
                 newNode.wayId = boundaryEdges[i].wayId;
                 newNode.cell = pNode.cell;
+                newNode.routing = false;
                 // TODO: getting combined priorities
                 newNode.rating = (innerWays[i].priority // priority of way on which one should go
                                       * distance(pNode.lon, pNode.lat, currentNode.lon, currentNode.lat)) // distance from current node
@@ -132,6 +140,8 @@ namespace osmscout {
                 newNode.lat = pNode.lat;
                 newNode.wayId = routeEdges[i].lastWayId;
                 newNode.cell = pNode.cell;
+                newNode.routing = true;
+                newNode.lastRoutingNodeId = routeEdges[i].lastNodeId;
                 // TODO: getting combined priorities
                 newNode.rating = routeEdges[i].cost // overall cost of getting through route edge
                                     + distance(pNode.lon, pNode.lat, endNode.lon, endNode.lat); // distance to endNode
@@ -165,8 +175,28 @@ namespace osmscout {
         //
         // currendNode = endNode, so reproduce path...
         //
-        // TODO: Reproduce path
+        std::list< RouteNode > simplifiedRoute;
+        while(currentNode.id != startId) {
+            simplifiedRoute.push_front(currentNode);
+
+            // find previous node and set it to current
+            for(std::map< int, RouteNode >::const_iterator it = usedMoves.begin(); it != usedMoves.end(); ++it) {
+                if(it->second.id == currentNode.prevNodeId) {
+                    currentNode.id = it->second.id;
+                    currentNode.prevNodeId = it->second.prevNodeId;
+                    currentNode.wayId = it->second.wayId;
+                    break;
+                }
+            }
+        }
+
+        // printing results for test
+        for(std::list< RouteNode >::const_iterator it = simplifiedRoute.begin(); it != simplifiedRoute.end(); ++it) {
+            qDebug() <<  "Node " << it->id << " from " << it->prevNodeId;
+        }
+        // TODO: Reproduce detailed path
     }
+
     double Routing::distance(double lonA, double latA, double lonB, double latB)
     {
         return sqrt(pow(lonA - lonB, 2) + pow(latA - latB, 2));
