@@ -1,7 +1,7 @@
 #ifndef PARTITIONMODEL_H
 #define PARTITIONMODEL_H
 
-#include <QtSql/QSqlDatabase>
+#include <QtSql>
 #include <osmscout/Partitioning.h>
 #include <QStringList>
 
@@ -112,7 +112,14 @@ public:
      * @param nodes
      * @param boundaryEdges
      */
-    bool exportToDatabase(std::vector<Partitioning::PartWay> &ways,std::vector<Partitioning::PartNode> &nodes,std::vector< Partitioning::BoundaryEdge > &boundaryEdges);
+    bool exportToDatabase(Partitioning::DatabasePartition &dbpart);
+    /**
+     * @brief
+     *
+     * @fn Create tables in new database
+     */
+    bool createTables();
+
 private:
     const static int MAX_TRANSACTION_QUERIES = 100000; /**< TODO */
 

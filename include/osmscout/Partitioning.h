@@ -56,6 +56,7 @@ namespace osmscout {
         struct RouteEdge
         {
             Id lastWayId;
+            Id lastNodeId;
             unsigned int nodeA;
             unsigned int nodeB;
             double cost;
@@ -166,7 +167,7 @@ namespace osmscout {
          * @brief Save data by PartitionModel
          *
          */
-        void saveToDatabase(QString name, DatabasePartition databasePartition);
+        void saveToDatabase(QString name, DatabasePartition& databasePartition);
     };
 }
 

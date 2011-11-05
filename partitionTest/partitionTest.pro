@@ -1,4 +1,5 @@
-QT       += core sql gui
+QT       += core sql \
+            gui
 
 TARGET = build/example-build
 TEMPLATE = app
@@ -111,8 +112,8 @@ SOURCES += \
     ../src/osmscout/ost/ParserT.cpp \
     ../src/osmscout/ost/ScannerT.cpp \
     ../src/osmscout/MapPainter.cpp \
-    ../src/osmscout/Partitioning.cpp \
     ../src/osmscout/Partitionmodel.cpp \
+    ../src/osmscout/Partitioning.cpp \
     ../src/osmscout/Routing.cpp
 
 INCLUDEPATH += ./../include/

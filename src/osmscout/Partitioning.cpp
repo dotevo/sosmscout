@@ -358,11 +358,12 @@ namespace osmscout {
         }
     }
 
-    void Partitioning::saveToDatabase(QString name, DatabasePartition databasePartition){
+    void Partitioning::saveToDatabase(QString name, DatabasePartition& databasePartition){
 
         osmscout::PartitionModel pm;
         pm.open(name);
-        pm.exportToDatabase(partition.ways,partition.nodes,partition.boundaryEdges);
+        pm.createTables();
+        pm.exportToDatabase(databasePartition);
     }
 
     void Partitioning::FindPartition()

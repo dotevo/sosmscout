@@ -47,9 +47,11 @@ void MainWindow::init()
 
     osmscout::Partitioning part(map, style);
     //part.TestAlgorithm();
-    //part.saveToDatabase("c:\\map\\partition.db");
+
 
     part.FindPartition();
+
+    //part.saveToDatabase("partition.db");
 
     /*TEST CODE
     std::vector <osmscout::Partitioning::PartNode> nodes;
