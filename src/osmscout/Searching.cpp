@@ -51,7 +51,7 @@ void Searching::searchAllRegions()
     for (std::list<osmscout::AdminRegion>::const_iterator r = regions.begin(); r!=regions.end(); ++r) {
             const osmscout::AdminRegion region = *r;
 
-            std::cout << region.name.toStdString() << " " << region.reference.GetTypeName() << std::endl;
+            //std::cout << region.name.toStdString() << " " << region.reference.GetTypeName() << std::endl;
 
         }
 }
@@ -64,8 +64,9 @@ QList<AdminRegion> Searching::searchRegion(QString name)
 
     database->GetMatchingAdminRegions(name, regions, size, reached, false);
 
-    QList<AdminRegion> qRegions = QList<AdminRegion>::fromStdList(regions);
-
+    QList<AdminRegion> qRegions;
+	foreach(AdminRegion el, regions)
+		qRegions.append(el);
     return qRegions;
 
     /*
@@ -87,7 +88,9 @@ QList<Location> Searching::searchLocation(QString name, AdminRegion region)
 
     database->GetMatchingLocations(region, name, locations, max_size, reached, false);
 
-    QList<Location> qLocations = QList<Location>::fromStdList(locations);
+    QList<Location> qLocations;
+	foreach(Location el, locations)
+		qLocations.append(el);
 
     return qLocations;
 

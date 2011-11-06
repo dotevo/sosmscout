@@ -270,7 +270,7 @@ namespace osmscout {
 
     // if the user supplied a special hash function call it and use the result
     if (hashFunction!=NULL) {
-      nameHash = (*hashFunction)(name.toStdString());
+      nameHash = (*hashFunction)(name.toUtf8().constData());
     }
 
     FileScanner   scanner;
@@ -333,7 +333,7 @@ namespace osmscout {
 
           if (!hash.empty()) {
             //loc = modifyCharacters(QString::fromStdString(hash)).indexOf(modifyCharacters(QString::fromStdString(nameHash)), 0, Qt::CaseInsensitive);
-              loc = QString::fromStdString(hash).indexOf(QString::fromStdString(nameHash), 0, Qt::CaseInsensitive);
+			  loc = QString(hash.c_str()).indexOf(QString(nameHash.c_str()), 0, Qt::CaseInsensitive);
           }
           else {
               loc = modifyCharacters(region.name).indexOf(modifyCharacters(name), 0, Qt::CaseInsensitive);
@@ -396,7 +396,7 @@ namespace osmscout {
 
       while (offset!=0) {
         QString name;
-        std::string nameStd = name.toStdString();
+        std::string nameStd = name.toUtf8().constData();
 
         scanner.SetPos(offset);
         scanner.Read(nameStd);
@@ -441,7 +441,7 @@ namespace osmscout {
     locVisitor.hashFunction=hashFunction;
 
     if (hashFunction!=NULL) {
-      locVisitor.nameHash=(*hashFunction)(name.toStdString());
+      locVisitor.nameHash=(*hashFunction)(name.toUtf8().constData());
     }
 
     if (!LoadRegion(locVisitor.scanner,

@@ -235,12 +235,12 @@ namespace osmscout {
   {
 	  assert(!path.isEmpty());
           QString l((const char*)path.toAscii());
-          this->path = l.toStdString();
+		  this->path = l.toUtf8().constData();
     this->hashFunction  = hashFunction;
 
     typeConfig=new TypeConfig();
 
-    if (!LoadTypeData(l.toStdString(),*typeConfig)) {
+    if (!LoadTypeData(l.toUtf8().constData(),*typeConfig)) {
       std::cerr << "Cannot load 'types.dat'!" << std::endl;
       delete typeConfig;
       typeConfig=NULL;
@@ -282,7 +282,7 @@ namespace osmscout {
 //    std::cout << "Data bounding box: [" << minLat << "," << minLon << "] - [" << maxLat << "," << maxLon << "]" << std::endl;
 
 //    std::cout << "Opening 'nodes.dat'..." << std::endl;
-    if (!nodeDataFile.Open(l.toStdString())) {
+    if (!nodeDataFile.Open(l.toUtf8().constData())) {
 //      std::cerr << "Cannot open 'nodes.dat'!" << std::endl;
       delete typeConfig;
       typeConfig=NULL;
