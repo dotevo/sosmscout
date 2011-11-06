@@ -4,6 +4,7 @@
 #include <QDebug>
 
 #include "settings.h"
+#include "qmath.h"
 
 #include <osmscout/Database.h>
 #include <osmscout/StyleConfigLoader.h>
@@ -33,7 +34,21 @@ Searching::Searching()
         std::cerr << "Cannot open style" << std::endl;
     }
 
+    insertPoiTypes();
 //    searchAllRegions();
+}
+
+void Searching::insertPoiTypes()
+{
+    poi.setInsertInOrder(true);
+
+    poi.insert("-choose", "--choose--");
+    poi.insert("bus_stop", "Bus stop");
+}
+
+QMap<QString, QString> Searching::getPOIS()
+{
+    return poi;
 }
 
 void Searching::searchAllRegions()
@@ -107,16 +122,6 @@ QList<Location> Searching::searchLocation(QString name, AdminRegion region)
 void Searching::searchNode(const int id, NodeRef &node)
 {
     database->GetNode(id, node);
-   /* for (int i = 100000000; i < 1000000000; i++) {
-        NodeRef noderef;
-        //database->GetNode(id, node);
-        database->GetNode(i, noderef);
-
-
-
-        if (noderef.Valid())
-            qDebug() << noderef.Get()->GetId();
-    }*/
 }
 
 void Searching::searchWay(const int id, WayRef &wayRef)
@@ -129,12 +134,72 @@ void Searching::searchRelation(const int id, RelationRef &relationRef)
     database->GetRelation(id, relationRef);
 }
 
-void Searching::searchObjects(double lonMin, double latMin, double lonMax, double latMax, std::vector<osmscout::NodeRef> &nodes, std::vector<osmscout::WayRef> &ways, std::vector<osmscout::WayRef> &areas, std::vector<osmscout::RelationRef> &relationWays, std::vector<osmscout::RelationRef> &relationAreas)
+void Searching::searchObjects(double lonMin, double latMin, double lonMax, double latMax,
+                              std::vector<osmscout::NodeRef> &nodes, std::vector<osmscout::WayRef> &ways,
+                              std::vector<osmscout::WayRef> &areas, std::vector<osmscout::RelationRef> &relationWays,
+                              std::vector<osmscout::RelationRef> &relationAreas)
 {
     osmscout::AreaSearchParameter areaSearchParameter;
 
     database->GetObjects(*(styleConfig), lonMin, latMin, lonMax, latMax, osmscout::magVeryClose, areaSearchParameter,
                          nodes, ways, areas, relationWays, relationAreas);
+}
+
+void Searching::searchPoi(double x, double y, double distance, QString type, QVector<NodeRef> &poiRef)
+{
+    std::vector<osmscout::NodeRef> nodes;
+    std::vector<osmscout::WayRef> ways;
+    std::vector<osmscout::WayRef> areas;
+    std::vector<osmscout::RelationRef> relationWays;
+    std::vector<osmscout::RelationRef> relationAreas;
+
+    osmscout::AreaSearchParameter areaSearchParameter;
+
+    database->GetObjects(*(styleConfig), x - 0.01, y - 0.01, x + 0.01, y + 0.01, osmscout::magVeryClose, areaSearchParameter,
+                         nodes, ways, areas, relationWays, relationAreas);
+
+    for (int i = 0; i < ways.size(); i++)
+    {
+        osmscout::WayRef way;
+
+        searchWay(ways.at(i).Get()->GetId(), way);
+
+        if (way.Valid()) {
+            std::vector<Point> points = way.Get()->nodes;
+
+            for (int j = 0; j < points.size(); j++) {
+                NodeRef node;
+
+                searchNode(points.at(j).GetId(), node);
+
+                if (node.Valid()) {
+                    for (int k = 0; k < node.Get()->GetTagCount(); k++) {
+                        //qDebug() << k << QString::fromStdString(node.Get()->GetTagValue(k));
+						if (QString(node.Get()->GetTagValue(k).c_str()).compare(type) == 0) {
+                            poiRef.append(node);
+                        //    qDebug() << type << " = " << QString::fromStdString(node.Get()->GetTagValue(k));
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+}
+
+double Searching::calculateDistance(double sx, double sy, double dx, double dy)
+{
+    double R = 6371;    // km
+    double dLat = (dy - sy) * 3.14 / 180;
+    double dLon = (dx - sx) * 3.14 / 180;
+    double sx1 = sx * 3.14 / 180;
+    double sx2 = sx * 3.14 / 180;
+
+    double a = sin(dLat / 2) * sin(dLat / 2) + sin(dLon / 2) * sin(dLon / 2) * cos(sx1) * cos(sx2);
+    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    double d = R * c;
+
+    return d;
 }
 
 }
