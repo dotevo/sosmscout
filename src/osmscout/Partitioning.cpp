@@ -43,11 +43,11 @@ namespace osmscout {
         AreaSearchParameter parameter;
 
         double lonMin, latMin, lonMax, latMax, magnification;
-        lonMin = -20;
-        latMin = -20;
-        lonMax = 99;
-        latMax = 99;
-        magnification = 10000;
+        lonMin = -51;
+        latMin = 16.5;
+        lonMax = 52;
+        latMax = 17.4;
+        magnification = 1000000;
 
         osmscout::DatabaseParameter databaseParameter;
         osmscout::Database          database(databaseParameter);
@@ -378,7 +378,7 @@ namespace osmscout {
         unsigned int cellI;
         unsigned int cellJ;
 
-        quality = CalculateQuality();
+        quality = 99999;
         bestQuality = quality;
         bestCellsCount = partition.cellsCount;
 
@@ -405,12 +405,12 @@ namespace osmscout {
                     bestCellsCount = partition.cellsCount;
 
                     bestPartition.nodes.clear();
-                    for(unsigned int i=0; i<partition.nodes.size(); ++i) {
-                        bestPartition.nodes[i] = partition.nodes[i];
+                    for(unsigned int i=0; i<partition.nodes.size(); ++i) {                        
+                        bestPartition.nodes.push_back(partition.nodes[i]);
                     }
                     bestPartition.ways.clear();
                     for(unsigned int i=0; i<partition.ways.size(); ++i) {
-                        bestPartition.ways[i] = partition.ways[i];
+                        bestPartition.ways.push_back(partition.ways[i]);
                     }
                 }
             } else {
@@ -423,6 +423,7 @@ namespace osmscout {
 
                 // preparing format for writing to database
                 DatabasePartition databasePartition;
+                qDebug()<<"FIND PARTITION N:"<<bestPartition.nodes.size()<<" W:"<<bestPartition.ways.size();
                 databasePartition.nodes = bestPartition.nodes;
 
                 // adding inner ways and boundary edges

@@ -75,18 +75,22 @@ bool PartitionModel::createTables()
 
 
 bool PartitionModel::exportToDatabase(Partitioning::DatabasePartition &dbpart){
-
+    qDebug()<<"ZAPISUJE!"<<dbpart.nodes.size()<<":"<<dbpart.innerWays.size();
     //Add nodes
     for(unsigned int i=0;i<dbpart.nodes.size();i++){
         Partitioning::PartNode node=dbpart.nodes.at(i);
-        queriesBuffer.append(QString("INSERT INTO nodes VALUES("+QString::number(node.id)+", "+QString::number(node.lon)+", "+QString::number(node.lat)+", "+QString::number(node.cell)+", "+QString::number(node.type)+");\n "));
+        queriesBuffer.append(QString("INSERT INTO nodes VALUES("+
+                                     QString::number(node.id)+", "+
+                                     QString::number(node.lon)+", "+
+                                     QString::number(node.lat)+", "+
+                                     QString::number(node.cell)+");\n "));
         dbInsert(false);
     }
 
     //Add ways
     for(unsigned int i=0;i<dbpart.innerWays.size();i++){
         Partitioning::PartWay way=dbpart.innerWays.at(i);
-        queriesBuffer.append(QString("INSERT INTO ways ( id, prio_car ) VALUES("
+        queriesBuffer.append(QString("INSERT INTO innerWays ( id, prio_car ) VALUES("
                                      +QString::number(way.id)+", "
                                      +QString::number(way.priority)+");\n "));
         for(int j=0;j<way.nodes.size();j++){            
