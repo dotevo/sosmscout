@@ -16,7 +16,7 @@ namespace osmscout {
      */
     class Partitioning
     {
-    private:
+    public:
         /**
          * @brief Type of node in graph. Can be on the border of the cell (BOUNDARY), or inside the cell (INTERNAL)
          *
@@ -35,17 +35,31 @@ namespace osmscout {
             Id id;
             double lon;
             double lat;
-            PARTITION_NODE_TYPE type;
+            PARTITION_NODE_TYPE type; // ignore in writing to database
             unsigned int cell;
         };
         /**
-         * @brief Simple structure that represents boundary edge (which cells it connects).
+         * @brief Simple structure that represents boundary edge.
          *
          */
         struct BoundaryEdge
         {
+            Id wayId;
             unsigned int nodeA;
             unsigned int nodeB;
+            double priority;
+        };
+        /**
+         * @brief Simple structure that represents route edge.
+         *
+         */
+        struct RouteEdge
+        {
+            Id lastWayId;
+            Id lastNodeId;
+            unsigned int nodeA;
+            unsigned int nodeB;
+            double cost;
         };
         /**
          * @brief Simple structure that represents ways in graph (set of edges).
@@ -55,11 +69,13 @@ namespace osmscout {
         {
             Id id;
             std::vector<unsigned int> nodes;
+            double priority;
         };
         /**
          * @brief Simple structure that holds all nodes, ways and calculated values needed during partitioning process.
          *
          */
+    private:
         struct Partition
         {
             std::vector< PartNode > nodes;
@@ -123,10 +139,11 @@ namespace osmscout {
         double CalculateQuality();
 
     public:
-        struct FilePartition {
+        struct DatabasePartition {
             std::vector< PartNode > nodes;
             std::vector< PartWay > innerWays;
-            std::vector< PartWay > boundaryWays;
+            std::vector< BoundaryEdge > boundaryEdges;
+            std::vector< RouteEdge > routeEdges;
         };
 
         /**
@@ -140,12 +157,17 @@ namespace osmscout {
          * @brief Finds the best (not really, but close enough) partition for graph.
          *
          */
-        void FindPartition();
+        DatabasePartition FindPartition();
         /**
          * @brief Simple temporary method for testing the algorithm.
          *
          */
         void TestAlgorithm();
+        /**
+         * @brief Save data by PartitionModel
+         *
+         */
+        void saveToDatabase(QString name, DatabasePartition& databasePartition);
     };
 }
 

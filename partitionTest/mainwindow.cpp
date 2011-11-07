@@ -20,6 +20,8 @@
 #include <osmscout/Util.h>
 #include <osmscout/MapPainterQt.h>
 #include <osmscout/Partitioning.h>
+#include <osmscout/Partitionmodel.h>
+#include <osmscout/Routing.h>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -37,14 +39,43 @@ MainWindow::~MainWindow()
 
 void MainWindow::init()
 {
-    map = "";
-    style = "";
+    map = "/home/dotevo/Projekt/map";
+    style = "/home/dotevo/Projekt/map/standard.oss.xml";
 
-    map = "C:\\map\\";
-    style = "C:\\map\\style\\standard.oss.xml";
+    //map = "C:\\pilocik\\map\\";
+    //style = "C:\\pilocik\\style\\partitionMapStyle.xml";
 
     osmscout::Partitioning part(map, style);
-    part.TestAlgorithm();
-    //part.FindPartition();
+    //part.TestAlgorithm();
+
+
+    osmscout::Partitioning::DatabasePartition dbPart=part.FindPartition();
+
+    part.saveToDatabase("partition.db",dbPart);
+
+    /*TEST CODE
+    std::vector <osmscout::Partitioning::PartNode> nodes;
+    osmscout::Partitioning::PartWay way;
+    way.id=100;
+    for(int i=55;i<100;i++){
+        osmscout::Partitioning::PartNode node;
+        node.lon=i*10;
+        node.lat=i*1.3;
+        node.cell=0;
+        node.id=i;
+        nodes.push_back(node);
+        way.nodes.push_back(nodes.size()-1);
+    }
+    std::vector <osmscout::Partitioning::PartWay> ways;
+    ways.push_back(way);
+    std::vector <osmscout::Partitioning::BoundaryEdge> edges;
+
+    osmscout::PartitionModel pm;
+    pm.open("c:\\map\\partition.db");
+    pm.exportToDatabase(ways,nodes,edges);
+    */
+
+    osmscout::Routing r;
+    r.CalculateRoute(258184089, 60145225);
 }
 

@@ -122,7 +122,6 @@ namespace osmscout {
                   double width,
                   double height);
 
-    void DrawPositionMarker(const Projection& projection);
 
   public:
     MapPainterQt();
@@ -132,8 +131,7 @@ namespace osmscout {
                  const Projection& projection,
                  const MapParameter& parameter,
                  const MapData& data,
-                 QPainter* painter,
-                 bool showMarker);
+                 QPainter* painter);
 
     void PreparePartitionData(QString partitionOutPath);
 

@@ -20,6 +20,7 @@
 #include <osmscout/StyleConfigLoader.h>
 #include <osmscout/Util.h>
 #include <osmscout/MapPainter.h>
+#include <osmscout/Partitionmodel.h>
 
 namespace osmscout {
     Partitioning::Partitioning(QString mapDir, QString style)
@@ -42,11 +43,11 @@ namespace osmscout {
         AreaSearchParameter parameter;
 
         double lonMin, latMin, lonMax, latMax, magnification;
-        lonMin = -20;
-        latMin = -20;
-        lonMax = 99;
-        latMax = 99;
-        magnification = 10000;
+        lonMin = -51;
+        latMin = 16.5;
+        lonMax = 52;
+        latMax = 17.4;
+        magnification = 1000000;
 
         osmscout::DatabaseParameter databaseParameter;
         osmscout::Database          database(databaseParameter);
@@ -83,12 +84,11 @@ namespace osmscout {
         int wayCntr = 0;
         for (std::vector< WayRef >::const_iterator w = data.ways.begin(); w != data.ways.end(); ++w) {
             const WayRef& way= *w;
-            qDebug() << "way " << wayCntr << " nodes " << partition.nodes.size();
+            //qDebug() << "way " << wayCntr << " nodes " << partition.nodes.size();
             wayCntr++;
             PartWay partWay;
             for(std::vector< Point >::const_iterator p = way->nodes.begin(); p != way->nodes.end(); ++p) {
                 const Point point = *p;
-
                 // checks if this node is in any other way
                 int waysContainingNodeCount = 0;
                 if(p != way->nodes.begin() && p !=  way->nodes.end() - 1) {
@@ -158,14 +158,14 @@ namespace osmscout {
             }
         }
 
-        qDebug() << "Writing priorities to the file...";
+        /*qDebug() << "Writing priorities to the file...";
 
         QFile file("priorities.txt");
         if (!file.open(QIODevice::ReadWrite | QIODevice::Text)) {
             return;
         }
         QTextStream out(&file);
-        out << "xxx";
+        out << "xxx";*/
 
         // TODO: writing to file
     }
@@ -356,10 +356,17 @@ namespace osmscout {
 
             quality = CalculateQuality();
         }
-
     }
 
-    void Partitioning::FindPartition()
+    void Partitioning::saveToDatabase(QString name, DatabasePartition& databasePartition){
+
+        osmscout::PartitionModel pm;
+        pm.open(name);
+        pm.createTables();
+        pm.exportToDatabase(databasePartition);
+    }
+
+    Partitioning::DatabasePartition  Partitioning::FindPartition()
     {
         qDebug() << "Finding partition...";
 
@@ -371,7 +378,7 @@ namespace osmscout {
         unsigned int cellI;
         unsigned int cellJ;
 
-        quality = CalculateQuality();
+        quality = 99999;
         bestQuality = quality;
         bestCellsCount = partition.cellsCount;
 
@@ -398,63 +405,79 @@ namespace osmscout {
                     bestCellsCount = partition.cellsCount;
 
                     bestPartition.nodes.clear();
-                    for(unsigned int i=0; i<partition.nodes.size(); ++i) {
-                        bestPartition.nodes[i] = partition.nodes[i];
+                    for(unsigned int i=0; i<partition.nodes.size(); ++i) {                        
+                        bestPartition.nodes.push_back(partition.nodes[i]);
                     }
                     bestPartition.ways.clear();
                     for(unsigned int i=0; i<partition.ways.size(); ++i) {
-                        bestPartition.ways[i] = partition.ways[i];
+                        bestPartition.ways.push_back(partition.ways[i]);
                     }
                 }
             } else {
                 qDebug() << "best quality: " << bestQuality;
                 qDebug() << "best cells count: " << bestCellsCount;
 
-                // preparing format for writing to file
-                FilePartition fPart;
-                fPart.nodes = bestPartition.nodes;
-                for (unsigned int i=0; i < partition.ways.size(); ++i) {
-                    const PartWay way = partition.ways[i];
+                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                // Next +/-50 lines needs to be put into another method (maybe even savaToDatabase) and then it needs adding routing edges.
+                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-                    PartWay fWay;
-                    fWay.id = way.id;
-                    fWay.nodes.push_back(way.nodes[0]);
-                    PartNode node = partition.nodes[way.nodes[0]];
+                // preparing format for writing to database
+                DatabasePartition databasePartition;
+                qDebug()<<"FIND PARTITION N:"<<bestPartition.nodes.size()<<" W:"<<bestPartition.ways.size();
+                databasePartition.nodes = bestPartition.nodes;
+
+                // adding inner ways and boundary edges
+                for (unsigned int i=0; i < bestPartition.ways.size(); ++i) {
+                    const PartWay way = bestPartition.ways[i];
+
+                    PartWay databaseWay;
+                    databaseWay.id = way.id;
+                    databaseWay.priority = 1; // TODO: calculating priority somehow
+                    databaseWay.nodes.push_back(bestPartition.nodes[way.nodes[0]].id);
+                    PartNode node = bestPartition.nodes[way.nodes[0]];
                     int prevCell = node.cell;
                     int cell;
                     for(unsigned int j=1; j < way.nodes.size(); ++j) {
-                        node = partition.nodes[way.nodes[j]];
+                        node = bestPartition.nodes[way.nodes[j]];
                         cell = node.cell;
                         if(cell == prevCell) {
-                            fWay.nodes.push_back(way.nodes[j]);
+                            // if still in the same cell then continue building inner way
+                            databaseWay.nodes.push_back(bestPartition.nodes[way.nodes[j]].id);
                         } else {
-                            if(fWay.nodes.size()>1) {
-                                fPart.innerWays.push_back(fWay);
-                                int tmp = fWay.nodes[fWay.nodes.size()-1];
-                                fWay.nodes.clear();
-                                fWay.nodes.push_back(tmp);
-                                fWay.nodes.push_back(way.nodes[j]);
-                                fPart.boundaryWays.push_back(fWay);
-                                fWay.nodes.clear();
-                                fWay.nodes.push_back(way.nodes[j]);
-                            } else {
-                                fWay.nodes.push_back(way.nodes[j]);
-                                fPart.boundaryWays.push_back(fWay);
-                                fWay.nodes.clear();
-                                fWay.nodes.push_back(way.nodes[j]);
+                            // if went to another cell than push inner way created so far to database partition, push boundary edge and start new inner way
+                            if(databaseWay.nodes.size() > 1) {
+                                // if it's not just the start of way than push inner way to database partition
+                                databasePartition.innerWays.push_back(databaseWay);
                             }
+                            BoundaryEdge bEdge;
+                            bEdge.wayId = way.id;
+                            bEdge.nodeA = bestPartition.nodes[way.nodes[j-1]].id;
+                            bEdge.nodeB = bestPartition.nodes[way.nodes[j]].id;
+                            bEdge.priority = databaseWay.priority;
+                            databasePartition.boundaryEdges.push_back(bEdge);
+                            databaseWay.nodes.clear();
+                            databaseWay.nodes.push_back(bestPartition.nodes[way.nodes[j]].id);
                         }
                         prevCell = cell;
                     }
-                    if(fWay.nodes.size()>1) {
-                        fPart.innerWays.push_back(fWay);
+                    if(databaseWay.nodes.size()>1) {
+                        // if database way contains only one node than it means that last step detected boundary way and we should not push inner way to database
+                        databasePartition.innerWays.push_back(databaseWay);
                     }
                 }
+
+                // adding routing edges
+                // TODO: adding routing edges to database partition
+
+                // saving to database
+                return databasePartition;
 
                 break;
             }
             qDebug() << "";
         }
+        DatabasePartition empty;
+        return empty;
     }
 
     double Partitioning::CalculatePriority(unsigned int i, unsigned int j)
