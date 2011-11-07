@@ -174,8 +174,8 @@ void Searching::searchPoi(double x, double y, double distance, QString type, QVe
 
                 if (node.Valid()) {
                     for (int k = 0; k < node.Get()->GetTagCount(); k++) {
-                        //qDebug() << k << QString::fromStdString(node.Get()->GetTagValue(k));
-						if (QString(node.Get()->GetTagValue(k).c_str()).compare(type) == 0) {
+                    //    qDebug() << k << "/" << node.Get()->GetTagCount() << QString::fromStdString(node.Get()->GetTagValue(k));
+                        if (QString(node.Get()->GetTagValue(k).c_str()).compare(type) == 0) {
                             poiRef.append(node);
                         //    qDebug() << type << " = " << QString::fromStdString(node.Get()->GetTagValue(k));
                         }
