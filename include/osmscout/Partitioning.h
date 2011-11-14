@@ -82,6 +82,7 @@ namespace osmscout {
             std::vector< PartWay > ways;
             std::vector< BoundaryEdge > boundaryEdges;
             unsigned int nodesCount;
+            unsigned int waysCount;
             unsigned int cellsCount;
             std::vector< unsigned int > cellsNodesCount;
             std::vector< unsigned int > cellsEdgesCount;
@@ -89,20 +90,15 @@ namespace osmscout {
             std::vector< unsigned int > cellsRouteEdgesCount;
             unsigned int boundaryEdgesCount;
             unsigned int boundaryNodesCount;
-            std::vector< std::vector< double > > priorities;
+            std::vector< std::vector< double > * > priorities;
+            std::vector< std::vector< unsigned int > * > cellsConnections;
         };
 
-        QString mapDir;
-        QString style;
         Partition partition;
         Partition bestPartition;
         double alpha;
+        double beta;
 
-        /**
-         * @brief Initializes all objects and fields.
-         *
-         */
-        void Init();
         /**
          * @brief Calculates all values in partition after some change in it (ie. merging cells).
          *
@@ -147,12 +143,27 @@ namespace osmscout {
         };
 
         /**
-         * @brief Initializes all data and stuff.
+         * @brief Default constructor.
          *
-         * @param mapDir directory for map files
-         * @param style directory for style file
          */
-        Partitioning(QString mapDir, QString style);
+        Partitioning();
+        /**
+         * @brief Initializes all objects and fields.
+         *
+         */
+        void InitData();
+        /**
+         * @brief Saves partition to simple txt file.
+         *
+         * @param path the path to file for data should to be saved in
+         */
+        void SaveData(QString path);
+        /**
+         * @brief Loads partition from simple txt file.
+         *
+         * @param path the path to file for data should to be loaded from
+         */
+        void LoadData(QString path);
         /**
          * @brief Finds the best (not really, but close enough) partition for graph.
          *
@@ -164,10 +175,32 @@ namespace osmscout {
          */
         void TestAlgorithm();
         /**
-         * @brief Save data by PartitionModel
+         * @brief Save data by PartitionModel.
          *
          */
         void saveToDatabase(QString name, DatabasePartition& databasePartition);
+        /**
+         * @brief Calculates all priorities.
+         *
+         */
+        void CalculatePriorities();
+        /**
+         * @brief Saves all priorities to the file.
+         *
+         * @param path the path to file for data should to be saved in
+         */
+        void SavePriorities(QString path);
+        /**
+         * @brief Loads priorities from file.
+         *
+         * @param path the path to file for data should to be loaded from
+         */
+        void LoadPriorities(QString path);
+        /**
+         * @brief Deletes all data.
+         *
+         */
+        void Delete();
     };
 }
 

@@ -39,43 +39,23 @@ MainWindow::~MainWindow()
 
 void MainWindow::init()
 {
-    map = "/home/dotevo/Projekt/map";
-    style = "/home/dotevo/Projekt/map/standard.oss.xml";
+    osmscout::Partitioning part;
 
-    //map = "C:\\pilocik\\map\\";
-    //style = "C:\\pilocik\\style\\partitionMapStyle.xml";
+    //part.InitData();
+    //part.SaveData("D:\\pilocik\\map\\partition.txt");
 
-    osmscout::Partitioning part(map, style);
-    //part.TestAlgorithm();
+    //part.LoadData("D:\\pilocik\\map\\partTest.txt");
+    //part.CalculatePriorities();
+    //part.SavePriorities("D:\\pilocik\\map\\prioTest.txt");
 
-
+    part.LoadData("D:\\pilocik\\map\\partTestA.txt");
+    //part.LoadPriorities("D:\\pilocik\\map\\prioTest.txt");
     osmscout::Partitioning::DatabasePartition dbPart=part.FindPartition();
+    part.saveToDatabase("D:\\pilocik\\map\\partTestA.db",dbPart);
 
-    part.saveToDatabase("partition.db",dbPart);
+    //osmscout::Routing r;
+    //r.CalculateRoute(1, 34);
 
-    /*TEST CODE
-    std::vector <osmscout::Partitioning::PartNode> nodes;
-    osmscout::Partitioning::PartWay way;
-    way.id=100;
-    for(int i=55;i<100;i++){
-        osmscout::Partitioning::PartNode node;
-        node.lon=i*10;
-        node.lat=i*1.3;
-        node.cell=0;
-        node.id=i;
-        nodes.push_back(node);
-        way.nodes.push_back(nodes.size()-1);
-    }
-    std::vector <osmscout::Partitioning::PartWay> ways;
-    ways.push_back(way);
-    std::vector <osmscout::Partitioning::BoundaryEdge> edges;
-
-    osmscout::PartitionModel pm;
-    pm.open("c:\\map\\partition.db");
-    pm.exportToDatabase(ways,nodes,edges);
-    */
-
-    osmscout::Routing r;
-    r.CalculateRoute(258184089, 60145225);
+    part.Delete();
 }
 

@@ -152,7 +152,7 @@ namespace osmscout {
             //
             // getting best move from available moves
             //
-            double bestRating = 0;
+            double bestRating = 99999;
             int bestKey = -1;
             for(std::map< int , RouteNode >::const_iterator it = availableMoves.begin(); it != availableMoves.end(); ++it) {
                 if(it->second.rating < bestRating) {
