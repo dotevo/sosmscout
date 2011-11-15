@@ -6,7 +6,7 @@
 namespace osmscout {
     class Routing
     {
-    private:
+    public:
         /**
          * @brief Structure that represets node with information from which node one came, so it represents step in graph.
          *
@@ -20,6 +20,7 @@ namespace osmscout {
             unsigned int cell;
             double rating;
             bool routing;
+            bool crossing;  // defines is route node is crossing
             Id lastRoutingNodeId;
         };
         /**
@@ -32,7 +33,7 @@ namespace osmscout {
          */
         double distance(double lonA, double latA, double lonB, double latB);
 
-    public:
+    //public:
         /**
          * @brief Default constructor.
          *

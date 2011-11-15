@@ -11,6 +11,7 @@
 #include <osmscout/Way.h>
 #include <osmscout/AdminRegion.h>
 #include <osmscout/Database.h>
+#include <osmscout/Routing.h>
 
 namespace osmscout {
 
@@ -32,7 +33,28 @@ private:
 public:
     Searching();
 
-    static double calculateDistance(double sx, double sy, double dx, double dy);
+    /**
+      @brief It calculates distance between two points and return results in kilometers.
+      @param sx X coordinate of first node.
+      @param sy Y coordinate of first node.
+      @param dx X coordinate of second node.
+      @param dy Y coordinate of second node.
+      @return Distance between two nodes.
+      */
+    static double CalculateDistance(double sx, double sy, double dx, double dy);
+
+    /**
+      @brief It checks that actual point is between two other points.
+      @param actualPoint Actual node.
+      @param firstPoint First node.
+      @param secondPoint Second node.
+      @param precision Tolerance in meters.
+      @return true if <i>actualPoint</i> is between nodes, false otherwise.
+      */
+    static bool IsBetweenNodes(osmscout::Routing::RouteNode actualPoint,
+                               osmscout::Routing::RouteNode firstPoint,
+                               osmscout::Routing::RouteNode secondPoint,
+                               int precision = 10);
 
     void searchAllRegions();
 
