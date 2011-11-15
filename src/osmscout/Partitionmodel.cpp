@@ -173,7 +173,7 @@ std::vector< Partitioning::PartWay > PartitionModel::getWays( std::vector< long 
 }
 
 std::vector<Partitioning::PartWay> PartitionModel::getInnerWaysWithNode( long NodeId ){
-    return getInnerWaysByQuery("SELECT way,node FROM way_nodes WHERE way IN (SELECT way FROM ways_nodes WHERE node = "+QString::number(NodeId)+" ) ORDER BY way,num;");
+    return getInnerWaysByQuery("SELECT way,node FROM ways_nodes WHERE way IN (SELECT way FROM ways_nodes WHERE node = "+QString::number(NodeId)+" ) ORDER BY way,num;");
 }
 
 

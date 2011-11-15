@@ -16,158 +16,252 @@
 
 #include <QDebug>
 
-#include <osmscout/Database.h>
-#include <osmscout/StyleConfigLoader.h>
 #include <osmscout/Util.h>
-#include <osmscout/MapPainter.h>
 #include <osmscout/Partitionmodel.h>
 
 namespace osmscout {
-    Partitioning::Partitioning(QString mapDir, QString style)
+    Partitioning::Partitioning()
     {
-        this->mapDir = mapDir;
-        this->style = style;
-
-        Init();
+        // setting alpha factor for quality function
+        alpha = 0.99;
+        beta = 0.057;
     }
 
-    void Partitioning::Init()
+    void Partitioning::InitData()
     {
         qDebug() << "Reading data...";
 
-        // setting alpha factor for quality function
-        alpha = 0.3;
-
-        // getting data from database
-        MapData data;
-        AreaSearchParameter parameter;
+        QSqlDatabase db;
+        db = QSqlDatabase::addDatabase("QSQLITE");
+        db.setDatabaseName("D:\\pilocik\\map\\poland.db");
+        if(!db.open()){
+            qDebug() << "[SQLiteDatabase::open]" << db.lastError();
+            return;
+        }
 
         double lonMin, latMin, lonMax, latMax, magnification;
-        lonMin = -51;
-        latMin = 16.5;
-        lonMax = 52;
-        latMax = 17.4;
-        magnification = 1000000;
+        latMin = 50.1;
+        lonMin = 14.85;
+        latMax = 51.5;
+        lonMax = 17.5;
 
-        osmscout::DatabaseParameter databaseParameter;
-        osmscout::Database          database(databaseParameter);
+        //
+        // getting nodes
+        //
+        QSqlQuery query(db);
+        QString tmp = "SELECT id,lon,lat FROM nodes WHERE lon>" + QString::number(lonMin)
+                + " AND lat>" + QString::number(latMin)
+                + " AND lon<" + QString::number(lonMax)
+                + " AND lat<" + QString::number(latMax);
+        query.prepare(tmp);
+        query.exec();
 
-        if (!database.Open((const char*)mapDir.toAscii())) {
-            std::cerr << "Cannot open database" << std::endl;
+        std::vector< PartNode > tmpNodes;
+        tmpNodes.clear();
+        unsigned int cell = 0;
+        while (query.next()) {
+            PartNode newNode;
+            newNode.id = query.value(0).toInt();
+            newNode.lon = query.value(1).toDouble();
+            newNode.lat = query.value(2).toDouble();
+            newNode.cell = cell;
+            cell++;
+            newNode.type = INTERNAL;
+            tmpNodes.push_back(newNode);
         }
 
-        osmscout::StyleConfig styleConfig(database.GetTypeConfig());
+        //
+        // getting ways
+        //
+        tmp = "SELECT way,num,node FROM ways,way_nodes WHERE way_nodes.way=ways.id AND ways.lon1>" + QString::number(lonMin)
+                        + " AND ways.lat1>" + QString::number(latMin)
+                        + " AND ways.lon2<" + QString::number(lonMax)
+                        + " AND ways.lat2<" + QString::number(latMax)
+                        + " AND way IN(SELECT ref FROM way_tags"
+                            + " WHERE tag IN("
+                                + " SELECT id FROM tags"
+                                + " WHERE key == 'highway' "
+                                + " AND(value == 'primary' "
+                                    + " OR value == 'secondary' "
+                                    + " OR value == 'residential' "
+                                    + " OR value == 'track' "
+                                    + " OR value == 'road' "
+                                    + " OR value == 'motorway' "
+                                    + " OR value == 'living_street')))"
+                    + " ORDER BY way,num";
+        query.prepare(tmp);
+        query.exec();
 
-        if (!osmscout::LoadStyleConfig((const char*)style.toAscii(),styleConfig)) {
-            std::cerr << "Cannot open style" << std::endl;
-        }
+        std::vector< PartWay > tmpWays;
+        PartWay newWay;
+        newWay.id = 0;
+        while (query.next()) {
+            unsigned int id = query.value(0).toLongLong();
+            if(newWay.id == 0) {
+                newWay.id = id; // first way
+            }
 
-        database.GetObjects(styleConfig,
-                    lonMin,
-                    latMin,
-                    lonMax,
-                    latMax,
-                    magnification,
-                    parameter,
-                    data.nodes,
-                    data.ways,
-                    data.areas,
-                    data.relationWays,
-                    data.relationAreas);
+            if(newWay.id != id) {
+                tmpWays.push_back(newWay);
+                newWay.id = id;
+                newWay.nodes.clear();
+            }
 
-        qDebug() << "Initializing data...";
-        qDebug() << "ways " << data.ways.size();
-
-        // create partition ways
-        int idx = 0;
-        int maxCell = 0;
-        int wayCntr = 0;
-        for (std::vector< WayRef >::const_iterator w = data.ways.begin(); w != data.ways.end(); ++w) {
-            const WayRef& way= *w;
-            //qDebug() << "way " << wayCntr << " nodes " << partition.nodes.size();
-            wayCntr++;
-            PartWay partWay;
-            for(std::vector< Point >::const_iterator p = way->nodes.begin(); p != way->nodes.end(); ++p) {
-                const Point point = *p;
-                // checks if this node is in any other way
-                int waysContainingNodeCount = 0;
-                if(p != way->nodes.begin() && p !=  way->nodes.end() - 1) {
-                    //qDebug() << "   point " << point.GetId();
-                    for (std::vector< WayRef >::const_iterator tmpW = data.ways.begin(); tmpW != data.ways.end(); ++tmpW) {
-                        const WayRef& tmpWay= *tmpW;
-                        for(std::vector< Point >::const_iterator tmpP = tmpWay->nodes.begin(); tmpP != tmpWay->nodes.end(); ++tmpP) {
-                            const Point tmpPoint = *tmpP;
-                            if((tmpPoint.GetLon() == point.GetLon()) && (tmpPoint.GetLat() == point.GetLat())) {
-                                waysContainingNodeCount++;
-                                // break; // is it posible that one node is twice in the same way?
-                            }
-                        }
-                        if(waysContainingNodeCount > 1)
-                            break;
-                    }
-                } else {
-                    waysContainingNodeCount = 2; // just becouse way needs starting and end node
-                }
-
-                if(waysContainingNodeCount > 1) {
-
-                    // checks if this node is already added to the nodes list
-                    bool alreadyAdded = false;
-                    for(unsigned int i=0; i<partition.nodes.size(); ++i) {
-                        const PartNode pNode= partition.nodes[i];
-                        if(pNode.lon == point.GetLon()&& pNode.lat == point.GetLat()) {
-                            alreadyAdded = true;
-                            idx = i;
-                            break;
-                        }
-                    }
-                    if(!alreadyAdded) {
-                        PartNode partNode;
-                        partNode.id = point.GetId();
-                        partNode.lon = point.GetLon();
-                        partNode.lat = point.GetLat();
-                        partNode.cell = maxCell;
-                        partNode.type = INTERNAL;
-                        partition.nodes.push_back(partNode);
-                        idx = maxCell;
-                        maxCell++;
-                    }
-                    partWay.nodes.push_back(idx);
+            unsigned int nodeId = query.value(2).toInt();
+            int idx = -1;
+            for(unsigned int i=0; i<tmpNodes.size(); ++i) {
+                if(tmpNodes[i].id == nodeId) {
+                    idx = i;
+                    break;
                 }
             }
-            partWay.id = way->GetId();
-            partition.ways.push_back(partWay);
+            if(idx != -1) {
+                newWay.nodes.push_back(idx);
+            }
+        }
+        tmpWays.push_back(newWay);
+
+        //
+        // deleting all unnecessary nodes
+        //
+        for(unsigned int i=0; i<tmpNodes.size(); ++i) {
+            //check if exists in more than one way
+            int waysContainingNodeCount = 0;
+            for(unsigned int j=0; j<tmpWays.size(); ++j) {
+                for(unsigned int k=0; k<tmpWays[j].nodes.size(); ++ k) {
+                    if(i == tmpWays[j].nodes[k]) {
+                        waysContainingNodeCount++;
+                        if(k == 0 || k == tmpWays[j].nodes.size()-1) {
+                            waysContainingNodeCount++;
+                        }
+                        break;
+                    }
+                }
+                if(waysContainingNodeCount > 1) {
+                    break;
+                }
+            }
+            if(waysContainingNodeCount > 1) {
+                tmpNodes[i].cell = partition.nodes.size();
+                partition.nodes.push_back(tmpNodes[i]);
+            } else {
+                tmpNodes[i].id = -1;
+                tmpNodes[i].lon = -1;
+                tmpNodes[i].lat = -1;
+            }
+        }
+
+        //
+        // deleting all unnecessary nodes from ways
+        //
+        for(unsigned int i=0; i<tmpWays.size(); ++i) {
+            PartWay newWay;
+            newWay.id = tmpWays[i].id;
+            newWay.priority = 1; // TODO: calculating priority due to road type
+            newWay.nodes.clear();
+
+            //check if each node exists in nodes vector
+            for(unsigned int j=0; j<tmpWays[i].nodes.size(); ++j) {
+                // if this node is not deleted
+                if(!(tmpNodes[tmpWays[i].nodes[j]].id == -1
+                        && tmpNodes[tmpWays[i].nodes[j]].lon == -1
+                        && tmpNodes[tmpWays[i].nodes[j]].lat == -1)) {
+                    unsigned int id = tmpNodes[tmpWays[i].nodes[j]].id;
+                    for(unsigned int k=0; k<partition.nodes.size(); ++k) {
+                        if(partition.nodes[k].id == id) {
+                            newWay.nodes.push_back(k);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // finally add way to graph
+            partition.ways.push_back(newWay);
         }
 
         UpdatePartitionData();
+    }
 
-        // calculates initial priorities
-        qDebug() << "Reserving space for priorities...";
-        partition.priorities.reserve(partition.cellsCount * partition.cellsCount);
-        for(unsigned int i=0; i<partition.cellsCount; ++i) {
-            //qDebug() << i;
-            for(unsigned int j=0; j<partition.cellsCount; ++j) {
-                partition.priorities[i].push_back(0);
-                //partition.priorities[i].reserve(partition.cellsCount);
-            }
-        }
-        qDebug() << "Calculating priorities...";
-        for(unsigned int i=0; i<partition.cellsCount; ++i) {
-            for(unsigned int j=i+1; j<partition.cellsCount; ++j) {
-                partition.priorities[i][j] = CalculatePriority(i, j);
-            }
-        }
-
-        /*qDebug() << "Writing priorities to the file...";
-
-        QFile file("priorities.txt");
+    void Partitioning::SaveData(QString path)
+    {
+        qDebug() << "Writing partition to the file...";
+        QFile file(path);
         if (!file.open(QIODevice::ReadWrite | QIODevice::Text)) {
             return;
         }
         QTextStream out(&file);
-        out << "xxx";*/
+        out << partition.nodes.size() << "\n";
+        out << partition.ways.size() << "\n";
+        out << partition.cellsCount << "\n";
+        out << "\n";
+        for(unsigned int i=0; i<partition.nodes.size(); ++i) {
+            out << partition.nodes[i].id << " " << partition.nodes[i].lon << " " << partition.nodes[i].lat << " " << partition.nodes[i].cell << "\n";
+        }
+        out << "\n";
+        for(unsigned int i=0; i<partition.ways.size(); ++i) {
+            PartWay way = partition.ways[i];
+            out << way.id << " " << way.nodes.size() << " ";
+            for(unsigned int j=0; j<way.nodes.size(); ++j) {
+                out << way.nodes[j] << " ";
+                //out << partition.nodes[way.nodes[j]].id << " ";
+            }
+            out << "\n";
+        }
+        out << "\n";
 
-        // TODO: writing to file
+        file.close();
+    }
+
+    void Partitioning::LoadData(QString path)
+    {
+        qDebug() << "Reading partition from file...";
+
+        QFile file(path);
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            return;
+        }
+        QTextStream in(&file);
+        QString line = in.readLine();
+        unsigned int nodesCount = line.toInt();
+        line = in.readLine();
+        unsigned int waysCount = line.toInt();
+        line = in.readLine();
+        unsigned int cellsCount = line.toInt();
+        line = in.readLine();
+
+        partition.nodes.clear();
+        for(unsigned int i=0; i<nodesCount; ++i) {
+            line = in.readLine();
+            QStringList stringList = line.split(" ");
+
+            PartNode newNode;
+            newNode.id = stringList.at(0).toDouble();
+            newNode.lon = stringList.at(1).toDouble();
+            newNode.lat = stringList.at(2).toDouble();
+            newNode.cell = stringList.at(3).toDouble();
+            newNode.type = INTERNAL;
+
+            partition.nodes.push_back(newNode);
+        }
+        line = in.readLine();
+
+        for(unsigned int i=0; i<waysCount; ++i) {
+            PartWay newWay;
+            line = in.readLine();
+            QStringList stringList = line.split(" ");
+            newWay.id = stringList.at(0).toInt();
+            unsigned int wayNodesCount = stringList.at(1).toInt();
+            for(unsigned int j=0; j<wayNodesCount; ++j) {
+                newWay.nodes.push_back(stringList.at(2+j).toInt());
+            }
+
+            partition.ways.push_back(newWay);
+        }
+
+        file.close();
+
+        UpdatePartitionData();
     }
 
     void Partitioning::UpdatePartitionData()
@@ -180,9 +274,9 @@ namespace osmscout {
         partition.boundaryEdgesCount = 0;
         partition.boundaryNodesCount = 0;
         partition.nodesCount = partition.nodes.size();
+        partition.waysCount = partition.ways.size();
         for (unsigned int i=0; i < partition.nodesCount; ++i) {
             PartNode node = partition.nodes[i];
-            //qDebug() << " node " << node.ref->GetLon() << " " << node.ref->GetLat();
             if(node.cell >= partition.cellsCount) { // ATTENTION!! It's important to take care that there's no missing cells number, ie. 1, 2, 4, 5, 8 <- WRONG!
                 partition.cellsCount = node.cell + 1; // cells are numbered starting from 0
             }
@@ -194,18 +288,22 @@ namespace osmscout {
         partition.cellsEdgesCount.clear();
         partition.cellsRouteEdgesCount.clear();
         partition.boundaryEdges.clear();
+        partition.cellsConnections.clear();
 
         partition.cellsBoundaryNodesCount.reserve(partition.cellsCount);
         partition.cellsNodesCount.reserve(partition.cellsCount);
         partition.cellsEdgesCount.reserve(partition.cellsCount);
         partition.cellsRouteEdgesCount.reserve(partition.cellsCount);
         partition.boundaryEdges.reserve(partition.cellsCount);
+        partition.cellsConnections.reserve(partition.cellsCount);
 
         for(unsigned int i=0; i<partition.cellsCount; ++i) {
             partition.cellsBoundaryNodesCount.push_back(0);
             partition.cellsNodesCount.push_back(0);
             partition.cellsEdgesCount.push_back(0);
             partition.cellsRouteEdgesCount.push_back(0);
+            std::vector< unsigned int > * tmpVector = new std::vector< unsigned int >;
+            partition.cellsConnections.push_back(tmpVector);
         }
 
         // counts edges and adds boundary edges to list
@@ -215,17 +313,39 @@ namespace osmscout {
             //qDebug() << "w " << way->GetId() << "\n";
             PartNode prevNode = partition.nodes[way.nodes[0]];
             PartNode node;
-            int prevCell = prevNode.cell;
-            int cell;
+            unsigned int prevCell = prevNode.cell;
+            unsigned int cell;
             for(unsigned int j=1; j < way.nodes.size(); ++j) {
                 node = partition.nodes[way.nodes[j]];
                 cell = node.cell;
                 if(cell == prevCell) {
                     partition.cellsEdgesCount[cell] += 1;
                 } else {
+                    // adding connection between two cells
+                    unsigned int cellA, cellB;
+                    if(cell < prevCell) {
+                        cellA = cell;
+                        cellB = prevCell;
+                    } else {
+                        cellB = cell;
+                        cellA = prevCell;
+                    }
+                    bool connectionExists = false;
+                    for(unsigned int k=0; k<partition.cellsConnections[cellA]->size(); ++k) {
+                        if(partition.cellsConnections[cellA]->at(k) == cellB) {
+                            connectionExists = true;
+                            break;
+                        }
+                    }
+                    if(!connectionExists) {
+                        partition.cellsConnections[cellA]->push_back(cellB);
+                    }
+
+                    // setting nodes connecting two cells to boundary
                     partition.nodes[way.nodes[j-1]].type = BOUNDARY;
                     partition.nodes[way.nodes[j]].type = BOUNDARY;
 
+                    // adding boundary edge
                     BoundaryEdge edge;
                     edge.nodeA = way.nodes[j-1];
                     edge.nodeB = way.nodes[j];
@@ -242,7 +362,6 @@ namespace osmscout {
         //qDebug() << "Counting nodes...";
         for (unsigned int i=0; i<partition.nodesCount; ++i) {
             PartNode node = partition.nodes[i];
-            //qDebug() << "partN " << nodeRef->GetId() << " cell " << node.cell;
             partition.cellsNodesCount[node.cell] += 1;
             if(node.type == BOUNDARY) {
                 partition.cellsBoundaryNodesCount[node.cell] += 1;
@@ -253,20 +372,9 @@ namespace osmscout {
         }
 
         // calculates route edges in cells
-        //qDebug() << "Counting route edges...";
         for(unsigned int i=0; i<partition.cellsBoundaryNodesCount.size(); i++) {
             partition.cellsRouteEdgesCount[i] = partition.cellsBoundaryNodesCount[i] * (partition.cellsBoundaryNodesCount[i] - 1);
         }
-
-        // prints values
-        //qDebug() << "CELLS: " << partition.cellsCount;
-        /*qDebug() << "ways: " << partition.ways.size();
-        qDebug() << "nodesCount: " << partition.nodesCount;
-        qDebug() << "boundaryNodesCount: " << partition.boundaryNodesCount;
-        qDebug() << "boundaryEdgesCount: " << partition.boundaryEdgesCount;
-        qDebug() << "cellsCount: " << partition.cellsCount;
-        qDebug() << "cellsBoundaryNodesCount[0]: " << partition.cellsBoundaryNodesCount[0];
-        qDebug() << "cellsRouteEdgesCount[0]: " << partition.cellsRouteEdgesCount[0];*/
     }
 
     void Partitioning::UpdatePriorities(unsigned int i, unsigned int j)
@@ -274,10 +382,20 @@ namespace osmscout {
         //qDebug() << "Updating priorities...";
         // updates lines for merged cell
         for(unsigned int k=0; k<i; ++k) {
-            partition.priorities[k][i] = CalculatePriority(k, i);
+            for(unsigned l=0; l<partition.cellsConnections[k]->size(); ++l) { // calculates priority only if connection exists between cell k and i
+                if(partition.cellsConnections[k]->at(l) == i) {
+                    partition.priorities[k]->at(i) = CalculatePriority(k, i);
+                    break;
+                }
+            }
         }
-        for(unsigned int l=i+1; l<partition.cellsCount; ++l) {
-            partition.priorities[i][l] = CalculatePriority(i, l);
+        for(unsigned int k=i+1; k<partition.cellsCount; ++k) {
+            for(unsigned l=0; l<partition.cellsConnections[k]->size(); ++l) { // calculates priority only if connection exists between cell i and k
+                if(partition.cellsConnections[i]->at(l) == k) {
+                    partition.priorities[i]->at(k) = CalculatePriority(i, k);
+                    break;
+                }
+            }
         }
 
         // moves lines to delete those for deleted cell
@@ -286,27 +404,17 @@ namespace osmscout {
         }
         for(unsigned int k = 0; k<partition.cellsCount; ++k) {
             for(unsigned int l=j; l<partition.cellsCount; ++l) {
-                partition.priorities[k][l] = partition.priorities[k][l+1];
+                partition.priorities[k]->at(l) = partition.priorities[k]->at(l+1);
             }
         }
 
         // resets last rows
         for(unsigned int k = 0; k<partition.cellsCount; ++k) {
-            partition.priorities[k][partition.cellsCount] = 0;
+            partition.priorities[k]->at(partition.cellsCount) = 0;
         }
-        for(unsigned int l = 0; l<partition.cellsCount+1; ++l) {
-            partition.priorities[partition.cellsCount][l] = 0;
+        for(unsigned int k = 0; k<partition.cellsCount+1; ++k) {
+            partition.priorities[partition.cellsCount]->at(k) = 0;
         }
-        /*
-        // moves lines to delete those for deleted cell
-        for(unsigned int k = j; k<(partition.cellsCount-1); ++k) {
-            partition.priorities[k] = partition.priorities[k+1];
-        }
-        for(unsigned int k = 0; k<partition.cellsCount; ++k) {
-            for(unsigned int l=j; l<(partition.cellsCount-1); ++l) {
-                partition.priorities[k][l] = partition.priorities[k][l+1];
-            }
-        }*/
     }
 
     double Partitioning::CalculateQuality()
@@ -317,12 +425,13 @@ namespace osmscout {
 
         for(unsigned int i=0; i<partition.cellsCount; i++) {
             double fraction = (double)partition.cellsNodesCount[i]/(double)partition.nodesCount;
-            sumA += (fraction) * (2 - fraction) * (double)partition.cellsEdgesCount[i];
-            sumB += pow(1 - fraction, 2) * (double)partition.cellsRouteEdgesCount[i];
+            sumA += (fraction * (2 - fraction) * (double)partition.cellsEdgesCount[i]) + ((1.5 - fraction) * (double)partition.cellsRouteEdgesCount[i]);
+            sumB += pow(1 - fraction, 2);
+            //sumA += (fraction) * (2 - fraction) * (double)partition.cellsEdgesCount[i];
+            //sumB += pow(1 - fraction, 2) * (double)partition.cellsRouteEdgesCount[i];
         }
 
-        double result = sumA
-                + alpha * (sumB + (double)partition.boundaryEdgesCount);
+        double result = beta * sumA + alpha * (sumB + (double)partition.boundaryEdgesCount);
 
         //qDebug() << "Q: " << result;
         qDebug() << result;
@@ -385,22 +494,32 @@ namespace osmscout {
         while(partition.cellsCount > 1) {
             maxPriority = 0;
             for(unsigned int i=0; i<partition.cellsCount-1; ++i) {
+                //for(unsigned int j=0; j<partition.cellsCount-i-1; ++j) {
                 for(unsigned int j=i+1; j<partition.cellsCount; ++j) {
-                    priority = partition.priorities[i][j] * (1+(qrand()/32767./100));
+                    bool connected = false;
+                    for(unsigned k=0; k<partition.cellsConnections[i]->size(); ++k) { // calculates priority only if connection exists between cell i and j
+                        if(partition.cellsConnections[i]->at(k) == j) {
+                            connected = true;
+                            break;
+                        }
+                    }
+                    priority = ((!connected) ? 0 : CalculatePriority(i, j)) * (1+(qrand()/32767./100));
                     if(priority > maxPriority) {
                         cellI = i;
                         cellJ = j;
-                        maxPriority = partition.priorities[i][j];
+                        maxPriority = priority;
                     }
                 }
             }
 
             if(maxPriority > 0) {
+            //if(partition.cellsCount != 10) {
                 MergeCells(cellI, cellJ);
-                UpdatePriorities(cellI, cellJ);
+                //UpdatePriorities(cellI, cellJ);
 
                 quality = CalculateQuality();
                 if(quality < bestQuality) {
+                //if(partition.cellsCount == 6) {
                     bestQuality = quality;
                     bestCellsCount = partition.cellsCount;
 
@@ -414,70 +533,66 @@ namespace osmscout {
                     }
                 }
             } else {
-                qDebug() << "best quality: " << bestQuality;
-                qDebug() << "best cells count: " << bestCellsCount;
-
-                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                // Next +/-50 lines needs to be put into another method (maybe even savaToDatabase) and then it needs adding routing edges.
-                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-                // preparing format for writing to database
-                DatabasePartition databasePartition;
-                qDebug()<<"FIND PARTITION N:"<<bestPartition.nodes.size()<<" W:"<<bestPartition.ways.size();
-                databasePartition.nodes = bestPartition.nodes;
-
-                // adding inner ways and boundary edges
-                for (unsigned int i=0; i < bestPartition.ways.size(); ++i) {
-                    const PartWay way = bestPartition.ways[i];
-
-                    PartWay databaseWay;
-                    databaseWay.id = way.id;
-                    databaseWay.priority = 1; // TODO: calculating priority somehow
-                    databaseWay.nodes.push_back(bestPartition.nodes[way.nodes[0]].id);
-                    PartNode node = bestPartition.nodes[way.nodes[0]];
-                    int prevCell = node.cell;
-                    int cell;
-                    for(unsigned int j=1; j < way.nodes.size(); ++j) {
-                        node = bestPartition.nodes[way.nodes[j]];
-                        cell = node.cell;
-                        if(cell == prevCell) {
-                            // if still in the same cell then continue building inner way
-                            databaseWay.nodes.push_back(bestPartition.nodes[way.nodes[j]].id);
-                        } else {
-                            // if went to another cell than push inner way created so far to database partition, push boundary edge and start new inner way
-                            if(databaseWay.nodes.size() > 1) {
-                                // if it's not just the start of way than push inner way to database partition
-                                databasePartition.innerWays.push_back(databaseWay);
-                            }
-                            BoundaryEdge bEdge;
-                            bEdge.wayId = way.id;
-                            bEdge.nodeA = bestPartition.nodes[way.nodes[j-1]].id;
-                            bEdge.nodeB = bestPartition.nodes[way.nodes[j]].id;
-                            bEdge.priority = databaseWay.priority;
-                            databasePartition.boundaryEdges.push_back(bEdge);
-                            databaseWay.nodes.clear();
-                            databaseWay.nodes.push_back(bestPartition.nodes[way.nodes[j]].id);
-                        }
-                        prevCell = cell;
-                    }
-                    if(databaseWay.nodes.size()>1) {
-                        // if database way contains only one node than it means that last step detected boundary way and we should not push inner way to database
-                        databasePartition.innerWays.push_back(databaseWay);
-                    }
-                }
-
-                // adding routing edges
-                // TODO: adding routing edges to database partition
-
-                // saving to database
-                return databasePartition;
-
                 break;
             }
-            qDebug() << "";
         }
-        DatabasePartition empty;
-        return empty;
+
+        qDebug() << "best quality: " << bestQuality;
+        qDebug() << "best cells count: " << bestCellsCount;
+
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        // Next +/-50 lines needs to be put into another method (maybe even savaToDatabase) and then it needs adding routing edges.
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+        // preparing format for writing to database
+        DatabasePartition databasePartition;
+        qDebug()<<"FIND PARTITION N:"<<bestPartition.nodes.size()<<" W:"<<bestPartition.ways.size();
+        databasePartition.nodes = bestPartition.nodes;
+
+        // adding inner ways and boundary edges
+        for (unsigned int i=0; i < bestPartition.ways.size(); ++i) {
+            const PartWay way = bestPartition.ways[i];
+
+            PartWay databaseWay;
+            databaseWay.id = way.id;
+            databaseWay.priority = 1; // TODO: calculating priority somehow
+            databaseWay.nodes.push_back(bestPartition.nodes[way.nodes[0]].id);
+            PartNode node = bestPartition.nodes[way.nodes[0]];
+            int prevCell = node.cell;
+            int cell;
+            for(unsigned int j=1; j < way.nodes.size(); ++j) {
+                node = bestPartition.nodes[way.nodes[j]];
+                cell = node.cell;
+                if(cell == prevCell) {
+                    // if still in the same cell then continue building inner way
+                    databaseWay.nodes.push_back(bestPartition.nodes[way.nodes[j]].id);
+                } else {
+                    // if went to another cell than push inner way created so far to database partition, push boundary edge and start new inner way
+                    if(databaseWay.nodes.size() > 1) {
+                        // if it's not just the start of way than push inner way to database partition
+                        databasePartition.innerWays.push_back(databaseWay);
+                    }
+                    BoundaryEdge bEdge;
+                    bEdge.wayId = way.id;
+                    bEdge.nodeA = bestPartition.nodes[way.nodes[j-1]].id;
+                    bEdge.nodeB = bestPartition.nodes[way.nodes[j]].id;
+                    bEdge.priority = databaseWay.priority;
+                    databasePartition.boundaryEdges.push_back(bEdge);
+                    databaseWay.nodes.clear();
+                    databaseWay.nodes.push_back(bestPartition.nodes[way.nodes[j]].id);
+                }
+                prevCell = cell;
+            }
+            if(databaseWay.nodes.size()>1) {
+                // if database way contains only one node than it means that last step detected boundary way and we should not push inner way to database
+                databasePartition.innerWays.push_back(databaseWay);
+            }
+        }
+
+        // adding routing edges
+        // TODO: adding routing edges to database partition
+
+        return databasePartition;
     }
 
     double Partitioning::CalculatePriority(unsigned int i, unsigned int j)
@@ -489,39 +604,40 @@ namespace osmscout {
         for(unsigned int k=0; k<partition.boundaryEdges.size(); ++k) {
             BoundaryEdge edge = partition.boundaryEdges[k];
 
-            // looks for edge thet connects cell i and j
+            // looks for edge that connects cell i and j
             if((partition.nodes[edge.nodeA].cell == i && partition.nodes[edge.nodeB].cell == j)
                     || (partition.nodes[edge.nodeA].cell == j && partition.nodes[edge.nodeB].cell == i)) {
                 boundaryEdgesIJ++;
+            }
 
-                // checks if any of nodes in found edge connects to another cell
-                for(unsigned int l=0; l<partition.boundaryEdges.size(); ++l) {
-                    BoundaryEdge tEdge = partition.boundaryEdges[l];
-                    if((tEdge.nodeA == edge.nodeA && partition.nodes[tEdge.nodeB].cell != partition.nodes[edge.nodeB].cell)
-                            || (tEdge.nodeB == edge.nodeA && partition.nodes[tEdge.nodeA].cell != partition.nodes[edge.nodeB].cell)) {
+            // checks if any of nodes in edge is boundary node of cell i or j
+            if((partition.nodes[edge.nodeA].cell == i)
+                    || (partition.nodes[edge.nodeA].cell == j)) {
 
-                        // checks if this node is already added to the list
-                        bool alreadyAdded = false;
-                        for(unsigned int m=0; m<boundaryNodesIJ.size(); ++m) {
-                            if(boundaryNodesIJ[m] == edge.nodeA)
-                                alreadyAdded = true;
-                        }
-                        if(!alreadyAdded)
-                            boundaryNodesIJ.push_back(edge.nodeA);
-                    }
-                    if((tEdge.nodeA == edge.nodeB && partition.nodes[tEdge.nodeB].cell != partition.nodes[edge.nodeA].cell)
-                            || (tEdge.nodeB == edge.nodeB && partition.nodes[tEdge.nodeA].cell != partition.nodes[edge.nodeA].cell)) {
-
-                        // checks if this node is already added to the list
-                        bool alreadyAdded = false;
-                        for(unsigned int m=0; m<boundaryNodesIJ.size(); ++m) {
-                            if(boundaryNodesIJ[m] == edge.nodeB)
-                                alreadyAdded = true;
-                        }
-                        if(!alreadyAdded)
-                            boundaryNodesIJ.push_back(edge.nodeB);
+                // checks if this node is already added to the list
+                bool alreadyAdded = false;
+                for(unsigned int m=0; m<boundaryNodesIJ.size(); ++m) {
+                    if(boundaryNodesIJ[m] == edge.nodeA) {
+                        alreadyAdded = true;
+                        break;
                     }
                 }
+                if(!alreadyAdded)
+                    boundaryNodesIJ.push_back(edge.nodeA);
+            }
+            if((partition.nodes[edge.nodeB].cell == i)
+                    || (partition.nodes[edge.nodeB].cell == j)) {
+
+                // checks if this node is already added to the list
+                bool alreadyAdded = false;
+                for(unsigned int m=0; m<boundaryNodesIJ.size(); ++m) {
+                    if(boundaryNodesIJ[m] == edge.nodeB) {
+                        alreadyAdded = true;
+                        break;
+                    }
+                }
+                if(!alreadyAdded)
+                    boundaryNodesIJ.push_back(edge.nodeB);
             }
         }
 
@@ -555,6 +671,80 @@ namespace osmscout {
         }
 
         UpdatePartitionData();
-        //qDebug() << "Cells " << i << " and " << j << "merged";
+    }
+
+    void Partitioning::CalculatePriorities()
+    {
+        // calculates initial priorities
+        qDebug() << "Calculating priorities...";
+        for(unsigned int i=0; i<partition.cellsCount; ++i) {
+            try {
+                std::vector< double > * tmpVector = new std::vector< double >;
+                for(unsigned int j=i+1; j<partition.cellsCount; ++j) {
+                    bool connected = false;
+                    for(unsigned k=0; k<partition.cellsConnections[i]->size(); ++k) { // calculates priority only if connection exists between cell i and j
+                        if(partition.cellsConnections[i]->at(k) == j) {
+                            connected = true;
+                            break;
+                        }
+                    }
+                    tmpVector->push_back((!connected) ? 0 : CalculatePriority(i, j));
+                }
+                partition.priorities.push_back(tmpVector);
+            } catch (const std::bad_alloc &) {
+                // clean up here, e.g. save the session
+                // and close all config files.
+                qDebug() << "ERROR!!";
+                return;
+            }
+        }
+    }
+
+    void Partitioning::SavePriorities(QString path)
+    {
+        qDebug() << "Writing priorities to the file...";
+        QFile file(path);
+        if (!file.open(QIODevice::ReadWrite | QIODevice::Text)) {
+            return;
+        }
+        QTextStream out(&file);
+        for(unsigned int i=0; i<partition.cellsCount; ++i) {
+            for(unsigned int j=0; j<partition.cellsCount-i-1; ++j) {
+                out << partition.priorities[i]->at(j) << " ";
+            }
+            out << "\n";
+        }
+
+        file.close();
+    }
+
+    void Partitioning::LoadPriorities(QString path)
+    {
+        qDebug() << "Reading priorities from file...";
+        QFile file(path);
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            return;
+        }
+
+        QTextStream in(&file);
+
+        for(unsigned int i=0; i<partition.cellsCount; ++i) {
+            std::vector< double > * tmpVector = new std::vector< double >;
+            QString line = in.readLine();
+            QStringList stringList = line.split(" ");
+            for(unsigned int j=0; j<partition.cellsCount-i-1; ++j) {
+                tmpVector->push_back(stringList.at((j)).toDouble());
+            }
+            partition.priorities.push_back(tmpVector);
+        }
+
+        file.close();
+    }
+
+    void Partitioning::Delete()
+    {
+        for(unsigned int i=0; i<partition.priorities.size(); ++i) {
+            delete partition.priorities[i];
+        }
     }
 }
