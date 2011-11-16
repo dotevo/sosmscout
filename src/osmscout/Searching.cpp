@@ -222,4 +222,43 @@ bool Searching::IsBetweenNodes(osmscout::Routing::RouteNode actualPoint,
 
 }
 
+QPointF Searching::CorrectPosition(osmscout::Routing::RouteNode firstNode,
+                                   osmscout::Routing::RouteNode secondNode,
+                                   QPointF position,
+                                   const osmscout::Projection &projection,
+                                   double tolerance,
+                                   double changeRouteTolerance)
+{
+    double fx, fy, sx, sy;
+    projection.GeoToPixel(firstNode.lon, firstNode.lat, fx, fy);
+    projection.GeoToPixel(secondNode.lon, secondNode.lat, sx, sy);
+
+    double u = ((position.x() - fx) * (sx - fx) + (position.y() - fy) * (sy - fy)) / ((qPow(fx-sx, 2)) + (qPow(fy - sy, 2)));
+
+    double ox = fx + (sx - fx) * u;
+    double oy = fy + (sy - fy) * u;
+
+    double oLon, oLat, pLon, pLat;
+    projection.PixelToGeo(ox, projection.GetHeight() - oy, oLon, oLat);
+    projection.PixelToGeo(position.x(), projection.GetHeight() - position.y(), pLon, pLat);
+
+    //qDebug() << oLon << " " << oLat << " | " << pLon << " " << pLat;
+
+    double distance = floor(1000 * CalculateDistance(pLon, pLat, oLon, oLat));
+
+    //qDebug() << "\t" << distance;
+
+    if (distance < tolerance) {
+        return QPointF(pLon, pLat);
+    }
+    else {
+        if (distance > changeRouteTolerance) {
+
+            return QPointF(pLon, pLat);
+        } else {
+            return QPointF(oLon, oLat);
+        }
+    }
+}
+
 }

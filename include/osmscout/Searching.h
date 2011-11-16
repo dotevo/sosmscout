@@ -6,6 +6,7 @@
 #include <QString>
 #include <QList>
 #include <QMap>
+#include <QPointF>
 
 #include <osmscout/Node.h>
 #include <osmscout/Way.h>
@@ -55,6 +56,13 @@ public:
                                osmscout::Routing::RouteNode firstPoint,
                                osmscout::Routing::RouteNode secondPoint,
                                int precision = 10);
+
+    static QPointF CorrectPosition(osmscout::Routing::RouteNode firstNode,
+                                    osmscout::Routing::RouteNode secondNode,
+                                    QPointF position,
+                                    const osmscout::Projection &p,
+                                    double tolerance = 3,
+                                    double changeRouteTolerance = 20);
 
     void searchAllRegions();
 
