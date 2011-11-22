@@ -175,9 +175,30 @@ namespace osmscout {
         //
         // currendNode = endNode, so reproduce path...
         //
+        QList< Step > route;
         std::list< RouteNode > simplifiedRoute;
+        Step currentStep;
         while(currentNode.id != startId) {
+            currentStep.id = currentNode.id;
+            currentStep.lon = currentNode.lon;
+            currentStep.lat = currentNode.lat;
+            currentStep.routing = currentNode.routing;
+            currentStep.crossing = true;
+            route.push_front(currentStep);
             simplifiedRoute.push_front(currentNode);
+
+            Partitioning::PartWay way = partitionModel->getWay(currentNode.wayId);
+
+            for(unsigned int i=0; i<way.nodes.size(); ++i) {
+                if(way.nodes[i] == currentNode.id) {
+                    unsigned int prevId = currentNode.prevNodeId;
+                    while(currentNode.id != prevId) {
+                        //osodir;
+                    }
+                } else if(way.nodes[i] == currentNode.prevNodeId) {
+                    //y;
+                }
+            }
 
             // find previous node and set it to current
             for(std::map< int, RouteNode >::const_iterator it = usedMoves.begin(); it != usedMoves.end(); ++it) {

@@ -22,9 +22,11 @@
 namespace osmscout {
     Partitioning::Partitioning()
     {
-        // setting alpha factor for quality function
-        alpha = 0.99;
-        beta = 0.057;
+        // setting alpha and beta factors for quality function
+        alpha = 0.96;
+        beta = 0.015;
+        //alpha = 0.95;
+        //beta = 1;
     }
 
     void Partitioning::InitData()
@@ -82,13 +84,44 @@ namespace osmscout {
                                 + " SELECT id FROM tags"
                                 + " WHERE key == 'highway' "
                                 + " AND(value == 'primary' "
+                                    + " OR value == 'primary_link' "
                                     + " OR value == 'secondary' "
+                                    + " OR value == 'secondary_link' "
                                     + " OR value == 'residential' "
+                                    + " OR value == 'residential_link' "
+                                    + " OR value == 'minor' "
                                     + " OR value == 'track' "
+                                    + " OR value == 'tertiary' "
+                                    + " OR value == 'tertiary_link' "
+                                    + " OR value == 'trunk' "
+                                    + " OR value == 'trunk_link' "
                                     + " OR value == 'road' "
                                     + " OR value == 'motorway' "
                                     + " OR value == 'living_street')))"
                     + " ORDER BY way,num";
+
+        /*tmp = "SELECT way,num,node FROM ways,way_nodes WHERE way_nodes.way=ways.id AND ways.lon1>" + QString::number(lonMin)
+                        + " AND ways.lat1>" + QString::number(latMin)
+                        + " AND ways.lon2<" + QString::number(lonMax)
+                        + " AND ways.lat2<" + QString::number(latMax)
+                        + " AND way NOT IN(SELECT ref FROM way_tags"
+                            + " WHERE tag IN("
+                                + " SELECT id FROM tags"
+                                + " WHERE key == 'highway' "
+                                + " AND(value == 'primary' "
+                                    + " OR value == 'bus_stop' "
+                                    + " OR value == 'traffic_signals' "
+                                    + " OR value == 'mini_roundabout' "
+                                    + " OR value == 'speed_camera' "
+                                    + " OR value == 'passing_place' "
+                                    + " OR value == 'przystanek tramwajowy' "
+                                    + " OR value == 'przystanek tramwajowy (P)' "
+                                    + " OR value == 'przystanek tramwajowy 46' "
+                                    + " OR value == 'stop' "
+                                    + " OR value == 'PRZYSTANEK TRAMWAJOWY' "
+                                    + " OR value == 'PRZYSTANEK AUTOBUSOWY 263')))"
+                    + " ORDER BY way,num";*/
+
         query.prepare(tmp);
         query.exec();
 
@@ -287,15 +320,23 @@ namespace osmscout {
         partition.cellsNodesCount.clear();
         partition.cellsEdgesCount.clear();
         partition.cellsRouteEdgesCount.clear();
-        partition.boundaryEdges.clear();
+        for (unsigned int i=0; i < partition.cellsBoundaryNodes.size(); ++i) {
+            delete partition.cellsBoundaryNodes[i];
+        }
+        partition.cellsBoundaryNodes.clear();
+        for (unsigned int i=0; i < partition.cellsConnections.size(); ++i) {
+            delete partition.cellsConnections[i];
+        }
         partition.cellsConnections.clear();
+        partition.boundaryEdges.clear();
 
         partition.cellsBoundaryNodesCount.reserve(partition.cellsCount);
         partition.cellsNodesCount.reserve(partition.cellsCount);
         partition.cellsEdgesCount.reserve(partition.cellsCount);
         partition.cellsRouteEdgesCount.reserve(partition.cellsCount);
-        partition.boundaryEdges.reserve(partition.cellsCount);
+        partition.cellsBoundaryNodes.reserve(partition.cellsCount);
         partition.cellsConnections.reserve(partition.cellsCount);
+        partition.boundaryEdges.reserve(partition.cellsCount);
 
         for(unsigned int i=0; i<partition.cellsCount; ++i) {
             partition.cellsBoundaryNodesCount.push_back(0);
@@ -303,6 +344,8 @@ namespace osmscout {
             partition.cellsEdgesCount.push_back(0);
             partition.cellsRouteEdgesCount.push_back(0);
             std::vector< unsigned int > * tmpVector = new std::vector< unsigned int >;
+            partition.cellsBoundaryNodes.push_back(tmpVector);
+            tmpVector = new std::vector< unsigned int >;
             partition.cellsConnections.push_back(tmpVector);
         }
 
@@ -365,6 +408,7 @@ namespace osmscout {
             partition.cellsNodesCount[node.cell] += 1;
             if(node.type == BOUNDARY) {
                 partition.cellsBoundaryNodesCount[node.cell] += 1;
+                partition.cellsBoundaryNodes[node.cell]->push_back(node.id);
             }
         }
         for(unsigned int i=0; i<partition.cellsCount; ++i) {
@@ -381,6 +425,83 @@ namespace osmscout {
     {
         //qDebug() << "Updating priorities...";
         // updates lines for merged cell
+        // for cells before i
+        for(unsigned int k=0; k<i; ++k) {
+            std::map< unsigned int, double > * oldMap = partition.priorities[k];
+            std::map< unsigned int, double > * newMap = new std::map< unsigned int, double >;
+            for(std::map< unsigned int, double >::iterator it = oldMap->begin(); it!=oldMap->end(); ++it) {
+                unsigned int key = it->first;
+                double value = it->second;
+                if(key == j) {
+                    bool added = false;
+                    for(std::map< unsigned int, double >::iterator newIt = newMap->begin(); newIt!=newMap->end(); ++newIt) {
+                        if(newIt->first == i) {
+                            added = true;
+                        }
+                    }
+                    if(!added) {
+                        key = i;
+                        value = CalculatePriority(k, key);
+                    } else {
+                        continue;
+                    }
+                } else if(key > j) {
+                    key--;
+                } else if(key == i) {
+                    value = CalculatePriority(k, key);
+                }
+                newMap->insert(std::pair< unsigned int, double > (key, value));
+            }
+            partition.priorities[k] = newMap;
+            delete oldMap;
+        }
+        // for new cell i
+        {
+            std::map< unsigned int, double > * newMap = new std::map< unsigned int, double >;
+            for(unsigned int k = 0; k<partition.cellsConnections[i]->size(); ++k) {
+                unsigned int tmp = partition.cellsConnections[i]->at(k);
+                newMap->insert(std::pair< unsigned int, double > (tmp, CalculatePriority(i, tmp)));
+            }
+            partition.priorities[i] = newMap;
+        }
+        // for cells between i and j
+        for(unsigned int k=i+1; k<j && k<partition.cellsCount; ++k) {
+            std::map< unsigned int, double > * oldMap = partition.priorities[k];
+            std::map< unsigned int, double > * newMap = new std::map< unsigned int, double >;
+            for(std::map< unsigned int, double >::iterator it = oldMap->begin(); it!=oldMap->end(); ++it) {
+                unsigned int key = it->first;
+                double value = it->second;
+                if(key == j) {
+                    continue;
+                } else if(key > j) {
+                    key--;
+                }
+                newMap->insert(std::pair< unsigned int, double > (key, value));
+            }
+            partition.priorities[k] = newMap;
+            delete oldMap;
+        }
+        // delete maps for cell j
+        std::map< unsigned int, double > * mapJ = partition.priorities[j];
+        delete mapJ;
+        // for cells after j
+        for(unsigned int k=j; k<partition.cellsCount; ++k) {
+            std::map< unsigned int, double > * oldMap = partition.priorities[k+1];
+            std::map< unsigned int, double > * newMap = new std::map< unsigned int, double >;
+            for(std::map< unsigned int, double >::iterator it = oldMap->begin(); it!=oldMap->end(); ++it) {
+                unsigned int key = it->first - 1;
+                double value = it->second;
+                newMap->insert(std::pair< unsigned int, double > (key, value));
+            }
+            partition.priorities[k] = newMap;
+            delete oldMap;
+        }
+        // delete last row
+        partition.priorities.pop_back();
+
+
+        // old way
+        /*// updates lines for merged cell
         for(unsigned int k=0; k<i; ++k) {
             for(unsigned l=0; l<partition.cellsConnections[k]->size(); ++l) { // calculates priority only if connection exists between cell k and i
                 if(partition.cellsConnections[k]->at(l) == i) {
@@ -414,7 +535,7 @@ namespace osmscout {
         }
         for(unsigned int k = 0; k<partition.cellsCount+1; ++k) {
             partition.priorities[partition.cellsCount]->at(k) = 0;
-        }
+        }*/
     }
 
     double Partitioning::CalculateQuality()
@@ -494,8 +615,16 @@ namespace osmscout {
         while(partition.cellsCount > 1) {
             maxPriority = 0;
             for(unsigned int i=0; i<partition.cellsCount-1; ++i) {
-                //for(unsigned int j=0; j<partition.cellsCount-i-1; ++j) {
-                for(unsigned int j=i+1; j<partition.cellsCount; ++j) {
+                for(std::map< unsigned int, double >::iterator it = partition.priorities[i]->begin(); it!=partition.priorities[i]->end(); ++it) {
+                    priority = it->second * (1+(qrand()/32767./100));
+                    if(priority > maxPriority) {
+                        cellI = i;
+                        cellJ = it->first;
+                        maxPriority = priority;
+                    }
+                }
+                // old way
+                /*for(unsigned int j=0; j<partition.cellsCount-i-1; ++j) {
                     bool connected = false;
                     for(unsigned k=0; k<partition.cellsConnections[i]->size(); ++k) { // calculates priority only if connection exists between cell i and j
                         if(partition.cellsConnections[i]->at(k) == j) {
@@ -503,19 +632,20 @@ namespace osmscout {
                             break;
                         }
                     }
-                    priority = ((!connected) ? 0 : CalculatePriority(i, j)) * (1+(qrand()/32767./100));
+                    priority = ((!connected) ? 0 : partition.priorities[i]->at(j)) * (1+(qrand()/32767./100));
+
                     if(priority > maxPriority) {
                         cellI = i;
                         cellJ = j;
                         maxPriority = priority;
                     }
-                }
+                }*/
             }
 
             if(maxPriority > 0) {
             //if(partition.cellsCount != 10) {
                 MergeCells(cellI, cellJ);
-                //UpdatePriorities(cellI, cellJ);
+                UpdatePriorities(cellI, cellJ);
 
                 quality = CalculateQuality();
                 if(quality < bestQuality) {
@@ -527,9 +657,22 @@ namespace osmscout {
                     for(unsigned int i=0; i<partition.nodes.size(); ++i) {                        
                         bestPartition.nodes.push_back(partition.nodes[i]);
                     }
+
                     bestPartition.ways.clear();
                     for(unsigned int i=0; i<partition.ways.size(); ++i) {
                         bestPartition.ways.push_back(partition.ways[i]);
+                    }
+
+                    for(unsigned int i=0; i<bestPartition.cellsBoundaryNodes.size(); ++i) {
+                        delete bestPartition.cellsBoundaryNodes[i];
+                    }
+                    bestPartition.cellsBoundaryNodes.clear();
+                    for(unsigned int i=0; i<partition.cellsBoundaryNodes.size(); ++i) {
+                        std::vector< unsigned int > * tmpVector = new std::vector< unsigned int >;
+                        for(unsigned int j=0; j<partition.cellsBoundaryNodes[i]->size(); ++j) {
+                            tmpVector->push_back(partition.cellsBoundaryNodes[i]->at(j));
+                        }
+                        bestPartition.cellsBoundaryNodes.push_back(tmpVector);
                     }
                 }
             } else {
@@ -590,7 +733,18 @@ namespace osmscout {
         }
 
         // adding routing edges
-        // TODO: adding routing edges to database partition
+        for(unsigned int i=0; i<bestPartition.cellsBoundaryNodes.size(); ++i) {
+            for(unsigned int j=0; j<bestPartition.cellsBoundaryNodes[i]->size(); ++j) {
+                for(unsigned int k=0; k<bestPartition.cellsBoundaryNodes[i]->size(); ++k) {
+                    if(k != j) {
+                        RouteEdge rEdge;
+                        rEdge.nodeA = bestPartition.cellsBoundaryNodes[i]->at(j);
+                        rEdge.nodeB = bestPartition.cellsBoundaryNodes[i]->at(k);
+                        databasePartition.routingEdges.push_back(rEdge);
+                    }
+                }
+            }
+        }
 
         return databasePartition;
     }
@@ -678,25 +832,24 @@ namespace osmscout {
         // calculates initial priorities
         qDebug() << "Calculating priorities...";
         for(unsigned int i=0; i<partition.cellsCount; ++i) {
-            try {
-                std::vector< double > * tmpVector = new std::vector< double >;
-                for(unsigned int j=i+1; j<partition.cellsCount; ++j) {
-                    bool connected = false;
-                    for(unsigned k=0; k<partition.cellsConnections[i]->size(); ++k) { // calculates priority only if connection exists between cell i and j
-                        if(partition.cellsConnections[i]->at(k) == j) {
-                            connected = true;
-                            break;
-                        }
-                    }
-                    tmpVector->push_back((!connected) ? 0 : CalculatePriority(i, j));
-                }
-                partition.priorities.push_back(tmpVector);
-            } catch (const std::bad_alloc &) {
-                // clean up here, e.g. save the session
-                // and close all config files.
-                qDebug() << "ERROR!!";
-                return;
+            std::map< unsigned int, double > * tmpMap = new std::map< unsigned int, double >;
+            for(unsigned int j=0; j<partition.cellsConnections[i]->size(); ++j) {
+                double tmp = partition.cellsConnections[i]->at(j);
+                tmpMap->insert(std::pair< unsigned int, double > (tmp, CalculatePriority(i, tmp)));
             }
+            // old way
+            /*std::vector< double > * tmpVector = new std::vector< double >;
+            for(unsigned int j=i+1; j<partition.cellsCount; ++j) {
+                bool connected = false;
+                for(unsigned k=0; k<partition.cellsConnections[i]->size(); ++k) { // calculates priority only if connection exists between cell i and j
+                    if(partition.cellsConnections[i]->at(k) == j) {
+                        connected = true;
+                        break;
+                    }
+                }
+                tmpVector->push_back((!connected) ? 0 : CalculatePriority(i, j));
+            }*/
+            partition.priorities.push_back(tmpMap);
         }
     }
 
@@ -708,12 +861,24 @@ namespace osmscout {
             return;
         }
         QTextStream out(&file);
+
+        out << partition.cellsCount << "\n";
         for(unsigned int i=0; i<partition.cellsCount; ++i) {
+            out << partition.priorities[i]->size() << " ";
+            for(std::map< unsigned int, double >::iterator it = partition.priorities[i]->begin(); it!=partition.priorities[i]->end(); ++it) {
+                unsigned int key = it->first;
+                double value = it->second;
+                out << key << ":" << value << " ";
+            }
+            out << "\n";
+        }
+        // old way
+        /*for(unsigned int i=0; i<partition.cellsCount; ++i) {
             for(unsigned int j=0; j<partition.cellsCount-i-1; ++j) {
                 out << partition.priorities[i]->at(j) << " ";
             }
             out << "\n";
-        }
+        }*/
 
         file.close();
     }
@@ -727,8 +892,22 @@ namespace osmscout {
         }
 
         QTextStream in(&file);
+        QString line = in.readLine();
+        unsigned int cellsCount = line.toInt();
+        for(unsigned int i=0; i<cellsCount; ++i) {
+            std::map< unsigned int, double > * tmpMap = new std::map< unsigned int, double >;
+            line = in.readLine();
+            QStringList stringList = line.split(" ");
+            unsigned int connectionsCount = stringList.at(0).toInt();
+            for(unsigned int j=1; j<=connectionsCount; ++j) {
+                QStringList tmpPair = stringList.at(j).split(":");
+                tmpMap->insert(std::pair< unsigned int, double > (tmpPair.at(0).toInt(), tmpPair.at(1).toDouble()));
+            }
+            partition.priorities.push_back(tmpMap);
+        }
 
-        for(unsigned int i=0; i<partition.cellsCount; ++i) {
+        // old way
+        /*for(unsigned int i=0; i<partition.cellsCount; ++i) {
             std::vector< double > * tmpVector = new std::vector< double >;
             QString line = in.readLine();
             QStringList stringList = line.split(" ");
@@ -736,7 +915,7 @@ namespace osmscout {
                 tmpVector->push_back(stringList.at((j)).toDouble());
             }
             partition.priorities.push_back(tmpVector);
-        }
+        }*/
 
         file.close();
     }
