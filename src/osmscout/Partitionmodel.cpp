@@ -126,7 +126,7 @@ bool PartitionModel::exportToDatabase(Partitioning::DatabasePartition &dbpart){
     }
 
     dbInsert(true);
-
+    return true;
 }
 
 bool PartitionModel::dbInsert(bool forceInsert)
@@ -151,6 +151,7 @@ bool PartitionModel::dbInsert(bool forceInsert)
 std::vector<Partitioning::PartWay> PartitionModel::getAllWays(){
     // TODO: Needs to return ways not nodes...
     //return getNodesByQuery("SELECT way,node FROM way_nodes ORDER BY way,num;");
+    return std::vector<Partitioning::PartWay>();
 }
 
 Partitioning::PartWay PartitionModel::getWay( long WayId ){
