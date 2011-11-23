@@ -70,6 +70,8 @@ namespace osmscout {
             Id id;
             std::vector<unsigned int> nodes;
             double priority;
+            QString type;
+            int oneway;
         };
         /**
          * @brief Simple structure that holds all nodes, ways and calculated values needed during partitioning process.

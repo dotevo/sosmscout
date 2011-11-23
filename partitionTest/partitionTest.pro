@@ -5,65 +5,7 @@ TARGET = build/example-build
 TEMPLATE = app
 
 HEADERS += \
-    mainwindow.h \
-    ../include/osmscout/Database.h \
-    ../include/osmscout/StyleConfigLoader.h \
-    ../include/osmscout/Util.h \
-    ../include/osmscout/MapPainterQt.h \
-    ../include/osmscout/MapPainterQt.h \
-    ../include/osmscout/util/Geometry.h \
-    ../include/osmscout/private/Math.h \
-    ../include/osmscout/StyleConfig.h \
-    ../include/osmscout/TypeConfig.h \
-    ../include/osmscout/NodeDataFile.h \
-    ../include/osmscout/RelationDataFile.h \
-    ../include/osmscout/WayDataFile.h \
-    ../include/osmscout/OptimizeLowZoom.h \
-    ../include/osmscout/NodeIndex.h \
-    ../include/osmscout/WayIndex.h \
-    ../include/osmscout/AreaAreaIndex.h \
-    ../include/osmscout/AreaNodeIndex.h \
-    ../include/osmscout/AreaWayIndex.h \
-    ../include/osmscout/CityStreetIndex.h \
-    ../include/osmscout/NodeUseIndex.h \
-    ../include/osmscout/WaterIndex.h \
-    ../include/osmscout/Route.h \
-    ../include/osmscout/util/Cache.h \
-    ../include/osmscout/RoutingProfile.h \
-    ../include/osmscout/TypeConfigLoader.h \
-    ../include/osmscout/util/StopClock.h \
-    ../include/osmscout/oss/Parser.h \
-    ../include/osmscout/oss/Scanner.h \
-    ../include/osmscout/system/Types.h \
-    ../include/osmscout/MapPainter.h \
-    ../include/osmscout/Point.h \
-    ../include/osmscout/util/Projection.h \
-    ../include/osmscout/private/Config.h \
-    ../include/osmscout/Types.h \
-    ../include/osmscout/Tag.h \
-    ../include/osmscout/util/Reference.h \
-    ../include/osmscout/Node.h \
-    ../include/osmscout/DataFile.h \
-    ../include/osmscout/Relation.h \
-    ../include/osmscout/Way.h \
-    ../include/osmscout/util/FileScanner.h \
-    ../include/osmscout/util/String.h \
-    ../include/osmscout/util/Transformation.h \
-    ../include/osmscout/NumericIndex.h \
-    ../include/osmscout/AdminRegion.h \
-    ../include/osmscout/Location.h \
-    ../include/osmscout/GroundTile.h \
-    ../include/osmscout/CoreFeatures.h \
-    ../include/osmscout/MapFeatures.h \
-    ../include/osmscout/util/FileWriter.h \
-    ../include/osmscout/SegmentAttributes.h \
-    ../include/osmscout/ObjectRef.h \
-    ../include/osmscout/Progress.h \
-    ../include/osmscout/ost/ParserT.h \
-    ../include/osmscout/ost/ScannerT.h \
-    ../include/osmscout/Partitioning.h \
-    ../include/osmscout/Partitionmodel.h \
-    ../include/osmscout/Routing.h
+    mainwindow.h
 
 SOURCES += \
     mainwindow.cpp \
@@ -114,9 +56,24 @@ SOURCES += \
     ../src/osmscout/MapPainter.cpp \
     ../src/osmscout/Partitionmodel.cpp \
     ../src/osmscout/Partitioning.cpp \
-    ../src/osmscout/Routing.cpp
+    ../src/osmscout/Routing.cpp \
+    ../../PiLibocik/src/preparedata.cpp \
+    ../../PiLibocik/src/position.cpp \
+    ../../PiLibocik/src/poi.cpp \
+    ../../PiLibocik/src/pilibocik.cpp \
+    ../../PiLibocik/src/poifileppoi.cpp \
+    ../../PiLibocik/src/boundarybox.cpp \
+    ../../PiLibocik/src/geohash.cpp \
+    ../../PiLibocik/src/partition/boundaryedge.cpp \
+    ../../PiLibocik/src/partition/edge.cpp \
+    ../../PiLibocik/src/partition/node.cpp \
+    ../../PiLibocik/src/partition/partitionfile.cpp \
+    ../../PiLibocik/src/partition/routenode.cpp \
+    ../../PiLibocik/src/partition/restriction.cpp \
+    ../../PiLibocik/src/partition/way.cpp
 
-INCLUDEPATH += ./../include/
+INCLUDEPATH += ./../include/ \
+    ../../PiLibocik/include/
 
 FORMS += \
     mainwindow.ui
@@ -124,7 +81,7 @@ FORMS += \
 RESOURCES += \
     icons.qrc
 
-
+DEFINES += PiLibocik_WRITE_MODE
 
 
 

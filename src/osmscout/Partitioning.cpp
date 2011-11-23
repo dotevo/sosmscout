@@ -19,12 +19,17 @@
 #include <osmscout/Util.h>
 #include <osmscout/Partitionmodel.h>
 
+#include <../../PiLibocik/include/pilibocik/geohash.h>
+#include <../../PiLibocik/include/pilibocik/partition/boundaryedge.h>
+#include <../../PiLibocik/include/pilibocik/partition/partitionfile.h>
+#include <../../PiLibocik/include/pilibocik/partition/node.h>
+
 namespace osmscout {
     Partitioning::Partitioning()
     {
         // setting alpha and beta factors for quality function
-        alpha = 0.96;
-        beta = 0.015;
+        alpha = 0.98;
+        beta = 0.010;
         //alpha = 0.95;
         //beta = 1;
     }
@@ -47,9 +52,15 @@ namespace osmscout {
         latMax = 51.5;
         lonMax = 17.5;
 
+        latMin = 50.2;
+        lonMin = 16.4;
+        latMax = 51.3;
+        lonMax = 16.5;
+
         //
         // getting nodes
         //
+        qDebug() << "Getting nodes...";
         QSqlQuery query(db);
         QString tmp = "SELECT id,lon,lat FROM nodes WHERE lon>" + QString::number(lonMin)
                 + " AND lat>" + QString::number(latMin)
@@ -75,6 +86,7 @@ namespace osmscout {
         //
         // getting ways
         //
+        qDebug() << "Getting ways...";
         tmp = "SELECT way,num,node FROM ways,way_nodes WHERE way_nodes.way=ways.id AND ways.lon1>" + QString::number(lonMin)
                         + " AND ways.lat1>" + QString::number(latMin)
                         + " AND ways.lon2<" + QString::number(lonMax)
@@ -100,28 +112,7 @@ namespace osmscout {
                                     + " OR value == 'living_street')))"
                     + " ORDER BY way,num";
 
-        /*tmp = "SELECT way,num,node FROM ways,way_nodes WHERE way_nodes.way=ways.id AND ways.lon1>" + QString::number(lonMin)
-                        + " AND ways.lat1>" + QString::number(latMin)
-                        + " AND ways.lon2<" + QString::number(lonMax)
-                        + " AND ways.lat2<" + QString::number(latMax)
-                        + " AND way NOT IN(SELECT ref FROM way_tags"
-                            + " WHERE tag IN("
-                                + " SELECT id FROM tags"
-                                + " WHERE key == 'highway' "
-                                + " AND(value == 'primary' "
-                                    + " OR value == 'bus_stop' "
-                                    + " OR value == 'traffic_signals' "
-                                    + " OR value == 'mini_roundabout' "
-                                    + " OR value == 'speed_camera' "
-                                    + " OR value == 'passing_place' "
-                                    + " OR value == 'przystanek tramwajowy' "
-                                    + " OR value == 'przystanek tramwajowy (P)' "
-                                    + " OR value == 'przystanek tramwajowy 46' "
-                                    + " OR value == 'stop' "
-                                    + " OR value == 'PRZYSTANEK TRAMWAJOWY' "
-                                    + " OR value == 'PRZYSTANEK AUTOBUSOWY 263')))"
-                    + " ORDER BY way,num";*/
-
+        query.clear();
         query.prepare(tmp);
         query.exec();
 
@@ -157,6 +148,7 @@ namespace osmscout {
         //
         // deleting all unnecessary nodes
         //
+        qDebug() << "Deleting all unnecessary nodes...";
         for(unsigned int i=0; i<tmpNodes.size(); ++i) {
             //check if exists in more than one way
             int waysContainingNodeCount = 0;
@@ -187,10 +179,14 @@ namespace osmscout {
         //
         // deleting all unnecessary nodes from ways
         //
+        qDebug() << "Deleting all unnecessary nodes from ways...";
         for(unsigned int i=0; i<tmpWays.size(); ++i) {
             PartWay newWay;
             newWay.id = tmpWays[i].id;
             newWay.priority = 1; // TODO: calculating priority due to road type
+            newWay.oneway = 0;\
+            QString tmpString = "";
+            newWay.type = tmpString;
             newWay.nodes.clear();
 
             //check if each node exists in nodes vector
@@ -211,6 +207,60 @@ namespace osmscout {
 
             // finally add way to graph
             partition.ways.push_back(newWay);
+        }
+
+        //
+        // checking for oneways
+        //
+        // for optimalization - get it all to list and then check
+        qDebug() << "Checking for oneways...";
+        for(int i=0; i<partition.ways.size(); ++i) {
+            tmp = "SELECT value FROM way_tags LEFT JOIN tags ON way_tags.tag = tags.id"
+                    " WHERE tag IN("
+                        " SELECT id FROM tags"
+                        " WHERE key='oneway')"
+                    " AND ref == '" + QString::number(partition.ways[i].id) + "'";
+            query.clear();
+            query.prepare(tmp);
+            query.exec();
+
+            if(query.next()) {
+                QString onewayString = query.value(0).toString();
+
+                int x = onewayString.compare("1");
+
+                if(onewayString.compare("1") == 0
+                            || onewayString.compare("yes") == 0
+                            || onewayString.compare("true") == 0
+                            || onewayString.compare("1, yes") == 0) {
+                    partition.ways[i].oneway = 1;
+                } else if(onewayString.compare("-1") == 0
+                            || onewayString.compare("no") == 0
+                            || onewayString.compare("false") == 0
+                            || onewayString.compare("-1;yes") == 0) {
+                    partition.ways[i].oneway = -1;
+                }
+            }
+        }
+
+        //
+        // checking for priorities
+        //
+        qDebug() << "Checking for priorities...";
+        for(int i=0; i<partition.ways.size(); ++i) {
+            tmp = "SELECT value FROM way_tags LEFT JOIN tags ON way_tags.tag = tags.id"
+                    " WHERE tag IN("
+                        " SELECT id FROM tags"
+                        " WHERE key='highway')"
+                    " AND ref == '" + QString::number(partition.ways[i].id) + "'";
+            query.clear();
+            query.prepare(tmp);
+            query.exec();
+
+            if(query.next()) {
+                QString highwayType = query.value(0).toString();
+                partition.ways[i].type = highwayType;
+            }
         }
 
         UpdatePartitionData();
@@ -234,7 +284,7 @@ namespace osmscout {
         out << "\n";
         for(unsigned int i=0; i<partition.ways.size(); ++i) {
             PartWay way = partition.ways[i];
-            out << way.id << " " << way.nodes.size() << " ";
+            out << way.id << " " << way.type << " " << way.oneway << " " << way.nodes.size() << " ";
             for(unsigned int j=0; j<way.nodes.size(); ++j) {
                 out << way.nodes[j] << " ";
                 //out << partition.nodes[way.nodes[j]].id << " ";
@@ -588,12 +638,84 @@ namespace osmscout {
         }
     }
 
-    void Partitioning::saveToDatabase(QString name, DatabasePartition& databasePartition){
-
+    void Partitioning::saveToDatabase(QString name, DatabasePartition& databasePartition)
+    {
+        //
+        // saving to sql database
+        //
         osmscout::PartitionModel pm;
         pm.open(name);
         pm.createTables();
         pm.exportToDatabase(databasePartition);
+
+        //
+        // saving to binary file
+        //
+        PiLibocik::Partition::PartitionFile partitionFile("test", "car", QIODevice::WriteOnly, 1);
+        QList< PiLibocik::Partition::Way > fileWays;
+        QList< PiLibocik::Partition::Node > fileNodes;
+        std::vector< PiLibocik::Partition::Way > ways;
+        std::vector< PiLibocik::Partition::Node > nodes;
+
+        // adding nodes
+        for(unsigned int i=0; i<databasePartition.nodes.size(); ++i) {
+            Partitioning::PartNode node = databasePartition.nodes[i];
+            PiLibocik::Partition::Node fileNode(node.id, node.cell, node.lon, node.lat);
+
+            nodes.push_back(fileNode);
+        }
+
+        // adding ways
+        for(unsigned int i=0; i<databasePartition.innerWays.size(); ++i) {
+            Partitioning::PartWay way = databasePartition.innerWays[i];
+            PiLibocik::Partition::Way fileWay(way.id, way.priority, way.oneway);
+
+            // adding nodes to way and way to nodes
+            for(unsigned int j=0; j<way.nodes.size(); ++j) {
+                PiLibocik::Partition::Node nodeInWay = nodes[way.nodes[j]];
+
+                fileWay.addNode(way.nodes[j]); // ATTENTION! zmienic na indeksy nodów w liœcie, a nie ich id (w FindPartition na koñcu przy tworzeniu DatabasePartition)
+                nodeInWay.addWay(i);
+            }
+
+            ways.push_back(fileWay);
+        }
+
+        // adding boundary edges
+        for(unsigned int i=0; i<databasePartition.boundaryEdges.size(); ++i) {
+            Partitioning::BoundaryEdge edge = databasePartition.boundaryEdges[i];
+            PiLibocik::Partition::BoundaryEdge fileEdgeAB(edge.nodeB, edge.wayId, edge.priority); // edge from A to B
+            PiLibocik::Partition::BoundaryEdge fileEdgeBA(edge.nodeA, edge.wayId, edge.priority); // edge from B to A
+            PiLibocik::Partition::Node fileNodeA = nodes[edge.nodeA];
+            PiLibocik::Partition::Node fileNodeB = nodes[edge.nodeB];
+
+            fileNodeA.addBoundaryEdge(fileEdgeAB);
+            fileNodeB.addBoundaryEdge(fileEdgeBA);
+        }
+
+        // adding routing edges
+        for(unsigned int i=0; i<databasePartition.routingEdges.size(); ++i) {
+            Partitioning::RouteEdge edge = databasePartition.routingEdges[i];
+            PiLibocik::Partition::Edge fileEdgeAB(edge.nodeB, 1); // edge from A to B
+            PiLibocik::Partition::Edge fileEdgeBA(edge.nodeA, 1); // edge from B to A
+            PiLibocik::Partition::Node fileNodeA = nodes[edge.nodeA];
+            PiLibocik::Partition::Node fileNodeB = nodes[edge.nodeB];
+
+            fileNodeA.addRoutingEdge(fileEdgeAB);
+            fileNodeB.addRoutingEdge(fileEdgeBA);
+        }
+
+        // creating list of nodes
+        for(unsigned int i=0; i<nodes.size(); ++i) {
+            fileNodes.append(nodes[i]);
+        }
+
+        // creating list of ways
+        for(unsigned int i=0; i<ways.size(); ++i) {
+            fileWays.append(ways[i]);
+        }
+
+        partitionFile.savePartition(fileWays, fileNodes, 2);
     }
 
     Partitioning::DatabasePartition  Partitioning::FindPartition()
@@ -683,13 +805,13 @@ namespace osmscout {
         qDebug() << "best quality: " << bestQuality;
         qDebug() << "best cells count: " << bestCellsCount;
 
-        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        // Next +/-50 lines needs to be put into another method (maybe even savaToDatabase) and then it needs adding routing edges.
-        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        // Next +/-50 lines needs to be put into another method (maybe even savaToDatabase).
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         // preparing format for writing to database
         DatabasePartition databasePartition;
-        qDebug()<<"FIND PARTITION N:"<<bestPartition.nodes.size()<<" W:"<<bestPartition.ways.size();
+        qDebug()<<"FOUND PARTITION N:"<<bestPartition.nodes.size()<<" W:"<<bestPartition.ways.size();
         databasePartition.nodes = bestPartition.nodes;
 
         // adding inner ways and boundary edges
