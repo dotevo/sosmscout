@@ -8,6 +8,18 @@ namespace osmscout {
     {
     public:
         /**
+         * @brief Structure that represets one step of calculated route.
+         *
+         */
+        struct Step {
+            Id id;
+            double lon;
+            double lat;
+            Id wayId; // by which one came to this node from prevNode
+            bool crossing;
+            bool routing;
+        };
+        /**
          * @brief Structure that represets node with information from which node one came, so it represents step in graph.
          *
          */

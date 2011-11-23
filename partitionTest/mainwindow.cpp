@@ -41,21 +41,17 @@ void MainWindow::init()
 {
     osmscout::Partitioning part;
 
-    //part.InitData();
-    //part.SaveData("D:\\pilocik\\map\\partition.txt");
-
-    //part.LoadData("D:\\pilocik\\map\\partTest.txt");
+    part.InitData();
+    part.SaveData("D:\\pilocik\\partitioning\\partition.txt");
+    //part.LoadData("D:\\pilocik\\partitioning\\partition.txt");
     //part.CalculatePriorities();
-    //part.SavePriorities("D:\\pilocik\\map\\prioTest.txt");
-
-    part.LoadData("D:\\pilocik\\map\\partTestA.txt");
-    //part.LoadPriorities("D:\\pilocik\\map\\prioTest.txt");
-    osmscout::Partitioning::DatabasePartition dbPart=part.FindPartition();
-    part.saveToDatabase("D:\\pilocik\\map\\partTestA.db",dbPart);
+    //part.SavePriorities("D:\\pilocik\\partitioning\\priorities.txt");
+    //part.LoadPriorities("D:\\pilocik\\partitioning\\priorities.txt");
+    //osmscout::Partitioning::DatabasePartition dbPart = part.FindPartition();
+    //part.saveToDatabase("D:\\pilocik\\partitioning\\partition.db", dbPart);
+    //part.Delete();
 
     //osmscout::Routing r;
     //r.CalculateRoute(1, 34);
-
-    part.Delete();
 }
 

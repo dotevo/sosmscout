@@ -90,7 +90,9 @@ namespace osmscout {
             std::vector< unsigned int > cellsRouteEdgesCount;
             unsigned int boundaryEdgesCount;
             unsigned int boundaryNodesCount;
-            std::vector< std::vector< double > * > priorities;
+            //std::vector< std::vector< double > * > priorities;
+            std::vector< std::vector< unsigned int > * > cellsBoundaryNodes;
+            std::vector< std::map< unsigned int, double > * > priorities;
             std::vector< std::vector< unsigned int > * > cellsConnections;
         };
 
@@ -139,7 +141,7 @@ namespace osmscout {
             std::vector< PartNode > nodes;
             std::vector< PartWay > innerWays;
             std::vector< BoundaryEdge > boundaryEdges;
-            std::vector< RouteEdge > routeEdges;
+            std::vector< RouteEdge > routingEdges;
         };
 
         /**
