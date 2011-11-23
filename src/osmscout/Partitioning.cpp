@@ -740,7 +740,7 @@ namespace osmscout {
                         RouteEdge rEdge;
                         rEdge.nodeA = bestPartition.cellsBoundaryNodes[i]->at(j);
                         rEdge.nodeB = bestPartition.cellsBoundaryNodes[i]->at(k);
-                        databasePartition.routingEdges.push_back(rEdge);
+                        databasePartition.routeEdges.push_back(rEdge);
                     }
                 }
             }

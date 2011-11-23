@@ -141,7 +141,7 @@ namespace osmscout {
             std::vector< PartNode > nodes;
             std::vector< PartWay > innerWays;
             std::vector< BoundaryEdge > boundaryEdges;
-            std::vector< RouteEdge > routingEdges;
+            std::vector< RouteEdge > routeEdges;
         };
 
         /**
