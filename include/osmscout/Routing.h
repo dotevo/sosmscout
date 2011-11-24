@@ -61,7 +61,7 @@ namespace osmscout {
          *
          * @return list of steps in route graph - it needs to be transformed into list of steps in map (lack of some nodes).
          */
-        std::vector< RouteNode > CalculateRoute(PiLibocik::Position startPosition, PiLibocik::Position endPosition);
+        QList< Routing::Step > CalculateRoute(PiLibocik::Position startPosition, PiLibocik::Position endPosition);
         /**
          * @brief Old method that uses sql database.
          *

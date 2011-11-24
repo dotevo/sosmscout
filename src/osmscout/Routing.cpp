@@ -1,9 +1,12 @@
 #include "osmscout/Routing.h"
 #include "osmscout/Partitionmodel.h"
+#include "osmscout/Database.h"
+#include "../../../Pilocik/settings.h"
 
 #include "math.h"
 
 #include <QDebug>
+#include <QString>
 
 #include <../../PiLibocik/include/pilibocik/partition/partitionfile.h>
 #include <../../PiLibocik/include/pilibocik/partition/boundaryedge.h>
@@ -33,11 +36,11 @@ namespace osmscout {
 
         int prevWayId = -1;
         double rating = distance(startNode.getLon(), startNode.getLat(), endNode.getLon(), endNode.getLat());
-        PiLibocik::Partition::RouteNode currentRouteNode(startNode, prevWayId rating);
+        PiLibocik::Partition::RouteNode * currentRouteNode = new PiLibocik::Partition::RouteNode(startNode, prevWayId, rating);
 
-        QMap< QString, PiLibocik::Partition::RouteNode > availableMoves;
-        QMap< QString, PiLibocik::Partition::RouteNode > usedMoves;
-        QString key = QString(currentRouteNode.getPrevNode().getId()) + "_" + QString(currentRouteNode.getId);
+        QMap< QString, PiLibocik::Partition::RouteNode * > availableMoves;
+        QMap< QString, PiLibocik::Partition::RouteNode * > usedMoves;
+        QString key = QString::number(currentRouteNode->getPrevNode().getId()) + "_" + QString::number(currentRouteNode->getId());
         usedMoves.insert(key, currentRouteNode);
 
         QVector< PiLibocik::Partition::Way > innerWays;
@@ -47,7 +50,7 @@ namespace osmscout {
         //
         // main body of algorithm
         //
-        while(currentRouteNode.id != endId) {
+        while(currentRouteNode->getId() != endNode.getId()) {
             //
             // adding available moves from current node
             //
@@ -56,117 +59,196 @@ namespace osmscout {
             innerWays.clear();
             boundaryEdges.clear();
             routeEdges.clear();
-            if(currentNode.cell == startCell || currentNode.cell == endCell) {
-                innerWays = currentFileNode.getWaysObj();
+            if(currentRouteNode->getCell() == startCell || currentRouteNode->getCell() == endCell) {
+                innerWays = currentRouteNode->getWaysObj();
             } else {
-                routeEdges = currentFileNode.getRoutingEdges();
+                routeEdges = currentRouteNode->getRoutingEdges();
             }
-            boundaryEdges = currentFileNode.getBoundaryEdges();
+            boundaryEdges = currentRouteNode->getBoundaryEdges();
 
             // getting neighbours of current node (in every of ways and edges), creating RouteNodes from them and adding to available moves
             for(unsigned int i=0; i<innerWays.size(); ++i) { // start of searching in innerWays
                 PiLibocik::Partition::Way innerWay = innerWays.at(i);
-                QVector<Node> nodesInInnerWay = innerWay.getNodesObj();
+                QVector<PiLibocik::Partition::Node> nodesInInnerWay = innerWay.getNodesObj();
 
                 for(unsigned int j=0; j<nodesInInnerWay.size(); ++j) {
-                    if(nodesInInnerWay.at(j).getId() == currentRouteNode.getId()) {
+                    if(currentRouteNode->getId()
+                            == nodesInInnerWay.at(j).getId()) {
                         if(j > 0) {
                             // TODO: taking oneway into account
                             PiLibocik::Partition::Node neighbourNode = nodesInInnerWay.at(j-1);
 
                             rating = (innerWay.getPrioritet() // priority of way on which one should go
-                                            * distance(neighbourNode.getLon(), neighbourNode.getLat(), currentRouteNode.getLon(), currentRouteNode.getLat())) // distance from current node
+                                            * distance(neighbourNode.getLon(), neighbourNode.getLat(), currentRouteNode->getLon(), currentRouteNode->getLat())) // distance from current node
                                         + distance(neighbourNode.getLon(), neighbourNode.getLat(), endNode.getLon(), endNode.getLat()); // distance to endNod
 
-                            PiLibocik::Partition::RouteNode newNode(neighbourNode, innerWay.getId(), rating);
+                            PiLibocik::Partition::RouteNode * newNode = new PiLibocik::Partition::RouteNode(neighbourNode, innerWay.getId(), rating, currentRouteNode);
 
-                            key = QString(newNode.getPrevNode().getId()) + "_" + QString(newNode.getId);
+                            key = QString::number(newNode->getPrevNode().getId()) + "_" + QString::number(newNode->getId());
                             availableMoves.insert(key, newNode);
                         }
                         if(j < nodesInInnerWay.size()-1) {
                             PiLibocik::Partition::Node neighbourNode = nodesInInnerWay.at(j+1);
 
                             rating = (innerWay.getPrioritet() // priority of way on which one should go
-                                            * distance(neighbourNode.getLon(), neighbourNode.getLat(), currentRouteNode.getLon(), currentRouteNode.getLat())) // distance from current node
+                                            * distance(neighbourNode.getLon(), neighbourNode.getLat(), currentRouteNode->getLon(), currentRouteNode->getLat())) // distance from current node
                                         + distance(neighbourNode.getLon(), neighbourNode.getLat(), endNode.getLon(), endNode.getLat()); // distance to endNod
 
-                            PiLibocik::Partition::RouteNode newNode(neighbourNode, innerWay.getId(), rating);
+                            PiLibocik::Partition::RouteNode * newNode = new PiLibocik::Partition::RouteNode(neighbourNode, innerWay.getId(), rating, currentRouteNode);
 
-                            key = QString(newNode.getPrevNode().getId()) + "_" + QString(newNode.getId);
+                            key = QString::number(newNode->getPrevNode().getId()) + "_" + QString::number(newNode->getId());
                             availableMoves.insert(key, newNode);
                         }
                     }
                 }
             } // end of searching in innerWays
 
-            // TC: tu skonczylem !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             for(unsigned int i=0; i<boundaryEdges.size(); ++i) { // start of searching in boundaryEdges
-                Partitioning::PartNode pNode;
-                if(boundaryEdges[i].nodeA == currentNode.id) { // there's only two nodes in boundaryEdge, so only one of them needs to be added to available moves
-                    pNode = partitionModel->getNode(boundaryEdges[i].nodeB);
-                } else {
-                    pNode = partitionModel->getNode(boundaryEdges[i].nodeA);
-                }
-                RouteNode newNode;
-                newNode.id = pNode.id;
-                newNode.prevNodeId = currentNode.id;
-                newNode.lon = pNode.lon;
-                newNode.lat = pNode.lat;
-                newNode.wayId = boundaryEdges[i].wayId;
-                newNode.cell = pNode.cell;
-                newNode.routing = false;
-                // TODO: getting combined priorities
-                newNode.rating = (innerWays[i].priority // priority of way on which one should go
-                                      * distance(pNode.lon, pNode.lat, currentNode.lon, currentNode.lat)) // distance from current node
-                                    + distance(pNode.lon, pNode.lat, endNode.lon, endNode.lat); // distance to endNode
+                PiLibocik::Partition::BoundaryEdge boundaryEdge = boundaryEdges.at(i);
 
-                availableMoves[availableMoves.size()] = newNode;
+                PiLibocik::Partition::Node neighbourNode = boundaryEdge.getPairObj();
+
+                rating = (boundaryEdge.getPrioritet() // priority of way on which one should go
+                                * distance(neighbourNode.getLon(), neighbourNode.getLat(), currentRouteNode->getLon(), currentRouteNode->getLat())) // distance from current node
+                            + distance(neighbourNode.getLon(), neighbourNode.getLat(), endNode.getLon(), endNode.getLat()); // distance to endNod
+
+                PiLibocik::Partition::RouteNode * newNode = new PiLibocik::Partition::RouteNode(neighbourNode, boundaryEdge.getWayObj().getId(), rating, currentRouteNode);
+
+                key = QString::number(newNode->getPrevNode().getId()) + "_" + QString::number(newNode->getId());
+                availableMoves.insert(key, newNode);
             } // end of searching in boundaryEdges
 
             for(unsigned int i=0; i<routeEdges.size(); ++i) { // start of searching in routeEdges
-                Partitioning::PartNode pNode;
-                if(routeEdges[i].nodeA == currentNode.id) { // there's only two nodes in routeEdge, so only one of them needs to be added to available moves
-                    pNode = partitionModel->getNode(routeEdges[i].nodeB);
-                } else {
-                    pNode = partitionModel->getNode(routeEdges[i].nodeA);
-                }
-                RouteNode newNode;
-                newNode.id = pNode.id;
-                newNode.prevNodeId = currentNode.id;
-                newNode.lon = pNode.lon;
-                newNode.lat = pNode.lat;
-                newNode.wayId = routeEdges[i].lastWayId;
-                newNode.cell = pNode.cell;
-                newNode.routing = true;
-                newNode.lastRoutingNodeId = routeEdges[i].lastNodeId;
-                // TODO: getting combined priorities
-                newNode.rating = routeEdges[i].cost // overall cost of getting through route edge
-                                    + distance(pNode.lon, pNode.lat, endNode.lon, endNode.lat); // distance to endNode
+                PiLibocik::Partition::Edge routeEdge = routeEdges.at(i);
 
-                availableMoves[availableMoves.size()] = newNode;
+                PiLibocik::Partition::Node neighbourNode = routeEdge.getPairObj();
+
+                double cost = 1.2 * distance(neighbourNode.getLon(), neighbourNode.getLat(), currentRouteNode->getLon(), currentRouteNode->getLat()); // estimated cost of going through route edge
+                rating = cost + distance(neighbourNode.getLon(), neighbourNode.getLat(), endNode.getLon(), endNode.getLat()); // distance to endNod
+
+                PiLibocik::Partition::RouteNode * newNode = new PiLibocik::Partition::RouteNode(neighbourNode, -1, rating, currentRouteNode, true);
+
+                key = QString::number(newNode->getPrevNode().getId()) + "_" + QString::number(newNode->getId());
+                availableMoves.insert(key, newNode);
             } // end of searching in routeEdges
 
             //
             // getting best move from available moves
             //
-            double bestRating = 99999;
-            int bestKey = -1;
-            for(std::map< int , RouteNode >::const_iterator it = availableMoves.begin(); it != availableMoves.end(); ++it) {
-                if(it->second.rating < bestRating) {
-                    bestRating = it->second.rating;
-                    bestKey = it->first;
+            double bestRating = 99999.99;
+            QString bestKey("");
+            QMapIterator< QString, PiLibocik::Partition::RouteNode * > it(availableMoves);
+            while (it.hasNext()) {
+                it.next();
+                if(it.value()->getRating() < bestRating) {
+                    bestRating = it.value()->getRating();
+                    bestKey = it.key();
                 }
             }
 
-            currentNode.prevNodeId = currentNode.id;
-            currentNode.id = availableMoves[bestKey].id;
-            currentNode.lon = availableMoves[bestKey].lon;
-            currentNode.lat = availableMoves[bestKey].lat;
-            currentNode.wayId = availableMoves[bestKey].wayId;
-            currentNode.cell = availableMoves[bestKey].cell;
-            currentNode.rating = availableMoves[bestKey].rating;
-            usedMoves[usedMoves.size()] = currentNode;
-            availableMoves.erase(bestKey);
+            currentRouteNode = availableMoves.take(bestKey);
+            usedMoves.insert(bestKey, currentRouteNode);
+            availableMoves.remove(bestKey);
+        }
+
+        //
+        // currendNode = endNode, so reproduce path...
+        //
+        QList< Step > partialRoute;
+        Step currentStep;
+        int previousId = -1;
+        int currentId = -1;
+        Id wayId = -1;
+        osmscout::WayRef way;
+
+        // connectiong to database
+        osmscout::DatabaseParameter databaseParameter;
+        osmscout::Database database(databaseParameter);
+        QString map = Settings::getInstance()->getMapPath();
+        if (map.size() != 0 && !database.Open((const char*)map.toAscii())) {
+            std::cerr << "Fatal error: Cannot open database" << std::endl;
+        }
+
+        // creating route
+        while(currentRouteNode->getId() != startNode.getId()) {
+            // adding current node (crossing)
+            currentStep.id = currentRouteNode->getId();
+            currentStep.lon = currentRouteNode->getLon();
+            currentStep.lat = currentRouteNode->getLat();
+            wayId = currentRouteNode->getPrevWay();
+            currentStep.wayId = wayId;
+            currentStep.routing = currentRouteNode->getRouting();
+            currentStep.crossing = true;
+
+            finalRoute.push_front(currentStep);
+
+            if(!currentStep.routing) {
+                // creating route from previous node to current
+                partialRoute.clear();
+                previousId = currentRouteNode->getPrevNode().getId();
+                currentId = currentRouteNode->getId();
+
+                // getting way
+                database.GetWay(wayId, way);
+                for(int i=0; i<way->nodes.size(); ++i) {
+                    if(way->nodes.at(i).id == previousId) {
+                        // creating partial route (starting with next)
+                        for(int j=i+1; way->nodes.at(j).id == currentId; ++j) {
+                            currentStep.id = way->nodes.at(j).id;
+                            currentStep.lon = way->nodes.at(j).lon;
+                            currentStep.lat = way->nodes.at(j).lat;
+                            currentStep.wayId = wayId;
+                            currentStep.routing = false;
+                            currentStep.crossing = false;
+
+                            partialRoute.push_back(currentStep);
+                        }
+                        break;
+                    }
+                    if(way->nodes.at(i).id == currentId) {
+                        // creating partial route (starting with next)
+                        for(int j=i+1; way->nodes.at(j).id == previousId; ++j) {
+                            currentStep.id = way->nodes.at(j).id;
+                            currentStep.lon = way->nodes.at(j).lon;
+                            currentStep.lat = way->nodes.at(j).lat;
+                            currentStep.wayId = wayId;
+                            currentStep.routing = false;
+                            currentStep.crossing = false;
+
+                            partialRoute.push_front(currentStep);
+                        }
+                        break;
+                    }
+                }
+
+                // adding created route to final route
+                partialRoute.append(finalRoute);
+                finalRoute = partialRoute;
+            }
+
+            // find previous node and set it to current
+            currentRouteNode = &(currentRouteNode->getPrevNode());
+        }
+
+        // adding first step
+        currentStep.id = currentRouteNode->getId();
+        currentStep.lon = currentRouteNode->getLon();
+        currentStep.lat = currentRouteNode->getLat();
+        currentStep.routing = currentRouteNode->getRouting();
+        currentStep.crossing = true;
+
+        finalRoute.push_front(currentStep);
+
+        // deleting all route nodes
+        QMapIterator< QString, PiLibocik::Partition::RouteNode * > itA(availableMoves);
+        while (itA.hasNext()) {
+            itA.next();
+            delete itA.value();
+        }
+        QMapIterator< QString, PiLibocik::Partition::RouteNode * > itB(usedMoves);
+        while (itB.hasNext()) {
+            itB.next();
+            delete itB.value();
         }
     }
 

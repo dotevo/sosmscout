@@ -23,6 +23,7 @@
 #include <../../PiLibocik/include/pilibocik/partition/boundaryedge.h>
 #include <../../PiLibocik/include/pilibocik/partition/partitionfile.h>
 #include <../../PiLibocik/include/pilibocik/partition/node.h>
+#include <../../PiLibocik/include/pilibocik/partition/way.h>
 
 namespace osmscout {
     Partitioning::Partitioning()
