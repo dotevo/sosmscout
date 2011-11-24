@@ -1,5 +1,6 @@
 QT       += core sql \
-            gui
+            gui \
+            xml
 
 TARGET = build/example-build
 TEMPLATE = app

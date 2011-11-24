@@ -73,7 +73,8 @@ namespace osmscout {
 
                 for(unsigned int j=0; j<nodesInInnerWay.size(); ++j) {
                     if(currentRouteNode->getId()
-                            == nodesInInnerWay.at(j).getId()) {
+                            == 0) {
+                            //== nodesInInnerWay.at(j).getId()) {
                         if(j > 0) {
                             // TODO: taking oneway into account
                             PiLibocik::Partition::Node neighbourNode = nodesInInnerWay.at(j-1);

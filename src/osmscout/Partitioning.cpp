@@ -639,6 +639,7 @@ namespace osmscout {
         }
     }
 
+#ifdef PiLibocik_WRITE_MODE
     void Partitioning::saveToDatabase(QString name, DatabasePartition& databasePartition)
     {
         //
@@ -718,6 +719,7 @@ namespace osmscout {
 
         partitionFile.savePartition(fileWays, fileNodes, 2);
     }
+#endif
 
     Partitioning::DatabasePartition  Partitioning::FindPartition()
     {

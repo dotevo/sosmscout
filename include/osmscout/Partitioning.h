@@ -178,11 +178,13 @@ namespace osmscout {
          *
          */
         void TestAlgorithm();
+#ifdef PiLibocik_WRITE_MODE
         /**
          * @brief Save data by PartitionModel.
          *
          */
         void saveToDatabase(QString name, DatabasePartition& databasePartition);
+#endif
         /**
          * @brief Calculates all priorities.
          *
