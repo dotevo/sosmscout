@@ -70,12 +70,13 @@ namespace osmscout {
             for(int i=0; i<innerWays.size(); ++i) { // start of searching in innerWays
                 PiLibocik::Partition::Way innerWay = innerWays.at(i);
                 QVector<PiLibocik::Partition::Node> nodesInInnerWay = innerWay.getNodesObj();
+                int innerWayOneway = innerWay.getOneway();
 
                 for(int j=0; j<nodesInInnerWay.size(); ++j) {
+                    PiLibocik::Partition::Node nodeInWay = nodesInInnerWay.at(j);
                     if(currentRouteNode->getId()
-                            == 0) {
-                            //== nodesInInnerWay.at(j).getId()) {
-                        if(j > 0) {
+                            == nodeInWay.getId()) {
+                        if(j > 0 && innerWayOneway != 1) {
                             // TODO: taking oneway into account
                             PiLibocik::Partition::Node neighbourNode = nodesInInnerWay.at(j-1);
 
@@ -88,7 +89,7 @@ namespace osmscout {
                             key = QString::number(newNode->getPrevNode().getId()) + "_" + QString::number(newNode->getId());
                             availableMoves.insert(key, newNode);
                         }
-                        if(j < nodesInInnerWay.size()-1) {
+                        if(j < nodesInInnerWay.size()-1 && innerWayOneway != -1) {
                             PiLibocik::Partition::Node neighbourNode = nodesInInnerWay.at(j+1);
 
                             rating = (innerWay.getPrioritet() // priority of way on which one should go
@@ -106,14 +107,36 @@ namespace osmscout {
 
             for(int i=0; i<boundaryEdges.size(); ++i) { // start of searching in boundaryEdges
                 PiLibocik::Partition::BoundaryEdge boundaryEdge = boundaryEdges.at(i);
-
+                PiLibocik::Partition::Way boundaryWay = boundaryEdge.getWayObj();
                 PiLibocik::Partition::Node neighbourNode = boundaryEdge.getPairObj();
+
+                // checking if oneway
+                bool valid = true;
+                if(boundaryWay.getOneway() != 0) {
+                    QVector<PiLibocik::Partition::Node> nodesInBoundaryWay = boundaryWay.getNodesObj();
+
+                    for(int j=0; j<nodesInBoundaryWay.size(); ++j) {
+                        PiLibocik::Partition::Node nodeInWay = nodesInBoundaryWay.at(j);
+
+                        if(nodeInWay.getId() == currentRouteNode->getId()) {
+                            if(boundaryWay.getOneway() == -1) {
+                                valid = false;
+                            }
+                            break;
+                        }
+                        if(nodeInWay.getId() == neighbourNode.getId()) {
+                            if(boundaryWay.getOneway() == 1) {
+                                valid = false;
+                            }
+                            break;
+                        }
+                    }
+                }
 
                 rating = (boundaryEdge.getPrioritet() // priority of way on which one should go
                                 * distance(neighbourNode.getLon(), neighbourNode.getLat(), currentRouteNode->getLon(), currentRouteNode->getLat())) // distance from current node
                             + distance(neighbourNode.getLon(), neighbourNode.getLat(), endNode.getLon(), endNode.getLat()); // distance to endNod
-
-                PiLibocik::Partition::RouteNode * newNode = new PiLibocik::Partition::RouteNode(neighbourNode, boundaryEdge.getWayObj().getId(), rating, currentRouteNode);
+                PiLibocik::Partition::RouteNode * newNode = new PiLibocik::Partition::RouteNode(neighbourNode, boundaryWay.getId(), rating, currentRouteNode);
 
                 key = QString::number(newNode->getPrevNode().getId()) + "_" + QString::number(newNode->getId());
                 availableMoves.insert(key, newNode);

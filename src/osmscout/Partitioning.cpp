@@ -13,6 +13,8 @@
 
 #include <QDebug>
 
+#include <QDomDocument>
+
 #include <osmscout/Util.h>
 #include <osmscout/Partitionmodel.h>
 
@@ -26,8 +28,8 @@ namespace osmscout {
 Partitioning::Partitioning()
 {
     // setting alpha and beta factors for quality function
-    alpha = 0.98;
-    beta = 0.07;
+    alpha = 0.99;
+    beta = 0.005;
     //alpha = 0.95;
     //beta = 1;
 
@@ -354,11 +356,11 @@ void Partitioning::InitData()
             if(onewayString.compare("1") == 0
                     || onewayString.compare("yes") == 0
                     || onewayString.compare("true") == 0
-                    || onewayString.compare("1, yes") == 0) {
+                    || onewayString.compare("1;yes") == 0) {
                 way->oneway = 1;
             } else if(onewayString.compare("-1") == 0
-                      || onewayString.compare("no") == 0
-                      || onewayString.compare("false") == 0
+                      //|| onewayString.compare("no") == 0
+                      //|| onewayString.compare("false") == 0
                       || onewayString.compare("-1;yes") == 0) {
                 way->oneway = -1;
             }
@@ -407,6 +409,7 @@ void Partitioning::InitData()
     UpdatePartitionData();
     emit initDataPartProgress(100);
 
+    db.close();
     emit initDataOverallProgress(95);
 }
 
@@ -639,7 +642,7 @@ void Partitioning::UpdatePartitionData()
         partition.cellsNodesCount[node.cell] += 1;
         if(node.type == BOUNDARY) {
             partition.cellsBoundaryNodesCount[node.cell] += 1;
-            partition.cellsBoundaryNodes[node.cell]->push_back(node.id);
+            partition.cellsBoundaryNodes[node.cell]->push_back(i);
         }
     }
     for(unsigned int i=0; i<partition.cellsCount; ++i) {
@@ -787,10 +790,10 @@ void Partitioning::saveToDatabase(DatabasePartition& databasePartition)
     //
     // saving to sql database
     //
-        osmscout::PartitionModel pm;
-        pm.open(finalDataPath + "\part.db");
-        pm.createTables();
-        pm.exportToDatabase(databasePartition);
+    /*osmscout::PartitionModel pm;
+    pm.open(finalDataPath + "\part.db");
+    pm.createTables();
+    pm.exportToDatabase(databasePartition);*/
 
     //
     // saving to binary file
@@ -887,10 +890,12 @@ Partitioning::DatabasePartition  Partitioning::FindPartition()
     bestQuality = quality;
     bestCellsCount = partition.cellsCount;
 
-    while(partition.cellsCount > 1) {
+    while(partition.cellsCount > 1999) {
         if(partition.cellsCount % 100 == 0) {
-            emit partCalcProgress((int)((double)partition.cellsCount/(double)partition.nodesCount * 100)-2);
+            emit partCalcProgress((int)((1.0-((double)partition.cellsCount/(double)partition.nodesCount)) * 97)+2);
         }
+        cellI = 0;
+        cellJ = partition.cellsCount-1;
         maxPriority = 0;
         for(unsigned int i=0; i<partition.cellsCount-1; ++i) {
             for(std::map< unsigned int, double >::iterator it = partition.priorities[i]->begin(); it!=partition.priorities[i]->end(); ++it) {
@@ -944,6 +949,11 @@ Partitioning::DatabasePartition  Partitioning::FindPartition()
     qDebug() << "best quality: " << bestQuality;
     qDebug() << "best cells count: " << bestCellsCount;
 
+    return getDatabasePartition();
+}
+
+Partitioning::DatabasePartition Partitioning::getDatabasePartition()
+{
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     // Next +/-50 lines needs to be put into another method (maybe even savaToDatabase).
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -953,13 +963,43 @@ Partitioning::DatabasePartition  Partitioning::FindPartition()
     qDebug()<<"FOUND PARTITION N:"<<bestPartition.nodes.size()<<" W:"<<bestPartition.ways.size();
     databasePartition.nodes = bestPartition.nodes;
 
+    // reading priorities according to types from xml file
+    QMap< QString, double > prioritiesMap;
+
+    QDomDocument *prioXML = new QDomDocument("PrioritiesXML");
+    QFile file("priorities.xml");
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        DatabasePartition DBPart;
+        return DBPart;
+    }
+    prioXML->setContent(&file);
+    file.close();
+
+    QDomElement typeNode = prioXML->firstChildElement("priorities").firstChildElement("category").firstChildElement("type");
+    while(!typeNode.isNull())
+    {
+        QString typeName = typeNode.attributeNode("name").value();
+        double typePriority = typeNode.attributeNode("priority").value().toDouble();
+
+        prioritiesMap.insert(typeName, typePriority);
+
+        typeNode = typeNode.nextSiblingElement("type");
+    }
+    delete prioXML;
+
     // adding inner ways and boundary edges
+    QMap< QString, double >::iterator it;
     for (unsigned int i=0; i < bestPartition.ways.size(); ++i) {
         const PartWay way = bestPartition.ways[i];
 
         PartWay databaseWay;
         databaseWay.id = way.id;
-        databaseWay.priority = 1; // TODO: calculating priority somehow
+        it = prioritiesMap.find(way.type);
+        if(it != prioritiesMap.end()) {
+            databaseWay.priority = it.value();
+        } else {
+            databaseWay.priority = 1;
+        }
         databaseWay.nodes.push_back(way.nodes[0]);
         PartNode node = bestPartition.nodes[way.nodes[0]];
         int prevCell = node.cell;

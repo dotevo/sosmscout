@@ -154,10 +154,20 @@ namespace osmscout {
             int oneway;
         };
         /**
+         * @brief Simple structure that helps during saving to the file.
+         *
+         */
+        struct DatabasePartition {
+            std::vector< PartNode > nodes;
+            std::vector< PartWay > innerWays;
+            std::vector< BoundaryEdge > boundaryEdges;
+            std::vector< RouteEdge > routingEdges;
+        };
+    private:
+        /**
          * @brief Simple structure that holds all nodes, ways and calculated values needed during partitioning process.
          *
          */
-    private:
         struct Partition
         {
             std::vector< PartNode > nodes;
@@ -222,15 +232,13 @@ namespace osmscout {
          * @return value of quality function.
          */
         double CalculateQuality();
+        /**
+         * @brief Converts bestPartition to DatabasePartition object for saving.
+         *
+         */
+        DatabasePartition getDatabasePartition();
 
     public:
-        struct DatabasePartition {
-            std::vector< PartNode > nodes;
-            std::vector< PartWay > innerWays;
-            std::vector< BoundaryEdge > boundaryEdges;
-            std::vector< RouteEdge > routingEdges;
-        };
-
         /**
          * @brief Initializes all objects and fields.
          *
