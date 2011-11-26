@@ -67,11 +67,11 @@ namespace osmscout {
             boundaryEdges = currentRouteNode->getBoundaryEdges();
 
             // getting neighbours of current node (in every of ways and edges), creating RouteNodes from them and adding to available moves
-            for(unsigned int i=0; i<innerWays.size(); ++i) { // start of searching in innerWays
+            for(int i=0; i<innerWays.size(); ++i) { // start of searching in innerWays
                 PiLibocik::Partition::Way innerWay = innerWays.at(i);
                 QVector<PiLibocik::Partition::Node> nodesInInnerWay = innerWay.getNodesObj();
 
-                for(unsigned int j=0; j<nodesInInnerWay.size(); ++j) {
+                for(int j=0; j<nodesInInnerWay.size(); ++j) {
                     if(currentRouteNode->getId()
                             == 0) {
                             //== nodesInInnerWay.at(j).getId()) {
@@ -104,7 +104,7 @@ namespace osmscout {
                 }
             } // end of searching in innerWays
 
-            for(unsigned int i=0; i<boundaryEdges.size(); ++i) { // start of searching in boundaryEdges
+            for(int i=0; i<boundaryEdges.size(); ++i) { // start of searching in boundaryEdges
                 PiLibocik::Partition::BoundaryEdge boundaryEdge = boundaryEdges.at(i);
 
                 PiLibocik::Partition::Node neighbourNode = boundaryEdge.getPairObj();
@@ -119,7 +119,7 @@ namespace osmscout {
                 availableMoves.insert(key, newNode);
             } // end of searching in boundaryEdges
 
-            for(unsigned int i=0; i<routeEdges.size(); ++i) { // start of searching in routeEdges
+            for(int i=0; i<routeEdges.size(); ++i) { // start of searching in routeEdges
                 PiLibocik::Partition::Edge routeEdge = routeEdges.at(i);
 
                 PiLibocik::Partition::Node neighbourNode = routeEdge.getPairObj();
@@ -157,15 +157,16 @@ namespace osmscout {
         //
         QList< Step > partialRoute;
         Step currentStep;
-        int previousId = -1;
-        int currentId = -1;
+        unsigned int previousId = -1;
+        unsigned int currentId = -1;
         Id wayId = -1;
         osmscout::WayRef way;
 
         // connectiong to database
         osmscout::DatabaseParameter databaseParameter;
         osmscout::Database database(databaseParameter);
-        QString map = Settings::getInstance()->getMapPath();
+        QString map("D:\\pilocik\\map\\");
+        //QString map = Settings::getInstance()->getMapPath();
         if (map.size() != 0 && !database.Open((const char*)map.toAscii())) {
             std::cerr << "Fatal error: Cannot open database" << std::endl;
         }
@@ -191,7 +192,7 @@ namespace osmscout {
 
                 // getting way
                 database.GetWay(wayId, way);
-                for(int i=0; i<way->nodes.size(); ++i) {
+                for(unsigned int i=0; i<way->nodes.size(); ++i) {
                     if(way->nodes.at(i).id == previousId) {
                         // creating partial route (starting with next)
                         for(int j=i+1; way->nodes.at(j).id == currentId; ++j) {
@@ -251,6 +252,8 @@ namespace osmscout {
             itB.next();
             delete itB.value();
         }
+
+        return finalRoute;
     }
 
     std::vector< Routing::RouteNode > Routing::CalculateRouteFromDatabase(Id startId, Id endId)
@@ -418,7 +421,6 @@ namespace osmscout {
         //
         // currendNode = endNode, so reproduce path...
         //
-        QList< Step > route;
         std::list< RouteNode > simplifiedRoute;
         Step currentStep;
         while(currentNode.id != startId) {
@@ -427,21 +429,8 @@ namespace osmscout {
             currentStep.lat = currentNode.lat;
             currentStep.routing = currentNode.routing;
             currentStep.crossing = true;
-            route.push_front(currentStep);
+            //route.push_front(currentStep);
             simplifiedRoute.push_front(currentNode);
-
-            Partitioning::PartWay way = partitionModel->getWay(currentNode.wayId);
-
-            for(unsigned int i=0; i<way.nodes.size(); ++i) {
-                if(way.nodes[i] == currentNode.id) {
-                    unsigned int prevId = currentNode.prevNodeId;
-                    while(currentNode.id != prevId) {
-                        //osodir;
-                    }
-                } else if(way.nodes[i] == currentNode.prevNodeId) {
-                    //y;
-                }
-            }
 
             // find previous node and set it to current
             for(std::map< int, RouteNode >::const_iterator it = usedMoves.begin(); it != usedMoves.end(); ++it) {
@@ -454,7 +443,7 @@ namespace osmscout {
             }
         }
 
-        //std::vector<RouteNode> route;
+        std::vector<RouteNode> route;
 
         // TODO: Reproduce detailed path
         /*
@@ -464,9 +453,9 @@ namespace osmscout {
 
             route.push_back(*(it));
         }
-        // TODO: Reproduce detailed path
+        // TODO: Reproduce detailed path*/
 
-        return route;*/
+        return route;
     }
 
     double Routing::distance(double lonA, double latA, double lonB, double latB)

@@ -93,7 +93,7 @@ bool PartitionModel::exportToDatabase(Partitioning::DatabasePartition &dbpart){
         queriesBuffer.append(QString("INSERT INTO innerWays ( id, prio_car ) VALUES("
                                      +QString::number(way.id)+", "
                                      +QString::number(way.priority)+");\n "));
-        for(int j=0;j<way.nodes.size();j++){            
+        for(unsigned int j=0;j<way.nodes.size();j++){
             queriesBuffer.append(QString("INSERT INTO ways_nodes VALUES("
                                          +QString::number(way.id)+", "
                                          +QString::number(way.nodes.at(j))+", "
@@ -165,7 +165,7 @@ Partitioning::PartWay PartitionModel::getWay( long WayId ){
 
 std::vector< Partitioning::PartWay > PartitionModel::getWays( std::vector< long > WaysIds ){
     QString ways;
-    for(int i=0;i<WaysIds.size();i++){
+    for(unsigned int i=0;i<WaysIds.size();i++){
         if(i!=0)
             ways+=", ";
         ways+=QString::number(WaysIds[i]);
@@ -234,7 +234,7 @@ Partitioning::PartNode PartitionModel::getNode( long NodeId ){
 
 std::vector< Partitioning::PartNode > PartitionModel::getNodes( std::vector< long > NodesIds ){
     QString nodes;
-    for(int i=0;i<NodesIds.size();i++){
+    for(unsigned int i=0;i<NodesIds.size();i++){
         if(i!=0)
             nodes+=", ";
         nodes+=QString::number(NodesIds[i]);
