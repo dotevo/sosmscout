@@ -466,19 +466,30 @@ namespace osmscout {
             }
         }
 
+<<<<<<< HEAD
         std::vector<RouteNode> route;
 
         // TODO: Reproduce detailed path
         /*
+=======
+        std::vector<RouteNode> route2;
+/*
+>>>>>>> 96135bedc6f510d74ccc97fd74076e4f11304770
         // printing results for test
         for(std::list< RouteNode >::const_iterator it = simplifiedRoute.begin(); it != simplifiedRoute.end(); ++it) {
             qDebug() <<  "Node " << it->id << " from " << it->prevNodeId;
 
             route.push_back(*(it));
         }
+<<<<<<< HEAD
         // TODO: Reproduce detailed path*/
 
         return route;
+=======
+        // TODO: Reproduce detailed path
+*/
+        return route2;
+>>>>>>> 96135bedc6f510d74ccc97fd74076e4f11304770
     }
 
     double Routing::distance(double lonA, double latA, double lonB, double latB)

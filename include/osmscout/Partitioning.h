@@ -232,13 +232,13 @@ namespace osmscout {
          * @return value of quality function.
          */
         double CalculateQuality();
+
+    public:
         /**
          * @brief Converts bestPartition to DatabasePartition object for saving.
          *
          */
         DatabasePartition getDatabasePartition();
-
-    public:
         /**
          * @brief Initializes all objects and fields.
          *
