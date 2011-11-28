@@ -3,7 +3,7 @@
 #define OSMSCOUT_EXPORT_SYMBOLS 1
 
 /* system header stdint.h is available */
-#ifdef Q_OS_WINCE_STD
+#ifdef _MSC_VER
 #define OSMSCOUT_HAVE_STDINT_H 0
 #else
 #define OSMSCOUT_HAVE_STDINT_H 1

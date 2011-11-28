@@ -821,10 +821,10 @@ void Partitioning::saveToDatabase(DatabasePartition& databasePartition)
 
         // adding nodes to way and way to nodes
         for(unsigned int j=0; j<way.nodes.size(); ++j) {
-            PiLibocik::Partition::Node nodeInWay = nodes[way.nodes[j]];
+            //PiLibocik::Partition::Node *fileNode = &nodes[way.nodes[j]];
 
             fileWay.addNode(way.nodes[j]); // ATTENTION! zmienic na indeksy nodów w liœcie, a nie ich id (w FindPartition na koñcu przy tworzeniu DatabasePartition)
-            nodeInWay.addWay(i);
+            nodes[way.nodes[j]].addWay(i);
         }
 
         ways.push_back(fileWay);
@@ -835,11 +835,11 @@ void Partitioning::saveToDatabase(DatabasePartition& databasePartition)
         Partitioning::BoundaryEdge edge = databasePartition.boundaryEdges[i];
         PiLibocik::Partition::BoundaryEdge fileEdgeAB(edge.nodeB, edge.wayId, edge.priority); // edge from A to B
         PiLibocik::Partition::BoundaryEdge fileEdgeBA(edge.nodeA, edge.wayId, edge.priority); // edge from B to A
-        PiLibocik::Partition::Node fileNodeA = nodes[edge.nodeA];
-        PiLibocik::Partition::Node fileNodeB = nodes[edge.nodeB];
+        //PiLibocik::Partition::Node *fileNodeA = &nodes[edge.nodeA];
+        //PiLibocik::Partition::Node *fileNodeB = &nodes[edge.nodeB];
 
-        fileNodeA.addBoundaryEdge(fileEdgeAB);
-        fileNodeB.addBoundaryEdge(fileEdgeBA);
+        nodes[edge.nodeA].addBoundaryEdge(fileEdgeAB);
+        nodes[edge.nodeB].addBoundaryEdge(fileEdgeBA);
     }
 
     // adding routing edges
@@ -847,11 +847,11 @@ void Partitioning::saveToDatabase(DatabasePartition& databasePartition)
         Partitioning::RouteEdge edge = databasePartition.routingEdges[i];
         PiLibocik::Partition::Edge fileEdgeAB(edge.nodeB, 1); // edge from A to B
         PiLibocik::Partition::Edge fileEdgeBA(edge.nodeA, 1); // edge from B to A
-        PiLibocik::Partition::Node fileNodeA = nodes[edge.nodeA];
-        PiLibocik::Partition::Node fileNodeB = nodes[edge.nodeB];
+        //PiLibocik::Partition::Node *fileNodeA = &nodes[edge.nodeA];
+        //PiLibocik::Partition::Node *fileNodeB = &nodes[edge.nodeB];
 
-        fileNodeA.addRoutingEdge(fileEdgeAB);
-        fileNodeB.addRoutingEdge(fileEdgeBA);
+        nodes[edge.nodeA].addRoutingEdge(fileEdgeAB);
+        nodes[edge.nodeB].addRoutingEdge(fileEdgeBA);
     }
 
     // creating list of nodes
