@@ -21,6 +21,7 @@ namespace osmscout {
   */
 class Searching
 {
+
 private:
     osmscout::DatabaseParameter databaseParameter;
     osmscout::Database          *database;
@@ -32,14 +33,24 @@ private:
     void insertPoiTypes();
 
 public:
+
+    class Intersection {
+    public:
+        Intersection();
+        QPointF myPos;
+        QPointF cross;
+        QPointF way;
+        QList<QPointF> ways; // at '0' is our road
+    };
+
     Searching();
 
     /**
       @brief It calculates distance between two points and return results in kilometers.
-      @param sx X coordinate of first node.
-      @param sy Y coordinate of first node.
-      @param dx X coordinate of second node.
-      @param dy Y coordinate of second node.
+      @param sx Lon coordinate of first node.
+      @param sy Lat coordinate of first node.
+      @param dx Lon coordinate of second node.
+      @param dy Lat coordinate of second node.
       @return Distance between two nodes.
       */
     static double CalculateDistance(double sx, double sy, double dx, double dy);
@@ -57,12 +68,26 @@ public:
                                osmscout::Routing::RouteNode secondPoint,
                                int precision = 10);
 
+    /**
+      @brief Correcting position if signal from satelits is not exactly real.
+      @param firstNode Last visited node.
+      @param secondNode Next visit node.
+      @param position Position received from satelits.
+      @param p <i>Projection</i> class from library.
+      @param tolerance Maximal tolerance for signal in meters.
+      @param changeRouteTolerance Tolerance of accepting new position and left route.
+      @return Coordinates of correct position.
+      */
     static QPointF CorrectPosition(osmscout::Routing::RouteNode firstNode,
                                     osmscout::Routing::RouteNode secondNode,
                                     QPointF position,
                                     const osmscout::Projection &p,
                                     double tolerance = 3,
                                     double changeRouteTolerance = 20);
+
+    static Intersection SimulateNextCrossing(osmscout::Routing::RouteNode lastNode,
+                                     osmscout::Routing::RouteNode crossingNode,
+                                     QList<osmscout::Routing::RouteNode> waysNodes);
 
     void searchAllRegions();
 
@@ -79,6 +104,7 @@ public:
                        std::vector<osmscout::WayRef> &areas, std::vector<osmscout::RelationRef>& relationWays,
                        std::vector<osmscout::RelationRef>& relationAreas);
     void searchPoi(double x, double y, double distance, QString type, QVector<NodeRef> &poiRef);
+
 };
 
 }

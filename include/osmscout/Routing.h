@@ -3,10 +3,24 @@
 
 #include <osmscout/util/Geometry.h>
 
+#include <../../PiLibocik/include/pilibocik/position.h>
+
 namespace osmscout {
     class Routing
     {
     public:
+        /**
+         * @brief Structure that represets one step of calculated route.
+         *
+         */
+        struct Step {
+            Id id;
+            double lon;
+            double lat;
+            Id wayId; // by which one came to this node from prevNode
+            bool crossing;
+            bool routing;
+        };
         /**
          * @brief Structure that represets node with information from which node one came, so it represents step in graph.
          *
@@ -42,12 +56,19 @@ namespace osmscout {
         /**
          * @brief Calculates route from start node (point) to end node (point).
          *
-         * @param startId id of start node
-         * @param endId id of end node
+         * @param startPosition - position of start node
+         * @param endPosition - position of end node
          *
          * @return list of steps in route graph - it needs to be transformed into list of steps in map (lack of some nodes).
          */
-        std::vector< RouteNode > CalculateRoute(Id startId, Id endId);
+        QList< Routing::Step > CalculateRoute(PiLibocik::Position startPosition, PiLibocik::Position endPosition);
+        /**
+         * @brief Old method that uses sql database.
+         *
+         * @param startId id of start node
+         * @param endId id of end node
+         */
+        std::vector< RouteNode > CalculateRouteFromDatabase(Id startId, Id endId);
     };
 }
 
