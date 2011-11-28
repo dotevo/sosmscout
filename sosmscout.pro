@@ -117,5 +117,6 @@ SOURCES += \
 INCLUDEPATH += include/
 
 TEMPLATE = subdirs
-SUBDIRS += \
-    partitionTest
+SUBDIRS +=
+
+
