@@ -38,13 +38,14 @@ namespace osmscout {
             Id lastRoutingNodeId;
         };
         /**
-         * @brief Calculates distance from given node to end node.
+         * @brief Calculates distance between two positions.
          *
-         * @param node node from which calculate distance
-         * @param endNode node to which calculate distance
+         * @param positionA - first position
+         * @param positionB - second position
          *
          * @return distance from node to endNode
          */
+        double distance(PiLibocik::Position positionA, PiLibocik::Position positionB);
         double distance(double lonA, double latA, double lonB, double latB);
 
     //public:
