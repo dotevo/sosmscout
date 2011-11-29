@@ -80,10 +80,11 @@ void Partitioning::InitData()
 
     double lonMin, latMin, lonMax, latMax;
     //, magnification;
-    latMin = 50.1;
-    lonMin = 14.85;
-    latMax = 51.5;
-    lonMax = 17.5;
+    latMin = 51.1;
+    lonMin = 17.0;
+    latMax = 51.15;
+    lonMax = 17.3;
+    //Wroc³aw 51.118552&lon=17.057824
 
     //        latMin = 50.2;
     //        lonMin = 16.4;
@@ -970,8 +971,8 @@ Partitioning::DatabasePartition Partitioning::getDatabasePartition()
     QFile file("priorities.xml");
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         DatabasePartition DBPart;
-        return DBPart;
-    }
+        //return DBPart;
+    }/*
     prioXML->setContent(&file);
     file.close();
 
@@ -986,7 +987,7 @@ Partitioning::DatabasePartition Partitioning::getDatabasePartition()
         typeNode = typeNode.nextSiblingElement("type");
     }
     delete prioXML;
-
+*/
     // adding inner ways and boundary edges
     QMap< QString, double >::iterator it;
     for (unsigned int i=0; i < bestPartition.ways.size(); ++i) {
@@ -1017,7 +1018,7 @@ Partitioning::DatabasePartition Partitioning::getDatabasePartition()
                     databasePartition.innerWays.push_back(databaseWay);
                 }
                 BoundaryEdge bEdge;
-                bEdge.wayId = way.id;
+                bEdge.wayId = i;
                 bEdge.nodeA = way.nodes[j-1];
                 bEdge.nodeB = way.nodes[j];
                 bEdge.priority = databaseWay.priority;
