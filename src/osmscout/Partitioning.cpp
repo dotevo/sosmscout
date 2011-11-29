@@ -60,7 +60,7 @@ void Partitioning::run()
 #endif
         break;
     }
-    Delete();
+    //Delete();
 }
 
 void Partitioning::InitData()
@@ -85,10 +85,10 @@ void Partitioning::InitData()
     latMax = 51.5;
     lonMax = 17.5;
 
-    //        latMin = 50.2;
-    //        lonMin = 16.4;
-    //        latMax = 51.3;
-    //        lonMax = 16.5;
+    latMin = 51.08;
+    lonMin = 16.98;
+    latMax = 51.14;
+    lonMax = 17.09;
     emit initDataPartProgress(100);
 
     //
@@ -829,7 +829,7 @@ void Partitioning::saveToDatabase(DatabasePartition& databasePartition)
 
         ways.push_back(fileWay);
     }
-
+/*
     // adding boundary edges
     for(unsigned int i=0; i<databasePartition.boundaryEdges.size(); ++i) {
         Partitioning::BoundaryEdge edge = databasePartition.boundaryEdges[i];
@@ -840,7 +840,7 @@ void Partitioning::saveToDatabase(DatabasePartition& databasePartition)
 
         nodes[edge.nodeA].addBoundaryEdge(fileEdgeAB);
         nodes[edge.nodeB].addBoundaryEdge(fileEdgeBA);
-    }
+    }*/
 
     // adding routing edges
     for(unsigned int i=0; i<databasePartition.routingEdges.size(); ++i) {
@@ -864,7 +864,7 @@ void Partitioning::saveToDatabase(DatabasePartition& databasePartition)
         fileWays.append(ways[i]);
     }
 
-    partitionFile.savePartition(fileWays, fileNodes, 2);
+    partitionFile.savePartition(fileWays, fileNodes, 4);
 
     emit partCalcStatusChanged("Finished.");
     emit partCalcProgress(100);
@@ -890,7 +890,7 @@ Partitioning::DatabasePartition  Partitioning::FindPartition()
     bestQuality = quality;
     bestCellsCount = partition.cellsCount;
 
-    while(partition.cellsCount > 1999) {
+    while(partition.cellsCount > 1) {
         if(partition.cellsCount % 100 == 0) {
             emit partCalcProgress((int)((1.0-((double)partition.cellsCount/(double)partition.nodesCount)) * 97)+2);
         }
