@@ -25,9 +25,13 @@ namespace osmscout {
         //
         // initialization
         //
-        PiLibocik::Partition::PartitionFile partitionFile("test","car",QIODevice::ReadOnly,1);
+        QString dbPath("");
+        PiLibocik::Partition::PartitionFile partitionFile(dbPath, "car", QIODevice::ReadOnly, 1);
 
-        PiLibocik::Partition::Node startNode = partitionFile.getNearestNode(startPosition); // TODO: implementation of this method
+        PiLibocik::BoundaryBox bbox(PiLibocik::Position(0.1, 0.1), PiLibocik::Position(62.0, 62.0));
+        QList<PiLibocik::Partition::Node> fileNodes = partitionFile.getNodesFromBoundaryBox(bbox);
+
+        PiLibocik::Partition::Node startNode = partitionFile.getNearestNode(startPosition);
         PiLibocik::Partition::Node endNode = partitionFile.getNearestNode(endPosition);
         unsigned int startCell = startNode.getCell();
         unsigned int endCell = endNode.getCell();
