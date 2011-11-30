@@ -80,10 +80,11 @@ void Partitioning::InitData()
 
     double lonMin, latMin, lonMax, latMax;
     //, magnification;
-    latMin = 50.1;
-    lonMin = 14.85;
-    latMax = 51.5;
-    lonMax = 17.5;
+    latMin = 51.1;
+    lonMin = 17.0;
+    latMax = 51.15;
+    lonMax = 17.3;
+    //Wroc³aw 51.118552&lon=17.057824
 
     latMin = 51.08;
     lonMin = 16.98;
@@ -970,7 +971,7 @@ Partitioning::DatabasePartition Partitioning::getDatabasePartition()
     QFile file("priorities.xml");
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         DatabasePartition DBPart;
-        return DBPart;
+        //return DBPart;
     }
     prioXML->setContent(&file);
     file.close();
@@ -1007,30 +1008,32 @@ Partitioning::DatabasePartition Partitioning::getDatabasePartition()
         for(unsigned int j=1; j < way.nodes.size(); ++j) {
             node = bestPartition.nodes[way.nodes[j]];
             cell = node.cell;
-            if(cell == prevCell) {
+            //if(cell == prevCell) {
                 // if still in the same cell then continue building inner way
                 databaseWay.nodes.push_back(way.nodes[j]);
-            } else {
+            //} else {
+            if(cell != prevCell) {
                 // if went to another cell than push inner way created so far to database partition, push boundary edge and start new inner way
-                if(databaseWay.nodes.size() > 1) {
+                /*if(databaseWay.nodes.size() > 1) {
                     // if it's not just the start of way than push inner way to database partition
                     databasePartition.innerWays.push_back(databaseWay);
-                }
+                }*/
                 BoundaryEdge bEdge;
-                bEdge.wayId = way.id;
+                bEdge.wayId = i;
                 bEdge.nodeA = way.nodes[j-1];
                 bEdge.nodeB = way.nodes[j];
                 bEdge.priority = databaseWay.priority;
                 databasePartition.boundaryEdges.push_back(bEdge);
-                databaseWay.nodes.clear();
-                databaseWay.nodes.push_back(way.nodes[j]);
+                /*databaseWay.nodes.clear();
+                databaseWay.nodes.push_back(way.nodes[j]);*/
             }
             prevCell = cell;
         }
-        if(databaseWay.nodes.size()>1) {
+        /*if(databaseWay.nodes.size()>1) {
             // if database way contains only one node than it means that last step detected boundary way and we should not push inner way to database
             databasePartition.innerWays.push_back(databaseWay);
-        }
+        }*/
+        databasePartition.innerWays.push_back(databaseWay);
     }
 
     // adding routing edges

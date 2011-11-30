@@ -220,9 +220,9 @@ double Searching::CalculateDistance(double sx, double sy, double dx, double dy)
     //return sqrt(pow(sx - dx, 2) + pow(sy - dy, 2));
 }
 
-bool Searching::IsBetweenNodes(osmscout::Routing::RouteNode actualPoint,
-                               osmscout::Routing::RouteNode firstPoint,
-                               osmscout::Routing::RouteNode secondPoint,
+bool Searching::IsBetweenNodes(osmscout::Routing::Step actualPoint,
+                               osmscout::Routing::Step firstPoint,
+                               osmscout::Routing::Step secondPoint,
                                int precision)
 {
     double partDist1 = CalculateDistance(actualPoint.lat, actualPoint.lon, firstPoint.lat, firstPoint.lon);
@@ -240,8 +240,8 @@ bool Searching::IsBetweenNodes(osmscout::Routing::RouteNode actualPoint,
 
 }
 
-QPointF Searching::CorrectPosition(osmscout::Routing::RouteNode firstNode,
-                                   osmscout::Routing::RouteNode secondNode,
+QPointF Searching::CorrectPosition(osmscout::Routing::Step firstNode,
+                                   osmscout::Routing::Step secondNode,
                                    QPointF position,
                                    const osmscout::Projection &projection,
                                    double tolerance,
@@ -280,9 +280,9 @@ QPointF Searching::CorrectPosition(osmscout::Routing::RouteNode firstNode,
     }
 }
 
-osmscout::Searching::Intersection Searching::SimulateNextCrossing(osmscout::Routing::RouteNode lastNode,
-                                                                  osmscout::Routing::RouteNode crossingNode,
-                                                                  QList<osmscout::Routing::RouteNode> waysNodes)
+osmscout::Searching::Intersection Searching::SimulateNextCrossing(osmscout::Routing::Step lastNode,
+                                                                  osmscout::Routing::Step crossingNode,
+                                                                  QList<osmscout::Routing::Step> waysNodes)
 {
     int panelWidth = 109;
     int panelHeight = 122;

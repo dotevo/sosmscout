@@ -38,13 +38,14 @@ namespace osmscout {
             Id lastRoutingNodeId;
         };
         /**
-         * @brief Calculates distance from given node to end node.
+         * @brief Calculates distance between two positions.
          *
-         * @param node node from which calculate distance
-         * @param endNode node to which calculate distance
+         * @param positionA - first position
+         * @param positionB - second position
          *
          * @return distance from node to endNode
          */
+        double distance(PiLibocik::Position positionA, PiLibocik::Position positionB);
         double distance(double lonA, double latA, double lonB, double latB);
 
     //public:
@@ -61,7 +62,7 @@ namespace osmscout {
          *
          * @return list of steps in route graph - it needs to be transformed into list of steps in map (lack of some nodes).
          */
-        QList< Routing::Step > CalculateRoute(PiLibocik::Position startPosition, PiLibocik::Position endPosition);
+        QVector< Routing::Step > CalculateRoute(PiLibocik::Position startPosition, PiLibocik::Position endPosition);
         /**
          * @brief Old method that uses sql database.
          *
