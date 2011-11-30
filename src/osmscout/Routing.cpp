@@ -20,7 +20,7 @@ namespace osmscout {
     {
     }
 
-    QList< Routing::Step > Routing::CalculateRoute(PiLibocik::Position startPosition, PiLibocik::Position endPosition)
+    QVector< Routing::Step > Routing::CalculateRoute(PiLibocik::Position startPosition, PiLibocik::Position endPosition)
     {
         //
         // initialization
@@ -28,11 +28,11 @@ namespace osmscout {
         QString dbPath("");
         PiLibocik::Partition::PartitionFile partitionFile(dbPath, "car", QIODevice::ReadOnly, 1);
 
-        PiLibocik::BoundaryBox bbox(PiLibocik::Position(0.1, 0.1), PiLibocik::Position(62.0, 62.0));
-        QList<PiLibocik::Partition::Node> fileNodes = partitionFile.getNodesFromBoundaryBox(bbox);
-
         //PiLibocik::Partition::Node startNode = partitionFile.getNearestNode(startPosition);
         //PiLibocik::Partition::Node endNode = partitionFile.getNearestNode(endPosition);
+
+        PiLibocik::BoundaryBox bbox(PiLibocik::Position(0.1, 0.1), PiLibocik::Position(62.0, 62.0));
+        QList<PiLibocik::Partition::Node> fileNodes = partitionFile.getNodesFromBoundaryBox(bbox);
         PiLibocik::Partition::Node startNode;
         PiLibocik::Partition::Node endNode;
         double minDistStart = 99999;
@@ -49,6 +49,7 @@ namespace osmscout {
                 endNode = fileNodes.at(i);
             }
         }
+
         unsigned int startCell = startNode.getCell();
         unsigned int endCell = endNode.getCell();
 
@@ -108,7 +109,10 @@ namespace osmscout {
                             PiLibocik::Partition::RouteNode * newNode = new PiLibocik::Partition::RouteNode(neighbourNode, innerWay.getId(), rating, currentRouteNode);
 
                             key = QString::number(newNode->getPrevNode().getId()) + "_" + QString::number(newNode->getId());
-                            availableMoves.insert(key, newNode);
+                            QMap< QString, PiLibocik::Partition::RouteNode * >::iterator it = usedMoves.find(key);
+                            if(it == usedMoves.end()) {
+                                availableMoves.insert(key, newNode);
+                            }
                         }
                         if(j < nodesInInnerWay.size()-1 && innerWayOneway != -1) {
                             PiLibocik::Partition::Node neighbourNode = nodesInInnerWay.at(j+1);
@@ -120,7 +124,10 @@ namespace osmscout {
                             PiLibocik::Partition::RouteNode * newNode = new PiLibocik::Partition::RouteNode(neighbourNode, innerWay.getId(), rating, currentRouteNode);
 
                             key = QString::number(newNode->getPrevNode().getId()) + "_" + QString::number(newNode->getId());
-                            availableMoves.insert(key, newNode);
+                            QMap< QString, PiLibocik::Partition::RouteNode * >::iterator it = usedMoves.find(key);
+                            if(it == usedMoves.end()) {
+                                availableMoves.insert(key, newNode);
+                            }
                         }
                     }
                 }
@@ -160,7 +167,10 @@ namespace osmscout {
                 PiLibocik::Partition::RouteNode * newNode = new PiLibocik::Partition::RouteNode(neighbourNode, boundaryWay.getId(), rating, currentRouteNode);
 
                 key = QString::number(newNode->getPrevNode().getId()) + "_" + QString::number(newNode->getId());
-                availableMoves.insert(key, newNode);
+                QMap< QString, PiLibocik::Partition::RouteNode * >::iterator it = usedMoves.find(key);
+                if(it == usedMoves.end()) {
+                    availableMoves.insert(key, newNode);
+                }
             } // end of searching in boundaryEdges
 
             for(int i=0; i<routeEdges.size(); ++i) { // start of searching in routeEdges
@@ -174,7 +184,10 @@ namespace osmscout {
                 PiLibocik::Partition::RouteNode * newNode = new PiLibocik::Partition::RouteNode(neighbourNode, -1, rating, currentRouteNode, true);
 
                 key = QString::number(newNode->getPrevNode().getId()) + "_" + QString::number(newNode->getId());
-                availableMoves.insert(key, newNode);
+                QMap< QString, PiLibocik::Partition::RouteNode * >::iterator it = usedMoves.find(key);
+                if(it == usedMoves.end()) {
+                    availableMoves.insert(key, newNode);
+                }
             } // end of searching in routeEdges
 
             //
@@ -195,7 +208,7 @@ namespace osmscout {
             usedMoves.insert(bestKey, currentRouteNode);
             availableMoves.remove(bestKey);
 
-            qDebug() << QString::number(distance(currentRouteNode.getLon(), currentRouteNode.getLat(), endNode.getLon(), endNode.getLat()));
+            qDebug() << QString::number(distance(currentRouteNode->getLon(), currentRouteNode->getLat(), endNode.getLon(), endNode.getLat()));
         }
 
         //
@@ -220,6 +233,7 @@ namespace osmscout {
         // creating route
         while(currentRouteNode->getId() != startNode.getId()) {
             // adding current node (crossing)
+            qDebug() << "Creating route before " << currentRouteNode->getId();
             currentStep.id = currentRouteNode->getId();
             currentStep.lon = currentRouteNode->getLon();
             currentStep.lat = currentRouteNode->getLat();
@@ -239,9 +253,12 @@ namespace osmscout {
                 // getting way
                 database.GetWay(wayId, way);
                 for(unsigned int i=0; i<way->nodes.size(); ++i) {
+                    qDebug() << "Looking for node CURR or PREV";
                     if(way->nodes.at(i).id == previousId) {
+                        qDebug() << "Creating subroute on way " << way->GetId() << " start PREV = " << previousId;
                         // creating partial route (starting with next)
-                        for(int j=i+1; way->nodes.at(j).id == currentId; ++j) {
+                        for(int j=i+1; way->nodes.at(j).id != currentId; ++j) {
+                            qDebug() << "Adding step";
                             currentStep.id = way->nodes.at(j).id;
                             currentStep.lon = way->nodes.at(j).lon;
                             currentStep.lat = way->nodes.at(j).lat;
@@ -255,7 +272,9 @@ namespace osmscout {
                     }
                     if(way->nodes.at(i).id == currentId) {
                         // creating partial route (starting with next)
-                        for(int j=i+1; way->nodes.at(j).id == previousId; ++j) {
+                        qDebug() << "Creating subroute on way " << way->GetId() << " start CURR = " << currentId;
+                        for(int j=i+1; way->nodes.at(j).id != previousId; ++j) {
+                            qDebug() << "Adding step";
                             currentStep.id = way->nodes.at(j).id;
                             currentStep.lon = way->nodes.at(j).lon;
                             currentStep.lat = way->nodes.at(j).lat;
@@ -270,8 +289,11 @@ namespace osmscout {
                 }
 
                 // adding created route to final route
+                qDebug() << "Adding subroute to final route";
                 partialRoute.append(finalRoute);
                 finalRoute = partialRoute;
+            } else {
+                qDebug() << "Current step is routing";
             }
 
             // find previous node and set it to current
@@ -299,7 +321,14 @@ namespace osmscout {
             delete itB.value();
         }
 
-        return finalRoute;
+        QVector< osmscout::Routing::Step > result;
+        QListIterator< osmscout::Routing::Step > it(finalRoute);
+        while(it.hasNext()) {
+            osmscout::Routing::Step s = it.next();
+            result.push_back(s);
+            qDebug() << s.lon << ":" << s.lat << ((s.crossing) ? " x" : "");
+        }
+        return result;
     }
 
     std::vector< Routing::RouteNode > Routing::CalculateRouteFromDatabase(Id startId, Id endId)

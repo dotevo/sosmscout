@@ -63,9 +63,9 @@ public:
       @param precision Tolerance in meters.
       @return true if <i>actualPoint</i> is between nodes, false otherwise.
       */
-    static bool IsBetweenNodes(osmscout::Routing::RouteNode actualPoint,
-                               osmscout::Routing::RouteNode firstPoint,
-                               osmscout::Routing::RouteNode secondPoint,
+    static bool IsBetweenNodes(osmscout::Routing::Step actualPoint,
+                               osmscout::Routing::Step firstPoint,
+                               osmscout::Routing::Step secondPoint,
                                int precision = 10);
 
     /**
@@ -78,16 +78,16 @@ public:
       @param changeRouteTolerance Tolerance of accepting new position and left route.
       @return Coordinates of correct position.
       */
-    static QPointF CorrectPosition(osmscout::Routing::RouteNode firstNode,
-                                    osmscout::Routing::RouteNode secondNode,
+    static QPointF CorrectPosition(osmscout::Routing::Step firstNode,
+                                    osmscout::Routing::Step secondNode,
                                     QPointF position,
                                     const osmscout::Projection &p,
                                     double tolerance = 3,
                                     double changeRouteTolerance = 20);
 
-    static Intersection SimulateNextCrossing(osmscout::Routing::RouteNode lastNode,
-                                     osmscout::Routing::RouteNode crossingNode,
-                                     QList<osmscout::Routing::RouteNode> waysNodes);
+    static Intersection SimulateNextCrossing(osmscout::Routing::Step lastNode,
+                                     osmscout::Routing::Step crossingNode,
+                                     QList<osmscout::Routing::Step> waysNodes);
 
     void searchAllRegions();
 
