@@ -31,16 +31,7 @@ namespace osmscout {
         //
         // initialization
         //
-<<<<<<< HEAD
-        QString dbPath("route");
-        PiLibocik::Partition::PartitionFile partitionFile(dbPath, "car", QIODevice::ReadOnly, 1);
 
-        //PiLibocik::Partition::Node startNode = partitionFile.getNearestNode(startPosition);
-        //PiLibocik::Partition::Node endNode = partitionFile.getNearestNode(endPosition);
-
-        PiLibocik::BoundaryBox bbox(PiLibocik::Position(17, 51), PiLibocik::Position(19, 53));
-        QList<PiLibocik::Partition::Node> fileNodes = partitionFile.getNodesFromBoundaryBox(bbox);
-=======
         //PiLibocik::Partition::Node startNode = partitionFile->getNearestNode(startPosition);
         //PiLibocik::Partition::Node endNode = partitionFile->getNearestNode(endPosition);
 
@@ -50,7 +41,7 @@ namespace osmscout {
         double latMax = (startPosition.getLat()>endPosition.getLat()) ? startPosition.getLat() : endPosition.getLat();
         PiLibocik::BoundaryBox bbox(PiLibocik::Position(lonMin-0.1, latMin-0.1), PiLibocik::Position(lonMax+0.1, latMax+0.1));
         QList<PiLibocik::Partition::Node> fileNodes = partitionFile->getNodesFromBoundaryBox(bbox);
->>>>>>> 931d2ad4c67a1adbe80c0891e0776b96d847cff0
+
         PiLibocik::Partition::Node startNode;
         PiLibocik::Partition::Node endNode;
         double minDistStart = 99999;
