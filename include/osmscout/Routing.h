@@ -1,13 +1,26 @@
-#ifndef ROUTING_H
-#define ROUTING_H
+#ifndef OSMSCOUT_ROUTING_H
+#define OSMSCOUT_ROUTING_H
 
 #include <osmscout/util/Geometry.h>
 
+#include <QThread>
+
 #include <../../PiLibocik/include/pilibocik/position.h>
+#include "../../PiLibocik/include/pilibocik/partition/partitionfile.h"
 
 namespace osmscout {
-    class Routing
+    class Routing : public QObject
     {
+        Q_OBJECT
+
+    signals:
+        /**
+         * @brief Signal emited when progres is made.
+         *
+         * @param progress
+         */
+        void RoutingProgress(int progress);
+
     public:
         /**
          * @brief Structure that represets one step of calculated route.
@@ -38,22 +51,15 @@ namespace osmscout {
             Id lastRoutingNodeId;
         };
         /**
-         * @brief Calculates distance between two positions.
-         *
-         * @param positionA - first position
-         * @param positionB - second position
-         *
-         * @return distance from node to endNode
-         */
-        double distance(PiLibocik::Position positionA, PiLibocik::Position positionB);
-        double distance(double lonA, double latA, double lonB, double latB);
-
-    //public:
-        /**
          * @brief Default constructor.
          *
          */
         Routing();
+        /**
+         * @brief Default destructor.
+         *
+         */
+        ~Routing();
         /**
          * @brief Calculates route from start node (point) to end node (point).
          *
@@ -62,7 +68,7 @@ namespace osmscout {
          *
          * @return list of steps in route graph - it needs to be transformed into list of steps in map (lack of some nodes).
          */
-        QVector< Routing::Step > CalculateRoute(PiLibocik::Position startPosition, PiLibocik::Position endPosition);
+        QList< Routing::Step > CalculateRoute(PiLibocik::Position startPosition, PiLibocik::Position endPosition);
         /**
          * @brief Old method that uses sql database.
          *
@@ -70,7 +76,33 @@ namespace osmscout {
          * @param endId id of end node
          */
         std::vector< RouteNode > CalculateRouteFromDatabase(Id startId, Id endId);
+        /**
+         * @brief Transforms list of positions into list of steps.
+         *
+         * @param positions - list of positions to transform
+         */
+        QList< Routing::Step > positionsToSteps(QList< PiLibocik::Position > positions);
+    private:
+        PiLibocik::Partition::PartitionFile *partitionFile;
+        /**
+         * @brief Calculates distance between two positions.
+         *
+         * @param positionA - first position
+         * @param positionB - second position
+         *
+         * @return distance from node to endNode
+         */
+        double distance(PiLibocik::Position positionA, PiLibocik::Position positionB);
+        /**
+         * @brief Calculates distance between two positions.
+         *
+         * @param lonA - lon of first position
+         * @param latA - lat of first position
+         * @param lonB - lon of second position
+         * @param latB - lat of second position
+         */
+        double distance(double lonA, double latA, double lonB, double latB);
     };
 }
 
-#endif // ROUTING_H
+#endif // OSMSCOUT_ROUTING_H

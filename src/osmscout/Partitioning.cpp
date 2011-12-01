@@ -60,7 +60,7 @@ void Partitioning::run()
 #endif
         break;
     }
-    //Delete();
+    Delete();
 }
 
 void Partitioning::InitData()
@@ -80,16 +80,16 @@ void Partitioning::InitData()
 
     double lonMin, latMin, lonMax, latMax;
     //, magnification;
-    latMin = 51.1;
-    lonMin = 17.0;
-    latMax = 51.15;
-    lonMax = 17.3;
+    latMin = 49.98;
+    lonMin = 14.47;
+    latMax = 51.78;
+    lonMax = 17.77;
     //Wroc³aw 51.118552&lon=17.057824
 
-    latMin = 51.08;
+    /*latMin = 51.08;
     lonMin = 16.98;
     latMax = 51.14;
-    lonMax = 17.09;
+    lonMax = 17.09;*/
     emit initDataPartProgress(100);
 
     //
@@ -153,22 +153,7 @@ void Partitioning::InitData()
             + " AND way IN(SELECT ref FROM way_tags"
             + " WHERE tag IN("
             + " SELECT id FROM tags"
-            + " WHERE key == 'highway' "
-            + " AND(value == 'primary' "
-            + " OR value == 'primary_link' "
-            + " OR value == 'secondary' "
-            + " OR value == 'secondary_link' "
-            + " OR value == 'residential' "
-            + " OR value == 'residential_link' "
-            + " OR value == 'minor' "
-            + " OR value == 'track' "
-            + " OR value == 'tertiary' "
-            + " OR value == 'tertiary_link' "
-            + " OR value == 'trunk' "
-            + " OR value == 'trunk_link' "
-            + " OR value == 'road' "
-            + " OR value == 'motorway' "
-            + " OR value == 'living_street')))"
+            + " WHERE key == 'highway'))"
             + " ORDER BY way,num";
     qQuery.clear();
     qQuery.prepare(query);
@@ -185,22 +170,7 @@ void Partitioning::InitData()
             + " AND way IN(SELECT ref FROM way_tags"
             + " WHERE tag IN("
             + " SELECT id FROM tags"
-            + " WHERE key == 'highway' "
-            + " AND(value == 'primary' "
-            + " OR value == 'primary_link' "
-            + " OR value == 'secondary' "
-            + " OR value == 'secondary_link' "
-            + " OR value == 'residential' "
-            + " OR value == 'residential_link' "
-            + " OR value == 'minor' "
-            + " OR value == 'track' "
-            + " OR value == 'tertiary' "
-            + " OR value == 'tertiary_link' "
-            + " OR value == 'trunk' "
-            + " OR value == 'trunk_link' "
-            + " OR value == 'road' "
-            + " OR value == 'motorway' "
-            + " OR value == 'living_street')))"
+            + " WHERE key == 'highway'))"
             + " ORDER BY way,num";
     qQuery.clear();
     qQuery.prepare(query);
@@ -865,7 +835,7 @@ void Partitioning::saveToDatabase(DatabasePartition& databasePartition)
         fileWays.append(ways[i]);
     }
 
-    partitionFile.savePartition(fileWays, fileNodes, 4);
+    partitionFile.savePartition(fileWays, fileNodes, 5);
 
     emit partCalcStatusChanged("Finished.");
     emit partCalcProgress(100);
@@ -999,7 +969,7 @@ Partitioning::DatabasePartition Partitioning::getDatabasePartition()
         if(it != prioritiesMap.end()) {
             databaseWay.priority = it.value();
         } else {
-            databaseWay.priority = 1;
+            databaseWay.priority = 0.5;
         }
         databaseWay.nodes.push_back(way.nodes[0]);
         PartNode node = bestPartition.nodes[way.nodes[0]];
