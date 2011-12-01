@@ -54,7 +54,7 @@ namespace osmscout {
          * @brief Default constructor.
          *
          */
-        Routing();
+        Routing(PiLibocik::Partition::PartitionFile *pFile);
         /**
          * @brief Default destructor.
          *
