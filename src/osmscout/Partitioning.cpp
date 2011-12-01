@@ -800,7 +800,7 @@ void Partitioning::saveToDatabase(DatabasePartition& databasePartition)
 
         ways.push_back(fileWay);
     }
-/*
+
     // adding boundary edges
     for(unsigned int i=0; i<databasePartition.boundaryEdges.size(); ++i) {
         Partitioning::BoundaryEdge edge = databasePartition.boundaryEdges[i];
@@ -811,7 +811,7 @@ void Partitioning::saveToDatabase(DatabasePartition& databasePartition)
 
         nodes[edge.nodeA].addBoundaryEdge(fileEdgeAB);
         nodes[edge.nodeB].addBoundaryEdge(fileEdgeBA);
-    }*/
+    }
 
     // adding routing edges
     for(unsigned int i=0; i<databasePartition.routingEdges.size(); ++i) {
@@ -861,7 +861,7 @@ Partitioning::DatabasePartition  Partitioning::FindPartition()
     bestQuality = quality;
     bestCellsCount = partition.cellsCount;
 
-    while(partition.cellsCount > 1) {
+    while(partition.cellsCount > 1998) {
         if(partition.cellsCount % 100 == 0) {
             emit partCalcProgress((int)((1.0-((double)partition.cellsCount/(double)partition.nodesCount)) * 97)+2);
         }
@@ -877,6 +877,10 @@ Partitioning::DatabasePartition  Partitioning::FindPartition()
                     maxPriority = priority;
                 }
             }
+        }
+
+        if(partition.cellsCount == 2000) {
+            SaveData();
         }
 
         if(maxPriority > 0) {
@@ -965,6 +969,7 @@ Partitioning::DatabasePartition Partitioning::getDatabasePartition()
 
         PartWay databaseWay;
         databaseWay.id = way.id;
+        databaseWay.oneway = way.oneway;
         it = prioritiesMap.find(way.type);
         if(it != prioritiesMap.end()) {
             databaseWay.priority = it.value();
@@ -982,7 +987,8 @@ Partitioning::DatabasePartition Partitioning::getDatabasePartition()
                 // if still in the same cell then continue building inner way
                 databaseWay.nodes.push_back(way.nodes[j]);
             //} else {
-            if(cell != prevCell) {
+            if(false) {
+            //if(cell != prevCell) {
                 // if went to another cell than push inner way created so far to database partition, push boundary edge and start new inner way
                 /*if(databaseWay.nodes.size() > 1) {
                     // if it's not just the start of way than push inner way to database partition
@@ -1005,7 +1011,7 @@ Partitioning::DatabasePartition Partitioning::getDatabasePartition()
         }*/
         databasePartition.innerWays.push_back(databaseWay);
     }
-
+/*
     // adding routing edges
     for(unsigned int i=0; i<bestPartition.cellsBoundaryNodes.size(); ++i) {
         for(unsigned int j=0; j<bestPartition.cellsBoundaryNodes[i]->size(); ++j) {
@@ -1018,8 +1024,12 @@ Partitioning::DatabasePartition Partitioning::getDatabasePartition()
                 }
             }
         }
-    }
+    }*/
 
+    // trick to make it work
+    for (unsigned int i=0; i < databasePartition.nodes.size(); ++i) {
+        databasePartition.nodes[i].cell = 0;
+    }
     return databasePartition;
 }
 
