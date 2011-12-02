@@ -20,6 +20,7 @@ namespace osmscout {
          * @param progress
          */
         void RoutingProgress(int progress);
+        void Error(QString errorMessage);
 
     public:
         /**

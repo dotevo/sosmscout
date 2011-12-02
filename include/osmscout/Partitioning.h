@@ -3,6 +3,8 @@
 
 #include <QString>
 #include <QThread>
+#include <QVector>
+#include <QMap>
 
 #include <osmscout/util/Geometry.h>
 #include <osmscout/Node.h>
@@ -148,7 +150,7 @@ namespace osmscout {
         struct PartWay
         {
             Id id;
-            std::vector<unsigned int> nodes;
+            QVector< unsigned int > nodes;
             double priority;
             QString type;
             int oneway;
@@ -158,10 +160,10 @@ namespace osmscout {
          *
          */
         struct DatabasePartition {
-            std::vector< PartNode > nodes;
-            std::vector< PartWay > innerWays;
-            std::vector< BoundaryEdge > boundaryEdges;
-            std::vector< RouteEdge > routingEdges;
+            QVector< PartNode > nodes;
+            QVector< PartWay > innerWays;
+            QVector< BoundaryEdge > boundaryEdges;
+            QVector< RouteEdge > routingEdges;
         };
     private:
         /**
@@ -170,22 +172,22 @@ namespace osmscout {
          */
         struct Partition
         {
-            std::vector< PartNode > nodes;
-            std::vector< PartWay > ways;
-            std::vector< BoundaryEdge > boundaryEdges;
+            QVector< PartNode > nodes;
+            QVector< PartWay > ways;
+            QVector< BoundaryEdge > boundaryEdges;
             unsigned int nodesCount;
             unsigned int waysCount;
             unsigned int cellsCount;
-            std::vector< unsigned int > cellsNodesCount;
-            std::vector< unsigned int > cellsEdgesCount;
-            std::vector< unsigned int > cellsBoundaryNodesCount;
-            std::vector< unsigned int > cellsRouteEdgesCount;
+            QVector< unsigned int > cellsNodesCount;
+            QVector< unsigned int > cellsEdgesCount;
+            QVector< unsigned int > cellsBoundaryNodesCount;
+            QVector< unsigned int > cellsRouteEdgesCount;
             unsigned int boundaryEdgesCount;
             unsigned int boundaryNodesCount;
-            //std::vector< std::vector< double > * > priorities;
-            std::vector< std::vector< unsigned int > * > cellsBoundaryNodes;
-            std::vector< std::map< unsigned int, double > * > priorities;
-            std::vector< std::vector< unsigned int > * > cellsConnections;
+            //QVector< QVector< double > * > priorities;
+            QVector< QVector< unsigned int >* > cellsBoundaryNodes;
+            QVector< QMap< unsigned int, double >* > priorities;
+            QVector< QVector< unsigned int >* > cellsConnections;
         };
 
         PARTITIONING_STAGE stage;

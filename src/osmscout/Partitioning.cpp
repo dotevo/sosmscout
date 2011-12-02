@@ -65,7 +65,7 @@ void Partitioning::run()
 
 void Partitioning::InitData()
 {
-    emit initDataStatusChanged("Opening database...");
+    emit initDataStatusChanged(tr("Opening database..."));
     qDebug() << "Opening database...";
     emit initDataPartProgress(0);
     emit initDataOverallProgress(0);
@@ -95,7 +95,7 @@ void Partitioning::InitData()
     //
     // getting nodes
     //
-    emit initDataStatusChanged("Getting nodes...");
+    emit initDataStatusChanged(tr("Getting nodes..."));
     qDebug() << "Getting nodes...";
     emit initDataPartProgress(0);
     emit initDataOverallProgress(5);
@@ -120,7 +120,7 @@ void Partitioning::InitData()
     qQuery.prepare(query);
     qQuery.exec();
 
-    std::vector< PartNode > tmpNodes;
+    QVector< PartNode > tmpNodes;
     tmpNodes.clear();
     unsigned int cell = 0;
     while(qQuery.next()) {
@@ -142,7 +142,7 @@ void Partitioning::InitData()
     //
     // getting ways
     //
-    emit initDataStatusChanged("Getting ways...");
+    emit initDataStatusChanged(tr("Getting ways..."));
     qDebug() << "Getting ways...";
     emit initDataPartProgress(0);
     emit initDataOverallProgress(15);
@@ -176,7 +176,7 @@ void Partitioning::InitData()
     qQuery.prepare(query);
     qQuery.exec();
 
-    std::vector< PartWay > tmpWays;
+    QVector< PartWay > tmpWays;
     PartWay newWay;
     newWay.id = 0;
     cell = 0; // just for measuring progress
@@ -199,7 +199,7 @@ void Partitioning::InitData()
 
         unsigned int nodeId = qQuery.value(2).toInt();
         int idx = -1;
-        for(unsigned int i=0; i<tmpNodes.size(); ++i) {
+        for(int i=0; i<tmpNodes.size(); ++i) {
             if(tmpNodes[i].id == nodeId) {
                 idx = i;
                 break;
@@ -215,19 +215,19 @@ void Partitioning::InitData()
     //
     // deleting all unnecessary nodes
     //
-    emit initDataStatusChanged("Deleting all unnecessary nodes...");
+    emit initDataStatusChanged(tr("Deleting all unnecessary nodes..."));
     qDebug() << "Deleting all unnecessary nodes...";
     emit initDataPartProgress(0);
     emit initDataOverallProgress(25);
-    for(unsigned int i=0; i<tmpNodes.size(); ++i) {
+    for(int i=0; i<tmpNodes.size(); ++i) {
         if(i % 100 == 0) {
             emit initDataPartProgress((int)((double)i/(double)tmpNodes.size() * 100));
         }
 
         //check if exists in more than one way
         int waysContainingNodeCount = 0;
-        for(unsigned int j=0; j<tmpWays.size(); ++j) {
-            for(unsigned int k=0; k<tmpWays[j].nodes.size(); ++ k) {
+        for(int j=0; j<tmpWays.size(); ++j) {
+            for(int k=0; k<tmpWays[j].nodes.size(); ++ k) {
                 if(i == tmpWays[j].nodes[k]) {
                     waysContainingNodeCount++;
                     if(k == 0 || k == tmpWays[j].nodes.size()-1) {
@@ -254,11 +254,11 @@ void Partitioning::InitData()
     //
     // deleting all unnecessary nodes from ways
     //
-    emit initDataStatusChanged("Deleting all unnecessary nodes from ways...");
+    emit initDataStatusChanged(tr("Deleting all unnecessary nodes from ways..."));
     qDebug() << "Deleting all unnecessary nodes from ways...";
     emit initDataPartProgress(0);
     emit initDataOverallProgress(65);
-    for(unsigned int i=0; i<tmpWays.size(); ++i) {
+    for(int i=0; i<tmpWays.size(); ++i) {
         if(i % 100 == 0) {
             emit initDataPartProgress((int)((double)i/(double)tmpWays.size() * 100));
         }
@@ -272,13 +272,13 @@ void Partitioning::InitData()
         newWay.nodes.clear();
 
         //check if each node exists in nodes vector
-        for(unsigned int j=0; j<tmpWays[i].nodes.size(); ++j) {
+        for(int j=0; j<tmpWays[i].nodes.size(); ++j) {
             // if this node is not deleted
             if(!(tmpNodes[tmpWays[i].nodes[j]].id == 0
                  && tmpNodes[tmpWays[i].nodes[j]].lon == -1
                  && tmpNodes[tmpWays[i].nodes[j]].lat == -1)) {
                 unsigned int id = tmpNodes[tmpWays[i].nodes[j]].id;
-                for(unsigned int k=0; k<partition.nodes.size(); ++k) {
+                for(int k=0; k<partition.nodes.size(); ++k) {
                     if(partition.nodes[k].id == id) {
                         newWay.nodes.push_back(k);
                         break;
@@ -295,7 +295,7 @@ void Partitioning::InitData()
     //
     // checking for oneways
     //
-    emit initDataStatusChanged("Checking for oneways...");
+    emit initDataStatusChanged(tr("Checking for oneways..."));
     qDebug() << "Checking for oneways...";
     emit initDataPartProgress(0);
     emit initDataOverallProgress(85);
@@ -313,7 +313,7 @@ void Partitioning::InitData()
         oneways.insert(qQuery.value(0).toInt(), qQuery.value(1).toString());
     }
 
-    for(unsigned int i=0; i<partition.ways.size(); ++i) {
+    for(int i=0; i<partition.ways.size(); ++i) {
         if(i % 100 == 0) {
             emit initDataPartProgress((int)((double)i/(double)partition.ways.size() * 100));
         }
@@ -342,7 +342,7 @@ void Partitioning::InitData()
     //
     // checking for priorities
     //
-    emit initDataStatusChanged("Checking for types...");
+    emit initDataStatusChanged(tr("Checking for types..."));
     qDebug() << "Checking for types...";
     emit initDataPartProgress(0);
     emit initDataOverallProgress(90);
@@ -360,7 +360,7 @@ void Partitioning::InitData()
         types.insert(qQuery.value(0).toInt(), qQuery.value(1).toString());
     }
 
-    for(unsigned int i=0; i<partition.ways.size(); ++i) {
+    for(int i=0; i<partition.ways.size(); ++i) {
         if(i % 100 == 0) {
             emit initDataPartProgress((int)((double)i/(double)partition.ways.size() * 100));
         }
@@ -375,7 +375,7 @@ void Partitioning::InitData()
     }
     emit initDataPartProgress(100);
 
-    emit initDataStatusChanged("Updating partition data...");
+    emit initDataStatusChanged(tr("Updating partition data..."));
     emit initDataPartProgress(0);
     UpdatePartitionData();
     emit initDataPartProgress(100);
@@ -386,7 +386,7 @@ void Partitioning::InitData()
 
 void Partitioning::SaveData()
 {
-    emit initDataStatusChanged("Writing partition to the file...");
+    emit initDataStatusChanged(tr("Writing partition to the file..."));
     qDebug() << "Writing partition to the file...";
     emit initDataPartProgress(0);
     QFile file(simpleDataPath);
@@ -398,17 +398,17 @@ void Partitioning::SaveData()
     out << partition.ways.size() << "\n";
     out << partition.cellsCount << "\n";
     out << "\n";
-    for(unsigned int i=0; i<partition.nodes.size(); ++i) {
+    for(int i=0; i<partition.nodes.size(); ++i) {
         out << partition.nodes[i].id << " " << partition.nodes[i].lon << " " << partition.nodes[i].lat << " " << partition.nodes[i].cell << "\n";
     }
     out << "\n";
 
     emit initDataPartProgress(50);
 
-    for(unsigned int i=0; i<partition.ways.size(); ++i) {
+    for(int i=0; i<partition.ways.size(); ++i) {
         PartWay way = partition.ways[i];
         out << way.id << " " << way.type << " " << way.oneway << " " << way.nodes.size() << " ";
-        for(unsigned int j=0; j<way.nodes.size(); ++j) {
+        for(int j=0; j<way.nodes.size(); ++j) {
             out << way.nodes[j] << " ";
             //out << partition.nodes[way.nodes[j]].id << " ";
         }
@@ -420,7 +420,7 @@ void Partitioning::SaveData()
 
     emit initDataPartProgress(100);
     emit initDataOverallProgress(100);
-    emit initDataStatusChanged("Finished.");
+    emit initDataStatusChanged(tr("Finished."));
     emit initDataFinished();
 }
 
@@ -428,10 +428,10 @@ void Partitioning::LoadData()
 {
     switch(stage) {
     case PRIORITIES_CALCULATION:
-        emit prioCalcStatusChanged("Reading partition from file...");
+        emit prioCalcStatusChanged(tr("Reading partition from file..."));
         break;
     case PARTITIONS_CALCULATION:
-        emit partCalcStatusChanged("Reading partition from file...");
+        emit partCalcStatusChanged(tr("Reading partition from file..."));
         break;
     }
     qDebug() << "Reading partition from file...";
@@ -548,9 +548,9 @@ void Partitioning::UpdatePartitionData()
         partition.cellsNodesCount.push_back(0);
         partition.cellsEdgesCount.push_back(0);
         partition.cellsRouteEdgesCount.push_back(0);
-        std::vector< unsigned int > * tmpVector = new std::vector< unsigned int >;
+        QVector< unsigned int > * tmpVector = new QVector< unsigned int >;
         partition.cellsBoundaryNodes.push_back(tmpVector);
-        tmpVector = new std::vector< unsigned int >;
+        tmpVector = new QVector< unsigned int >;
         partition.cellsConnections.push_back(tmpVector);
     }
 
@@ -632,15 +632,15 @@ void Partitioning::UpdatePriorities(unsigned int i, unsigned int j)
     // updates lines for merged cell
     // for cells before i
     for(unsigned int k=0; k<i; ++k) {
-        std::map< unsigned int, double > * oldMap = partition.priorities[k];
-        std::map< unsigned int, double > * newMap = new std::map< unsigned int, double >;
-        for(std::map< unsigned int, double >::iterator it = oldMap->begin(); it!=oldMap->end(); ++it) {
-            unsigned int key = it->first;
-            double value = it->second;
+        QMap< unsigned int, double > * oldMap = partition.priorities[k];
+        QMap< unsigned int, double > * newMap = new QMap< unsigned int, double >;
+        for(QMap< unsigned int, double >::iterator it = oldMap->begin(); it!=oldMap->end(); ++it) {
+            unsigned int key = it.key();
+            double value = it.value();
             if(key == j) {
                 bool added = false;
-                for(std::map< unsigned int, double >::iterator newIt = newMap->begin(); newIt!=newMap->end(); ++newIt) {
-                    if(newIt->first == i) {
+                for(QMap< unsigned int, double >::iterator newIt = newMap->begin(); newIt!=newMap->end(); ++newIt) {
+                    if(newIt.key() == i) {
                         added = true;
                     }
                 }
@@ -655,48 +655,48 @@ void Partitioning::UpdatePriorities(unsigned int i, unsigned int j)
             } else if(key == i) {
                 value = CalculatePriority(k, key);
             }
-            newMap->insert(std::pair< unsigned int, double > (key, value));
+            newMap->insert(key, value);
         }
         partition.priorities[k] = newMap;
         delete oldMap;
     }
     // for new cell i
     {
-        std::map< unsigned int, double > * newMap = new std::map< unsigned int, double >;
+        QMap< unsigned int, double > * newMap = new QMap< unsigned int, double >;
         for(unsigned int k = 0; k<partition.cellsConnections[i]->size(); ++k) {
             unsigned int tmp = partition.cellsConnections[i]->at(k);
-            newMap->insert(std::pair< unsigned int, double > (tmp, CalculatePriority(i, tmp)));
+            newMap->insert(tmp, CalculatePriority(i, tmp));
         }
         partition.priorities[i] = newMap;
     }
     // for cells between i and j
     for(unsigned int k=i+1; k<j && k<partition.cellsCount; ++k) {
-        std::map< unsigned int, double > * oldMap = partition.priorities[k];
-        std::map< unsigned int, double > * newMap = new std::map< unsigned int, double >;
-        for(std::map< unsigned int, double >::iterator it = oldMap->begin(); it!=oldMap->end(); ++it) {
-            unsigned int key = it->first;
-            double value = it->second;
+        QMap< unsigned int, double > * oldMap = partition.priorities[k];
+        QMap< unsigned int, double > * newMap = new QMap< unsigned int, double >;
+        for(QMap< unsigned int, double >::iterator it = oldMap->begin(); it!=oldMap->end(); ++it) {
+            unsigned int key = it.key();
+            double value = it.value();
             if(key == j) {
                 continue;
             } else if(key > j) {
                 key--;
             }
-            newMap->insert(std::pair< unsigned int, double > (key, value));
+            newMap->insert(key, value);
         }
         partition.priorities[k] = newMap;
         delete oldMap;
     }
     // delete maps for cell j
-    std::map< unsigned int, double > * mapJ = partition.priorities[j];
+    QMap< unsigned int, double > * mapJ = partition.priorities[j];
     delete mapJ;
     // for cells after j
     for(unsigned int k=j; k<partition.cellsCount; ++k) {
-        std::map< unsigned int, double > * oldMap = partition.priorities[k+1];
-        std::map< unsigned int, double > * newMap = new std::map< unsigned int, double >;
-        for(std::map< unsigned int, double >::iterator it = oldMap->begin(); it!=oldMap->end(); ++it) {
-            unsigned int key = it->first - 1;
-            double value = it->second;
-            newMap->insert(std::pair< unsigned int, double > (key, value));
+        QMap< unsigned int, double > * oldMap = partition.priorities[k+1];
+        QMap< unsigned int, double > * newMap = new QMap< unsigned int, double >;
+        for(QMap< unsigned int, double >::iterator it = oldMap->begin(); it!=oldMap->end(); ++it) {
+            unsigned int key = it.key() - 1;
+            double value = it.value();
+            newMap->insert(key, value);
         }
         partition.priorities[k] = newMap;
         delete oldMap;
@@ -769,13 +769,13 @@ void Partitioning::saveToDatabase(DatabasePartition& databasePartition)
     //
     // saving to binary file
     //
-    emit partCalcStatusChanged("Saving files...");
+    emit partCalcStatusChanged(tr("Saving files..."));
     emit partCalcProgress(100);
     PiLibocik::Partition::PartitionFile partitionFile(finalDataPath, "car", QIODevice::WriteOnly, 1);
     QList< PiLibocik::Partition::Way > fileWays;
     QList< PiLibocik::Partition::Node > fileNodes;
-    std::vector< PiLibocik::Partition::Way > ways;
-    std::vector< PiLibocik::Partition::Node > nodes;
+    QVector< PiLibocik::Partition::Way > ways;
+    QVector< PiLibocik::Partition::Node > nodes;
 
     // adding nodes
     for(unsigned int i=0; i<databasePartition.nodes.size(); ++i) {
@@ -802,7 +802,7 @@ void Partitioning::saveToDatabase(DatabasePartition& databasePartition)
     }
 
     // adding boundary edges
-    for(unsigned int i=0; i<databasePartition.boundaryEdges.size(); ++i) {
+    /*for(unsigned int i=0; i<databasePartition.boundaryEdges.size(); ++i) {
         Partitioning::BoundaryEdge edge = databasePartition.boundaryEdges[i];
         PiLibocik::Partition::BoundaryEdge fileEdgeAB(edge.nodeB, edge.wayId, edge.priority); // edge from A to B
         PiLibocik::Partition::BoundaryEdge fileEdgeBA(edge.nodeA, edge.wayId, edge.priority); // edge from B to A
@@ -811,7 +811,7 @@ void Partitioning::saveToDatabase(DatabasePartition& databasePartition)
 
         nodes[edge.nodeA].addBoundaryEdge(fileEdgeAB);
         nodes[edge.nodeB].addBoundaryEdge(fileEdgeBA);
-    }
+    }*/
 
     // adding routing edges
     for(unsigned int i=0; i<databasePartition.routingEdges.size(); ++i) {
@@ -835,9 +835,21 @@ void Partitioning::saveToDatabase(DatabasePartition& databasePartition)
         fileWays.append(ways[i]);
     }
 
-    partitionFile.savePartition(fileWays, fileNodes, 5);
+    int count = 0;
+    QListIterator< PiLibocik::Partition::Node > fileNodesIterator(fileNodes);
+    while(fileNodesIterator.hasNext()) {
+        PiLibocik::Partition::Node fileNode = fileNodesIterator.next();
 
-    emit partCalcStatusChanged("Finished.");
+        if(fileNode.getBoundaryEdges().size() > 0)
+            qDebug() << "N " << count << " W in N " << fileNode.getWays().size() << " B in W " << fileNode.getBoundaryEdges().size();
+        if(fileNode.getRoutingEdges().size() > 0)
+            qDebug() << "N " << count << " W in N " << fileNode.getWays().size() << " R in W " << fileNode.getRoutingEdges().size();
+        count++;
+    }
+
+    partitionFile.savePartition(fileWays, fileNodes, 4);
+
+    emit partCalcStatusChanged(tr("Finished."));
     emit partCalcProgress(100);
     emit partCalcFinished();
 }
@@ -845,7 +857,7 @@ void Partitioning::saveToDatabase(DatabasePartition& databasePartition)
 
 Partitioning::DatabasePartition  Partitioning::FindPartition()
 {
-    emit partCalcStatusChanged("Finding partition...");
+    emit partCalcStatusChanged(tr("Finding partition..."));
     qDebug() << "Finding partition...";
     emit partCalcProgress(2);
 
@@ -869,11 +881,11 @@ Partitioning::DatabasePartition  Partitioning::FindPartition()
         cellJ = partition.cellsCount-1;
         maxPriority = 0;
         for(unsigned int i=0; i<partition.cellsCount-1; ++i) {
-            for(std::map< unsigned int, double >::iterator it = partition.priorities[i]->begin(); it!=partition.priorities[i]->end(); ++it) {
-                priority = it->second * (1+(qrand()/32767./100));
+            for(QMap< unsigned int, double >::iterator it = partition.priorities[i]->begin(); it!=partition.priorities[i]->end(); ++it) {
+                priority = it.value() * (1+(qrand()/32767./100));
                 if(priority > maxPriority) {
                     cellI = i;
-                    cellJ = it->first;
+                    cellJ = it.key();
                     maxPriority = priority;
                 }
             }
@@ -909,7 +921,7 @@ Partitioning::DatabasePartition  Partitioning::FindPartition()
                 }
                 bestPartition.cellsBoundaryNodes.clear();
                 for(unsigned int i=0; i<partition.cellsBoundaryNodes.size(); ++i) {
-                    std::vector< unsigned int > * tmpVector = new std::vector< unsigned int >;
+                    QVector< unsigned int > * tmpVector = new QVector< unsigned int >;
                     for(unsigned int j=0; j<partition.cellsBoundaryNodes[i]->size(); ++j) {
                         tmpVector->push_back(partition.cellsBoundaryNodes[i]->at(j));
                     }
@@ -974,7 +986,7 @@ Partitioning::DatabasePartition Partitioning::getDatabasePartition()
         if(it != prioritiesMap.end()) {
             databaseWay.priority = it.value();
         } else {
-            databaseWay.priority = 0.5;
+            databaseWay.priority = 0.3;
         }
         databaseWay.nodes.push_back(way.nodes[0]);
         PartNode node = bestPartition.nodes[way.nodes[0]];
@@ -1011,11 +1023,11 @@ Partitioning::DatabasePartition Partitioning::getDatabasePartition()
         }*/
         databasePartition.innerWays.push_back(databaseWay);
     }
-/*
+
     // adding routing edges
     for(unsigned int i=0; i<bestPartition.cellsBoundaryNodes.size(); ++i) {
         for(unsigned int j=0; j<bestPartition.cellsBoundaryNodes[i]->size(); ++j) {
-            for(unsigned int k=0; k<bestPartition.cellsBoundaryNodes[i]->size(); ++k) {
+            for(unsigned int k=j+1; k<bestPartition.cellsBoundaryNodes[i]->size(); ++k) {
                 if(k != j) {
                     RouteEdge rEdge;
                     rEdge.nodeA = bestPartition.cellsBoundaryNodes[i]->at(j);
@@ -1024,12 +1036,8 @@ Partitioning::DatabasePartition Partitioning::getDatabasePartition()
                 }
             }
         }
-    }*/
-
-    // trick to make it work
-    for (unsigned int i=0; i < databasePartition.nodes.size(); ++i) {
-        databasePartition.nodes[i].cell = 0;
     }
+
     return databasePartition;
 }
 
@@ -1038,7 +1046,7 @@ double Partitioning::CalculatePriority(unsigned int i, unsigned int j)
     //qDebug() << "Calculating priority for merging cells " << i << " and " << j << "...";
     // counts boundary edges and nodes of cell after merging
     int boundaryEdgesIJ = 0;
-    std::vector< unsigned int > boundaryNodesIJ;
+    QVector< unsigned int > boundaryNodesIJ;
     for(unsigned int k=0; k<partition.boundaryEdges.size(); ++k) {
         BoundaryEdge edge = partition.boundaryEdges[k];
 
@@ -1114,7 +1122,7 @@ void Partitioning::MergeCells(unsigned int i, unsigned int j)
 void Partitioning::CalculatePriorities()
 {
     // calculates initial priorities
-    emit prioCalcStatusChanged("Calculating priorities...");
+    emit prioCalcStatusChanged(tr("Calculating priorities..."));
     qDebug() << "Calculating priorities...";
     emit prioCalcProgress(0);
     for(unsigned int i=0; i<partition.cellsCount; ++i) {
@@ -1122,10 +1130,10 @@ void Partitioning::CalculatePriorities()
             emit prioCalcProgress((int)((double)i/(double)partition.cellsCount * 100) - 1);
         }
 
-        std::map< unsigned int, double > * tmpMap = new std::map< unsigned int, double >;
+        QMap< unsigned int, double > * tmpMap = new QMap< unsigned int, double >;
         for(unsigned int j=0; j<partition.cellsConnections[i]->size(); ++j) {
             double tmp = partition.cellsConnections[i]->at(j);
-            tmpMap->insert(std::pair< unsigned int, double > (tmp, CalculatePriority(i, tmp)));
+            tmpMap->insert(tmp, CalculatePriority(i, tmp));
         }
         partition.priorities.push_back(tmpMap);
     }
@@ -1134,7 +1142,7 @@ void Partitioning::CalculatePriorities()
 
 void Partitioning::SavePriorities()
 {
-    emit prioCalcStatusChanged("Writing priorities to the file...");
+    emit prioCalcStatusChanged(tr("Writing priorities to the file..."));
     qDebug() << "Writing priorities to the file...";
     QFile file(prioritiesDataPath);
     if (!file.open(QIODevice::ReadWrite | QIODevice::Text)) {
@@ -1145,9 +1153,9 @@ void Partitioning::SavePriorities()
     out << partition.cellsCount << "\n";
     for(unsigned int i=0; i<partition.cellsCount; ++i) {
         out << partition.priorities[i]->size() << " ";
-        for(std::map< unsigned int, double >::iterator it = partition.priorities[i]->begin(); it!=partition.priorities[i]->end(); ++it) {
-            unsigned int key = it->first;
-            double value = it->second;
+        for(QMap< unsigned int, double >::iterator it = partition.priorities[i]->begin(); it!=partition.priorities[i]->end(); ++it) {
+            unsigned int key = it.key();
+            double value = it.value();
             out << key << ":" << value << " ";
         }
         out << "\n";
@@ -1162,7 +1170,7 @@ void Partitioning::SavePriorities()
 
 void Partitioning::LoadPriorities()
 {
-    emit partCalcStatusChanged("Reading priorities from file...");
+    emit partCalcStatusChanged(tr("Reading priorities from file..."));
     qDebug() << "Reading priorities from file...";
     emit partCalcProgress(1);
 
@@ -1175,13 +1183,13 @@ void Partitioning::LoadPriorities()
     QString line = in.readLine();
     unsigned int cellsCount = line.toInt();
     for(unsigned int i=0; i<cellsCount; ++i) {
-        std::map< unsigned int, double > * tmpMap = new std::map< unsigned int, double >;
+        QMap< unsigned int, double > * tmpMap = new QMap< unsigned int, double >;
         line = in.readLine();
         QStringList stringList = line.split(" ");
         unsigned int connectionsCount = stringList.at(0).toInt();
         for(unsigned int j=1; j<=connectionsCount; ++j) {
             QStringList tmpPair = stringList.at(j).split(":");
-            tmpMap->insert(std::pair< unsigned int, double > (tmpPair.at(0).toInt(), tmpPair.at(1).toDouble()));
+            tmpMap->insert(tmpPair.at(0).toInt(), tmpPair.at(1).toDouble());
         }
         partition.priorities.push_back(tmpMap);
     }
