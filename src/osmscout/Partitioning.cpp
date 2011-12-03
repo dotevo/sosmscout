@@ -27,6 +27,8 @@
 namespace osmscout {
 Partitioning::Partitioning()
 {
+    precision = 0;
+
     // setting alpha and beta factors for quality function
     alpha = 0.99;
     beta = 0.005;
@@ -856,7 +858,7 @@ void Partitioning::saveToDatabase(DatabasePartition& databasePartition)
         count++;
     }*/
 
-    partitionFile.savePartition(fileWays, fileNodes, 4);
+    partitionFile.savePartition(fileWays, fileNodes, precision);
 
     emit partCalcStatusChanged(tr("Finished."));
     emit partCalcProgress(100);
@@ -995,7 +997,7 @@ Partitioning::DatabasePartition Partitioning::getDatabasePartition()
         if(it != prioritiesMap.end()) {
             databaseWay.priority = it.value();
         } else {
-            databaseWay.priority = 0.3;
+            databaseWay.priority = 0.0;
         }
         databaseWay.nodes.push_back(way.nodes[0]);
         PartNode node = bestPartition.nodes[way.nodes[0]];
@@ -1231,6 +1233,12 @@ void Partitioning::setPrioritiesDataPath(QString path)
 void Partitioning::setFinalDataPath(QString path)
 {
     finalDataPath = QString(path);
+}
+
+void Partitioning::setPrecision(qint8 prec)
+{
+    precision = 0;
+    precision = prec;
 }
 
 void Partitioning::Delete()

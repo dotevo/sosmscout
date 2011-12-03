@@ -67,9 +67,9 @@ namespace osmscout {
             int  currentProgress = (1.0 - (distance(currentRouteNode->getLon(), currentRouteNode->getLat(), endNode.getLon(), endNode.getLat())/totalDistance)) * 95 + 1;
             if(currentProgress > bestProgress) {
                 bestProgress = currentProgress;
-                qDebug() << QString::number(bestProgress);
                 emit RoutingProgress(bestProgress);
             }
+            qDebug() << QString::number(currentProgress);
 
             //
             // adding available moves from current node
@@ -110,17 +110,19 @@ namespace osmscout {
                                 if(inStartOrEndCell || neighbourNode.getCell() != currentRouteNode->getCell()) {
                                     double distanceFromCurrent = distance(neighbourNode.getLon(), neighbourNode.getLat(), currentRouteNode->getLon(), currentRouteNode->getLat());
                                     double distanceToEnd = distance(neighbourNode.getLon(), neighbourNode.getLat(), endNode.getLon(), endNode.getLat());
-                                    rating = ((2-innerWay.getPrioritet()) // priority of way on which one should go
-                                                    * (distanceFromCurrent // distance from current node
-                                                + distanceToEnd)) // distance to endNod
-                                                + currentRouteNode->getDistanceFromStart();  // distance from start node (real roads)
+                                    if(distanceToEnd < 3*totalDistance) {
+                                        rating = ((2-innerWay.getPrioritet()) // priority of way on which one should go
+                                                        * (distanceFromCurrent // distance from current node
+                                                    + distanceToEnd)) // distance to endNod
+                                                    + currentRouteNode->getDistanceFromStart();  // distance from start node (real roads)
 
-                                    PiLibocik::Partition::RouteNode * newNode = new PiLibocik::Partition::RouteNode(neighbourNode, innerWay.getId(), rating, currentRouteNode->getDistanceFromStart() + distanceFromCurrent, currentRouteNode);
+                                        PiLibocik::Partition::RouteNode * newNode = new PiLibocik::Partition::RouteNode(neighbourNode, innerWay.getId(), rating, currentRouteNode->getDistanceFromStart() + distanceFromCurrent, currentRouteNode);
 
-                                    key = QString::number(newNode->getPrevNode().getId()) + "_" + QString::number(newNode->getId());
-                                    QMap< QString, PiLibocik::Partition::RouteNode * >::iterator it = usedMoves.find(key);
-                                    if(it == usedMoves.end()) {
-                                        availableMoves.insert(key, newNode);
+                                        key = QString::number(newNode->getPrevNode().getId()) + "_" + QString::number(newNode->getId());
+                                        QMap< QString, PiLibocik::Partition::RouteNode * >::iterator it = usedMoves.find(key);
+                                        if(it == usedMoves.end()) {
+                                            availableMoves.insert(key, newNode);
+                                        }
                                     }
                                 }
                             }
@@ -130,17 +132,19 @@ namespace osmscout {
                                 if(inStartOrEndCell || neighbourNode.getCell() != currentRouteNode->getCell()) {
                                     double distanceFromCurrent = distance(neighbourNode.getLon(), neighbourNode.getLat(), currentRouteNode->getLon(), currentRouteNode->getLat());
                                     double distanceToEnd = distance(neighbourNode.getLon(), neighbourNode.getLat(), endNode.getLon(), endNode.getLat());
-                                    rating = ((2-innerWay.getPrioritet()) // priority of way on which one should go
-                                                    * (distanceFromCurrent // distance from current node
-                                                + distanceToEnd)) // distance to endNod
-                                                + currentRouteNode->getDistanceFromStart();  // distance from start node (real roads)
+                                    if(distanceToEnd < 3*totalDistance) {
+                                        rating = ((2-innerWay.getPrioritet()) // priority of way on which one should go
+                                                        * (distanceFromCurrent // distance from current node
+                                                    + distanceToEnd)) // distance to endNod
+                                                    + currentRouteNode->getDistanceFromStart();  // distance from start node (real roads)
 
-                                    PiLibocik::Partition::RouteNode * newNode = new PiLibocik::Partition::RouteNode(neighbourNode, innerWay.getId(), rating, currentRouteNode->getDistanceFromStart() + distanceFromCurrent, currentRouteNode);
+                                        PiLibocik::Partition::RouteNode * newNode = new PiLibocik::Partition::RouteNode(neighbourNode, innerWay.getId(), rating, currentRouteNode->getDistanceFromStart() + distanceFromCurrent, currentRouteNode);
 
-                                    key = QString::number(newNode->getPrevNode().getId()) + "_" + QString::number(newNode->getId());
-                                    QMap< QString, PiLibocik::Partition::RouteNode * >::iterator it = usedMoves.find(key);
-                                    if(it == usedMoves.end()) {
-                                        availableMoves.insert(key, newNode);
+                                        key = QString::number(newNode->getPrevNode().getId()) + "_" + QString::number(newNode->getId());
+                                        QMap< QString, PiLibocik::Partition::RouteNode * >::iterator it = usedMoves.find(key);
+                                        if(it == usedMoves.end()) {
+                                            availableMoves.insert(key, newNode);
+                                        }
                                     }
                                 }
                             }
@@ -202,16 +206,18 @@ namespace osmscout {
 
                 double distanceFromCurrent = distance(neighbourNode.getLon(), neighbourNode.getLat(), currentRouteNode->getLon(), currentRouteNode->getLat());
                 double distanceToEnd = distance(neighbourNode.getLon(), neighbourNode.getLat(), endNode.getLon(), endNode.getLat());
-                double cost = 2.0 * distance(neighbourNode.getLon(), neighbourNode.getLat(), currentRouteNode->getLon(), currentRouteNode->getLat()); // estimated cost of going through route edge
-                rating = cost
-                        + distanceToEnd; // distance to endNod
+                if(distanceToEnd < 3*totalDistance) {
+                    double cost = 2.0 * distance(neighbourNode.getLon(), neighbourNode.getLat(), currentRouteNode->getLon(), currentRouteNode->getLat()); // estimated cost of going through route edge
+                    rating = cost
+                            + distanceToEnd; // distance to endNod
 
-                PiLibocik::Partition::RouteNode * newNode = new PiLibocik::Partition::RouteNode(neighbourNode, -1, rating, currentRouteNode->getDistanceFromStart() + distanceFromCurrent, currentRouteNode, true);
+                    PiLibocik::Partition::RouteNode * newNode = new PiLibocik::Partition::RouteNode(neighbourNode, -1, rating, currentRouteNode->getDistanceFromStart() + distanceFromCurrent, currentRouteNode, true);
 
-                key = QString::number(newNode->getPrevNode().getId()) + "_" + QString::number(newNode->getId());
-                QMap< QString, PiLibocik::Partition::RouteNode * >::iterator it = usedMoves.find(key);
-                if(it == usedMoves.end()) {
-                    availableMoves.insert(key, newNode);
+                    key = QString::number(newNode->getPrevNode().getId()) + "_" + QString::number(newNode->getId());
+                    QMap< QString, PiLibocik::Partition::RouteNode * >::iterator it = usedMoves.find(key);
+                    if(it == usedMoves.end()) {
+                        availableMoves.insert(key, newNode);
+                    }
                 }
             } // end of searching in routeEdges
 
