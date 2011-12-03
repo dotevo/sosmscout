@@ -22,8 +22,14 @@ Searching::Intersection::Intersection()
     myPos = QPointF(0, 0);
     cross = QPointF(0, 0);
     way = QPointF(0,0);
-    //ways = QList<QPointF>();
-    //ways.append(QPointF(0,0));
+    //ways = new QPointF(0,0);
+}
+
+Searching::Intersection::Intersection(QPointF myPos, QPointF cross, QPointF way)
+{
+    this->myPos = myPos;
+    this->cross = cross;
+    this->way = way;
 }
 
 Searching::Searching()
@@ -282,19 +288,19 @@ QPointF Searching::CorrectPosition(osmscout::Routing::Step firstNode,
 
 osmscout::Searching::Intersection Searching::SimulateNextCrossing(osmscout::Routing::Step lastNode,
                                                                   osmscout::Routing::Step crossingNode,
-                                                                  QList<osmscout::Routing::Step> waysNodes)
+                                                                  QList<osmscout::Routing::Step> *waysNodes)
 {
-    int panelWidth = 109;
-    int panelHeight = 122;
+    int panelWidth = 74;
+    int panelHeight = 90;
 
     int scale = 100000;
     double minX, minY;
 
     minX = qMin(lastNode.lon, crossingNode.lon);
-    minX = qMin(minX, waysNodes[0].lon);
+    minX = qMin(minX, waysNodes->at(0).lon);
 
     minY = qMin(lastNode.lat, crossingNode.lat);
-    minY = qMin(minY, waysNodes[0].lat);
+    minY = qMin(minY, waysNodes->at(0).lat);
 
     QPointF last, cross;
     QList<QPointF> ways;
@@ -302,14 +308,15 @@ osmscout::Searching::Intersection Searching::SimulateNextCrossing(osmscout::Rout
     last.setY(scale * (lastNode.lat - minY));
     cross.setX(scale * (crossingNode.lon - minX));
     cross.setY(scale * (crossingNode.lat - minY));
-    for (int i = 0; i < waysNodes.length(); i++) {
-        ways.append(QPointF(scale * (waysNodes.at(i).lon - minX), scale * (waysNodes.at(i).lat - minY)));
+    for (int i = 0; i < waysNodes->length(); i++) {
+        ways.append(QPointF(scale * (waysNodes->at(i).lon - minX), scale * (waysNodes->at(i).lat - minY)));
     }
 
     //qDebug() << "MIN: " << minX << " " << minY;
-    //qDebug() << "LAST: " << QString::number(lastNode.lon, 'f', 10) << " " << QString::number(lastNode.lat, 'f', 10) << " | " << last.x() << " " << last.y();
-    //qDebug() << "CROSS: " << QString::number(crossingNode.lon, 'f', 10) << " " << QString::number(crossingNode.lat, 'f', 10) << " | " << cross.x() << " " << cross.y();
-    //qDebug() << "TARGET: " << QString::number(targetNode.lon, 'f', 10) << " " << QString::number(targetNode.lat, 'f', 10) << " | " << target.x() << " " << target.y();
+//    qDebug() << "Before translating";
+//    qDebug() << "LAST: " << QString::number(lastNode.lon, 'f', 10) << " " << QString::number(lastNode.lat, 'f', 10) << " | " << last.x() << " " << last.y();
+//    qDebug() << "CROSS: " << QString::number(crossingNode.lon, 'f', 10) << " " << QString::number(crossingNode.lat, 'f', 10) << " | " << cross.x() << " " << cross.y();
+//    qDebug() << "TARGET: " << QString::number(waysNodes->at(0).lon, 'f', 10) << " " << QString::number(waysNodes->at(0).lat, 'f', 10) << " | " << ways.at(0).x() << " " << ways.at(0).y();
 
     QMatrix moveToStart;
     moveToStart.translate(-last.x(), -last.y());
@@ -320,10 +327,18 @@ osmscout::Searching::Intersection Searching::SimulateNextCrossing(osmscout::Rout
         ways[i] = moveToStart.map(ways[i]);
     }
 
+//    qDebug() << "After moving to start! Last should be 0";
+//    qDebug() << "LAST: " << QString::number(lastNode.lon, 'f', 10) << " " << QString::number(lastNode.lat, 'f', 10) << " | " << last.x() << " " << last.y();
+//    qDebug() << "CROSS: " << QString::number(crossingNode.lon, 'f', 10) << " " << QString::number(crossingNode.lat, 'f', 10) << " | " << cross.x() << " " << cross.y();
+//    qDebug() << "TARGET: " << QString::number(waysNodes->at(0).lon, 'f', 10) << " " << QString::number(waysNodes->at(0).lat, 'f', 10) << " | " << ways[0].x() << " " << ways[0].y();
+
     double yDist = qAbs(cross.y() - last.y());
     double toCrossDist = qSqrt(qPow(cross.x() - last.x(), 2) + qPow(cross.y() - last.y(), 2));
     double cosVal = yDist / toCrossDist;
     double angle = - acos(cosVal) * 180 / M_PI;   // angle in deegres
+
+    if (cross.x() > 0)
+        angle = -angle;
 
     QMatrix rotateToVert;
     rotateToVert.rotate(angle);
@@ -333,6 +348,12 @@ osmscout::Searching::Intersection Searching::SimulateNextCrossing(osmscout::Rout
     for (int i = 0; i < ways.length(); i++) {
         ways[i] = rotateToVert.map(ways[i]);
     }
+
+//    qDebug() << "After rotating! Last should be 0";
+//    qDebug() << "LAST: " << QString::number(lastNode.lon, 'f', 10) << " " << QString::number(lastNode.lat, 'f', 10) << " | " << last.x() << " " << last.y();
+//    qDebug() << "CROSS: " << QString::number(crossingNode.lon, 'f', 10) << " " << QString::number(crossingNode.lat, 'f', 10) << " | " << cross.x() << " " << cross.y();
+//    qDebug() << "TARGET: " << QString::number(waysNodes->at(0).lon, 'f', 10) << " " << QString::number(waysNodes->at(0).lat, 'f', 10) << " | " << ways[0].x() << " " << ways[0].y();
+
 
     cross.setX(0);
 
@@ -345,6 +366,12 @@ osmscout::Searching::Intersection Searching::SimulateNextCrossing(osmscout::Rout
         ways[i] = moveToCenter.map(ways[i]);
     }
 
+//    qDebug() << "After moving to center! Cross should be in center";
+//    qDebug() << "LAST: " << QString::number(lastNode.lon, 'f', 10) << " " << QString::number(lastNode.lat, 'f', 10) << " | " << last.x() << " " << last.y();
+//    qDebug() << "CROSS: " << QString::number(crossingNode.lon, 'f', 10) << " " << QString::number(crossingNode.lat, 'f', 10) << " | " << cross.x() << " " << cross.y();
+//    qDebug() << "TARGET: " << QString::number(waysNodes->at(0).lon, 'f', 10) << " " << QString::number(waysNodes->at(0).lat, 'f', 10) << " | " << ways[0].x() << " " << ways[0].y();
+
+
     double a = (ways[0].y() - cross.y()) / (ways[0].x() - cross.x());
     double b = ways[0].y() - a * ways[0].x();
 
@@ -354,17 +381,37 @@ osmscout::Searching::Intersection Searching::SimulateNextCrossing(osmscout::Rout
         ways[i].setY(panelHeight - ways[i].y());
     }
 
+//    qDebug() << "After correcting y coordinate!";
+//    qDebug() << "LAST: " << QString::number(lastNode.lon, 'f', 10) << " " << QString::number(lastNode.lat, 'f', 10) << " | " << last.x() << " " << last.y();
+//    qDebug() << "CROSS: " << QString::number(crossingNode.lon, 'f', 10) << " " << QString::number(crossingNode.lat, 'f', 10) << " | " << cross.x() << " " << cross.y();
+//    qDebug() << "TARGET: " << QString::number(waysNodes->at(0).lon, 'f', 10) << " " << QString::number(waysNodes->at(0).lat, 'f', 10) << " | " << ways[0].x() << " " << ways[0].y();
+
+    /*
     Intersection intersection;
     intersection.myPos = QPointF(last);
     intersection.cross = QPointF(cross);
-    intersection.ways = ways;
+    intersection.ways = &ways;
     intersection.way = ways.at(0);
+    */
 
-    //qDebug() << "LAST: " << QString::number(lastNode.lon, 'f', 10) << " " << QString::number(lastNode.lat, 'f', 10) << " | " << last.x() << " " << last.y();
-    //qDebug() << "CROSS: " << QString::number(crossingNode.lon, 'f', 10) << " " << QString::number(crossingNode.lat, 'f', 10) << " | " << cross.x() << " " << cross.y();
-    //qDebug() << "TARGET: " << QString::number(waysNodes[0].lon, 'f', 10) << " " << QString::number(waysNodes[0].lat, 'f', 10) << " | " << ways[0].x() << " " << ways[0].y();
+    Intersection intersection(last, cross, ways[0]);
 
-    qDebug() << intersection.ways.at(0).isNull();
+    /*
+    QPointF waysPoint[ways.size()];
+    for (int i = 0; i < ways.size(); i++) {
+        waysPoint[i] =  ways.at(i);
+    }
+
+    for (int i = 0; i < ways.size(); i++) {
+        intersection.ways = waysPoint;
+    }
+    */
+
+//    qDebug() << "LAST: " << QString::number(lastNode.lon, 'f', 10) << " " << QString::number(lastNode.lat, 'f', 10) << " | " << last.x() << " " << last.y();
+//    qDebug() << "CROSS: " << QString::number(crossingNode.lon, 'f', 10) << " " << QString::number(crossingNode.lat, 'f', 10) << " | " << cross.x() << " " << cross.y();
+//    qDebug() << "TARGET: " << QString::number(waysNodes->at(0).lon, 'f', 10) << " " << QString::number(waysNodes->at(0).lat, 'f', 10) << " | " << ways[0].x() << " " << ways[0].y();
+
+    //qDebug() << intersection.ways->at(0).isNull();
     return intersection;
 
 }
