@@ -197,6 +197,7 @@ namespace osmscout {
         QString finalDataPath;
         Partition partition;
         Partition bestPartition;
+        qint8 precision;
         double alpha;
         double beta;
 
@@ -328,6 +329,12 @@ namespace osmscout {
          * @param path
          */
         void setFinalDataPath(QString path);
+        /**
+         * @brief
+         *
+         * @param prec
+         */
+        void setPrecision(qint8 prec);
     };
 }
 

@@ -294,7 +294,7 @@ osmscout::Searching::Intersection Searching::SimulateNextCrossing(osmscout::Rout
     int panelHeight = 90;
 
     int scale = 100000;
-    double minX, minY;
+    long double minX, minY;
 
     minX = qMin(lastNode.lon, crossingNode.lon);
     minX = qMin(minX, waysNodes->at(0).lon);

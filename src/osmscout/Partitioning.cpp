@@ -27,6 +27,8 @@
 namespace osmscout {
 Partitioning::Partitioning()
 {
+    precision = 0;
+
     // setting alpha and beta factors for quality function
     alpha = 0.99;
     beta = 0.005;
@@ -835,7 +837,7 @@ void Partitioning::saveToDatabase(DatabasePartition& databasePartition)
         fileWays.append(ways[i]);
     }
 
-    int count = 0;
+    /*int count = 0;
     QListIterator< PiLibocik::Partition::Node > fileNodesIterator(fileNodes);
     while(fileNodesIterator.hasNext()) {
         PiLibocik::Partition::Node fileNode = fileNodesIterator.next();
@@ -845,9 +847,18 @@ void Partitioning::saveToDatabase(DatabasePartition& databasePartition)
         if(fileNode.getRoutingEdges().size() > 0)
             qDebug() << "N " << count << " W in N " << fileNode.getWays().size() << " R in W " << fileNode.getRoutingEdges().size();
         count++;
-    }
+    }*/
+    /*int count = 0;
+    QListIterator< PiLibocik::Partition::Way > fileWaysIterator(fileWays);
+    while(fileWaysIterator.hasNext()) {
+        PiLibocik::Partition::Way fileWay = fileWaysIterator.next();
 
-    partitionFile.savePartition(fileWays, fileNodes, 4);
+        if(fileWay.getOneway() != 0)
+            qDebug() << "W " << count << " W ID " << fileWay.getId() << " W oneway " << fileWay.getOneway();
+        count++;
+    }*/
+
+    partitionFile.savePartition(fileWays, fileNodes, precision);
 
     emit partCalcStatusChanged(tr("Finished."));
     emit partCalcProgress(100);
@@ -986,7 +997,7 @@ Partitioning::DatabasePartition Partitioning::getDatabasePartition()
         if(it != prioritiesMap.end()) {
             databaseWay.priority = it.value();
         } else {
-            databaseWay.priority = 0.3;
+            databaseWay.priority = 0.0;
         }
         databaseWay.nodes.push_back(way.nodes[0]);
         PartNode node = bestPartition.nodes[way.nodes[0]];
@@ -1108,7 +1119,7 @@ double Partitioning::CalculatePriority(unsigned int i, unsigned int j)
 void Partitioning::MergeCells(unsigned int i, unsigned int j)
 {
     //qDebug() << "Merging cells " << i << " and " << j << " with priority = " << partition.priorities[i][j] << " ...";
-    for(unsigned int k=0; k<partition.nodes.size(); ++k) {
+    for(int k=0; k<partition.nodes.size(); ++k) {
         if(partition.nodes[k].cell == j) {
             partition.nodes[k].cell = i;
         } else if(partition.nodes[k].cell > j) {
@@ -1131,7 +1142,7 @@ void Partitioning::CalculatePriorities()
         }
 
         QMap< unsigned int, double > * tmpMap = new QMap< unsigned int, double >;
-        for(unsigned int j=0; j<partition.cellsConnections[i]->size(); ++j) {
+        for(int j=0; j<partition.cellsConnections[i]->size(); ++j) {
             double tmp = partition.cellsConnections[i]->at(j);
             tmpMap->insert(tmp, CalculatePriority(i, tmp));
         }
@@ -1224,9 +1235,15 @@ void Partitioning::setFinalDataPath(QString path)
     finalDataPath = QString(path);
 }
 
+void Partitioning::setPrecision(qint8 prec)
+{
+    precision = 0;
+    precision = prec;
+}
+
 void Partitioning::Delete()
 {
-    for(unsigned int i=0; i<partition.priorities.size(); ++i) {
+    for(int i=0; i<partition.priorities.size(); ++i) {
         delete partition.priorities[i];
     }
 }

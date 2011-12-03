@@ -77,7 +77,7 @@ bool PartitionModel::createTables()
 bool PartitionModel::exportToDatabase(Partitioning::DatabasePartition &dbpart){
     qDebug()<<"ZAPISUJE!"<<dbpart.nodes.size()<<":"<<dbpart.innerWays.size();
     //Add nodes
-    for(unsigned int i=0;i<dbpart.nodes.size();i++){
+    for(int i=0;i<dbpart.nodes.size();i++){
         Partitioning::PartNode node=dbpart.nodes.at(i);
         queriesBuffer.append(QString("INSERT INTO nodes VALUES("+
                                      QString::number(node.id)+", "+
@@ -88,12 +88,12 @@ bool PartitionModel::exportToDatabase(Partitioning::DatabasePartition &dbpart){
     }
 
     //Add ways
-    for(unsigned int i=0;i<dbpart.innerWays.size();i++){
+    for(int i=0;i<dbpart.innerWays.size();i++){
         Partitioning::PartWay way=dbpart.innerWays.at(i);
         queriesBuffer.append(QString("INSERT INTO innerWays ( id, prio_car ) VALUES("
                                      +QString::number(way.id)+", "
                                      +QString::number(way.priority)+");\n "));
-        for(unsigned int j=0;j<way.nodes.size();j++){
+        for(int j=0;j<way.nodes.size();j++){
             queriesBuffer.append(QString("INSERT INTO ways_nodes VALUES("
                                          +QString::number(way.id)+", "
                                          +QString::number(way.nodes.at(j))+", "
@@ -102,7 +102,7 @@ bool PartitionModel::exportToDatabase(Partitioning::DatabasePartition &dbpart){
         }
     }
     //Add Boundary Edges
-    for(unsigned int i=0;i<dbpart.boundaryEdges.size();i++){
+    for(int i=0;i<dbpart.boundaryEdges.size();i++){
         Partitioning::BoundaryEdge boundary=dbpart.boundaryEdges.at(i);
         queriesBuffer.append(QString("INSERT INTO boundaryEdges (node1,node2,wayId,prio_car) VALUES("
                                      +QString::number(boundary.nodeA)+", "
@@ -113,7 +113,7 @@ bool PartitionModel::exportToDatabase(Partitioning::DatabasePartition &dbpart){
     }
 
     //Add Boundary Edges
-    for(unsigned int i=0;i<dbpart.routingEdges.size();i++){
+    for(int i=0;i<dbpart.routingEdges.size();i++){
         Partitioning::RouteEdge routeEdge=dbpart.routingEdges.at(i);
         queriesBuffer.append(QString("INSERT INTO routeEdges (node1,node2,cost_car,lastWayId,lastNodeId) VALUES("
                                      +QString::number(routeEdge.nodeA)+", "
