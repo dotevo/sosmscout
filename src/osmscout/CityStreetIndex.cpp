@@ -65,7 +65,7 @@ namespace osmscout {
       found=pos==0;
     }
     else {
-      found=pos!=std::string::npos;
+      found=pos!=(int)std::string::npos;
     }
 
     if (!found) {

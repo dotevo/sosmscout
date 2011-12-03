@@ -29,8 +29,8 @@ namespace osmscout {
          */
         struct Step {
             Id id;
-            double lon;
-            double lat;
+            long double lon;
+            long double lat;
             Id wayId; // by which one came to this node from prevNode
             bool crossing;
             bool routing;
