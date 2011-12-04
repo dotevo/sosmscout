@@ -38,7 +38,17 @@ namespace osmscout {
         qDebug() << "Calculating from " << startNode.getId() << " to " << endNode.getId();
 
         if(startNode.getId() == endNode.getId()) {
-            emit Error(tr("Points are too close!"));
+            //emit Error(tr("Points are too close!"));
+            Routing::Step oneAndOnlyStep;
+
+            oneAndOnlyStep.id = startNode.getId();
+            oneAndOnlyStep.lon = startNode.getLon();
+            oneAndOnlyStep.lat = startNode.getLat();
+            oneAndOnlyStep.routing = false;
+            oneAndOnlyStep.crossing = true;
+
+            finalRoute.push_front(oneAndOnlyStep);
+
             return finalRoute;
         }
 
@@ -64,7 +74,7 @@ namespace osmscout {
         double totalDistance = distance(startPosition, endPosition);
         int bestProgress = 0;
         while(currentRouteNode->getId() != endNode.getId()) {
-            int  currentProgress = (1.0 - (distance(currentRouteNode->getLon(), currentRouteNode->getLat(), endNode.getLon(), endNode.getLat())/totalDistance)) * 95 + 1;
+            int currentProgress = (1.0 - (distance(currentRouteNode->getLon(), currentRouteNode->getLat(), endNode.getLon(), endNode.getLat())/totalDistance)) * 95 + 1;
             if(currentProgress > bestProgress) {
                 bestProgress = currentProgress;
                 emit RoutingProgress(bestProgress);
@@ -118,7 +128,7 @@ namespace osmscout {
 
                                         PiLibocik::Partition::RouteNode * newNode = new PiLibocik::Partition::RouteNode(neighbourNode, innerWay.getId(), rating, currentRouteNode->getDistanceFromStart() + distanceFromCurrent, currentRouteNode);
 
-                                        key = QString::number(newNode->getPrevNode().getId()) + "_" + QString::number(newNode->getId());
+                                        key = QString::number(newNode->getPrevNode()->getId()) + "_" + QString::number(newNode->getId());
                                         QMap< QString, PiLibocik::Partition::RouteNode * >::iterator it = usedMoves.find(key);
                                         if(it == usedMoves.end()) {
                                             availableMoves.insert(key, newNode);
@@ -140,7 +150,7 @@ namespace osmscout {
 
                                         PiLibocik::Partition::RouteNode * newNode = new PiLibocik::Partition::RouteNode(neighbourNode, innerWay.getId(), rating, currentRouteNode->getDistanceFromStart() + distanceFromCurrent, currentRouteNode);
 
-                                        key = QString::number(newNode->getPrevNode().getId()) + "_" + QString::number(newNode->getId());
+                                        key = QString::number(newNode->getPrevNode()->getId()) + "_" + QString::number(newNode->getId());
                                         QMap< QString, PiLibocik::Partition::RouteNode * >::iterator it = usedMoves.find(key);
                                         if(it == usedMoves.end()) {
                                             availableMoves.insert(key, newNode);
@@ -207,13 +217,13 @@ namespace osmscout {
                 double distanceFromCurrent = distance(neighbourNode.getLon(), neighbourNode.getLat(), currentRouteNode->getLon(), currentRouteNode->getLat());
                 double distanceToEnd = distance(neighbourNode.getLon(), neighbourNode.getLat(), endNode.getLon(), endNode.getLat());
                 if(distanceToEnd < 3*totalDistance) {
-                    double cost = 2.0 * distance(neighbourNode.getLon(), neighbourNode.getLat(), currentRouteNode->getLon(), currentRouteNode->getLat()); // estimated cost of going through route edge
+                    double cost = 1.5 * distance(neighbourNode.getLon(), neighbourNode.getLat(), currentRouteNode->getLon(), currentRouteNode->getLat()); // estimated cost of going through route edge
                     rating = cost
                             + distanceToEnd; // distance to endNod
 
                     PiLibocik::Partition::RouteNode * newNode = new PiLibocik::Partition::RouteNode(neighbourNode, -1, rating, currentRouteNode->getDistanceFromStart() + distanceFromCurrent, currentRouteNode, true);
 
-                    key = QString::number(newNode->getPrevNode().getId()) + "_" + QString::number(newNode->getId());
+                    key = QString::number(newNode->getPrevNode()->getId()) + "_" + QString::number(newNode->getId());
                     QMap< QString, PiLibocik::Partition::RouteNode * >::iterator it = usedMoves.find(key);
                     if(it == usedMoves.end()) {
                         availableMoves.insert(key, newNode);
@@ -224,10 +234,24 @@ namespace osmscout {
             //
             // getting best move from available moves
             //
-            if(availableMoves.size() == 0) {
-                emit Error(tr("Cannot calculate route!"));
-                finalRoute.clear();
-                return finalRoute;
+            if(availableMoves.size() == 0 || currentProgress < -150) {
+                emit Error(tr("Cannot find route! \nRouting to nearest..."));
+
+                double bestDistance = 99999.99;
+                QString bestKey("");
+                QMapIterator< QString, PiLibocik::Partition::RouteNode * > it(usedMoves);
+                while (it.hasNext()) {
+                    it.next();
+                    double currentDistance = distance(it.value()->getLon(), it.value()->getLat(), endNode.getLon(), endNode.getLat());
+                    if(currentDistance < bestDistance) {
+                        bestDistance = currentDistance;
+                        bestKey = it.key();
+                    }
+                }
+
+                currentRouteNode = usedMoves.take(bestKey);
+
+                break;
             }
             double bestRating = 99999.99;
             QString bestKey("");
@@ -285,7 +309,7 @@ namespace osmscout {
             if(!currentStep.routing) {
                 // creating route from previous node to current
                 partialRoute.clear();
-                previousId = currentRouteNode->getPrevNode().getId();
+                previousId = currentRouteNode->getPrevNode()->getId();
                 currentId = currentRouteNode->getId();
 
                 // getting way
@@ -341,7 +365,7 @@ namespace osmscout {
             }
 
             // find previous node and set it to current
-            currentRouteNode = &(currentRouteNode->getPrevNode());
+            currentRouteNode = currentRouteNode->getPrevNode();
         }
 
         // adding first step
