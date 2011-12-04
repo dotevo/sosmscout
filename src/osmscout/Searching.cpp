@@ -32,6 +32,14 @@ Searching::Intersection::Intersection(QPointF myPos, QPointF cross, QPointF way)
     this->way = way;
 }
 
+Searching::Intersection::Intersection(QPointF myPos, QPointF cross, QList<QPointF> ways)
+{
+    this->myPos = myPos;
+    this->cross = cross;
+    this->ways = &ways;
+    this->way = ways.at(0);
+}
+
 Searching::Searching()
 {
     database = new Database(databaseParameter);
@@ -335,10 +343,30 @@ osmscout::Searching::Intersection Searching::SimulateNextCrossing(osmscout::Rout
     double yDist = qAbs(cross.y() - last.y());
     double toCrossDist = qSqrt(qPow(cross.x() - last.x(), 2) + qPow(cross.y() - last.y(), 2));
     double cosVal = yDist / toCrossDist;
-    double angle = - acos(cosVal) * 180 / M_PI;   // angle in deegres
+    double angle = acos(cosVal) * 180 / M_PI;   // angle in deegres
 
-    if (cross.x() > 0)
-        angle = -angle;
+    if (cross.x() > 0) {
+        if (cross.y() >= 0) {
+            angle = angle;
+        }
+        else {
+            angle = 180 - angle;
+        }
+    }
+    if (cross.x() < 0) {
+        if (cross.y() >= 0) {
+            angle = 360 - angle;
+        } else {
+            angle = 180 + angle;
+        }
+    }
+
+    if (cross.x() == 0 && cross.y() < 0) {
+        angle = 180;
+    }
+
+
+    //qDebug() << "ANGLE: " << angle;
 
     QMatrix rotateToVert;
     rotateToVert.rotate(angle);
@@ -353,7 +381,6 @@ osmscout::Searching::Intersection Searching::SimulateNextCrossing(osmscout::Rout
 //    qDebug() << "LAST: " << QString::number(lastNode.lon, 'f', 10) << " " << QString::number(lastNode.lat, 'f', 10) << " | " << last.x() << " " << last.y();
 //    qDebug() << "CROSS: " << QString::number(crossingNode.lon, 'f', 10) << " " << QString::number(crossingNode.lat, 'f', 10) << " | " << cross.x() << " " << cross.y();
 //    qDebug() << "TARGET: " << QString::number(waysNodes->at(0).lon, 'f', 10) << " " << QString::number(waysNodes->at(0).lat, 'f', 10) << " | " << ways[0].x() << " " << ways[0].y();
-
 
     cross.setX(0);
 
@@ -394,7 +421,8 @@ osmscout::Searching::Intersection Searching::SimulateNextCrossing(osmscout::Rout
     intersection.way = ways.at(0);
     */
 
-    Intersection intersection(last, cross, ways[0]);
+    //Intersection intersection(last, cross, ways[0]);
+    Intersection intersection(last, cross, ways);
 
     /*
     QPointF waysPoint[ways.size()];

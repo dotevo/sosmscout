@@ -14,6 +14,12 @@
 #include <../../PiLibocik/include/pilibocik/partition/way.h>
 
 namespace osmscout {
+
+    void Routing::Step::setCrossing(bool cross)
+    {
+        crossing = cross;
+    }
+
     Routing::Routing(PiLibocik::Partition::PartitionFile *pFile)
     {
         partitionFile = pFile;

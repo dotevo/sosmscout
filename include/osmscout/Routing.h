@@ -34,6 +34,11 @@ namespace osmscout {
             Id wayId; // by which one came to this node from prevNode
             bool crossing;
             bool routing;
+            void setCrossing(bool cross);
+            bool operator ==(const Step &a) {
+                return a.id == id;
+            }
+
         };
         /**
          * @brief Structure that represets node with information from which node one came, so it represents step in graph.
