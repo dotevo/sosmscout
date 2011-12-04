@@ -149,9 +149,9 @@ void Partitioning::InitData()
     emit initDataPartProgress(0);
     emit initDataOverallProgress(15);
     query = "SELECT count(*) FROM ways,way_nodes WHERE way_nodes.way=ways.id AND ways.lon1>" + QString::number(minLon)
-            + " AND lat>" + QString::number(minLat)
-            + " AND lon<" + QString::number(maxLon)
-            + " AND lat<" + QString::number(maxLat)
+            + " AND ways.lat1>" + QString::number(minLat)
+            + " AND ways.lon2<" + QString::number(maxLon)
+            + " AND ways.lat2<" + QString::number(maxLat)
             + " AND way IN(SELECT ref FROM way_tags"
             + " WHERE tag IN("
             + " SELECT id FROM tags"
@@ -166,9 +166,9 @@ void Partitioning::InitData()
     }
 
     query = "SELECT way,num,node FROM ways,way_nodes WHERE way_nodes.way=ways.id AND ways.lon1>" + QString::number(minLon)
-            + " AND lat>" + QString::number(minLat)
-            + " AND lon<" + QString::number(maxLon)
-            + " AND lat<" + QString::number(maxLat)
+            + " AND ways.lat1>" + QString::number(minLat)
+            + " AND ways.lon2<" + QString::number(maxLon)
+            + " AND ways.lat2<" + QString::number(maxLat)
             + " AND way IN(SELECT ref FROM way_tags"
             + " WHERE tag IN("
             + " SELECT id FROM tags"
@@ -884,7 +884,7 @@ Partitioning::DatabasePartition  Partitioning::FindPartition()
     bestQuality = quality;
     bestCellsCount = partition.cellsCount;
 
-    while(partition.cellsCount > 1798) {
+    while(partition.cellsCount > 1) {
         if(partition.cellsCount % 100 == 0) {
             emit partCalcProgress((int)((1.0-((double)partition.cellsCount/(double)partition.nodesCount)) * 97)+2);
         }
@@ -1254,5 +1254,6 @@ void Partitioning::Delete()
     for(int i=0; i<partition.priorities.size(); ++i) {
         delete partition.priorities[i];
     }
+    partition.priorities.clear();
 }
 }
