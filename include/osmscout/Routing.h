@@ -71,13 +71,6 @@ namespace osmscout {
          */
         QList< Routing::Step > CalculateRoute(PiLibocik::Position startPosition, PiLibocik::Position endPosition);
         /**
-         * @brief Old method that uses sql database.
-         *
-         * @param startId id of start node
-         * @param endId id of end node
-         */
-        std::vector< RouteNode > CalculateRouteFromDatabase(Id startId, Id endId);
-        /**
          * @brief Transforms list of positions into list of steps.
          *
          * @param positions - list of positions to transform
