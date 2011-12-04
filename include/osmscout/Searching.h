@@ -38,10 +38,11 @@ public:
     public:
         Intersection();
         Intersection(QPointF myPos, QPointF cross, QPointF way);
+        Intersection(QPointF myPos, QPointF cross, QList<QPointF> ways);
         QPointF myPos;
         QPointF cross;
         QPointF way;
-        //QList<QPointF> *ways; // at '0' is our road
+        QList<QPointF> *ways; // at '0' is our road
         //QPointF *ways;
         //int numOfWays;
     };
