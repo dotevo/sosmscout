@@ -80,12 +80,12 @@ void Partitioning::InitData()
         return;
     }
 
-    double lonMin, latMin, lonMax, latMax;
+    //double lonMin, latMin, lonMax, latMax;
     //, magnification;
-    latMin = 49.98;
-    lonMin = 14.47;
-    latMax = 51.78;
-    lonMax = 17.77;
+    //latMin = 49.98;
+    //lonMin = 14.47;
+    //latMax = 51.78;
+    //lonMax = 17.77;
     //Wroc³aw 51.118552&lon=17.057824
 
     /*latMin = 51.08;
@@ -102,10 +102,10 @@ void Partitioning::InitData()
     emit initDataPartProgress(0);
     emit initDataOverallProgress(5);
     QSqlQuery qQuery(db);
-    QString query = "SELECT count(*) FROM nodes WHERE lon>" + QString::number(lonMin)
-            + " AND lat>" + QString::number(latMin)
-            + " AND lon<" + QString::number(lonMax)
-            + " AND lat<" + QString::number(latMax);
+    QString query = "SELECT count(*) FROM nodes WHERE lon>" + QString::number(minLon)
+            + " AND lat>" + QString::number(minLat)
+            + " AND lon<" + QString::number(maxLon)
+            + " AND lat<" + QString::number(maxLat);
     qQuery.prepare(query);
     qQuery.exec();
 
@@ -114,10 +114,10 @@ void Partitioning::InitData()
         querySize = qQuery.value(0).toInt();
     }
 
-    query = "SELECT id,lon,lat FROM nodes WHERE lon>" + QString::number(lonMin)
-            + " AND lat>" + QString::number(latMin)
-            + " AND lon<" + QString::number(lonMax)
-            + " AND lat<" + QString::number(latMax);
+    query = "SELECT id,lon,lat FROM nodes WHERE lon>" + QString::number(minLon)
+            + " AND lat>" + QString::number(minLat)
+            + " AND lon<" + QString::number(maxLon)
+            + " AND lat<" + QString::number(maxLat);
     qQuery.clear();
     qQuery.prepare(query);
     qQuery.exec();
@@ -148,10 +148,10 @@ void Partitioning::InitData()
     qDebug() << "Getting ways...";
     emit initDataPartProgress(0);
     emit initDataOverallProgress(15);
-    query = "SELECT count(*) FROM ways,way_nodes WHERE way_nodes.way=ways.id AND ways.lon1>" + QString::number(lonMin)
-            + " AND ways.lat1>" + QString::number(latMin)
-            + " AND ways.lon2<" + QString::number(lonMax)
-            + " AND ways.lat2<" + QString::number(latMax)
+    query = "SELECT count(*) FROM ways,way_nodes WHERE way_nodes.way=ways.id AND ways.lon1>" + QString::number(minLon)
+            + " AND lat>" + QString::number(minLat)
+            + " AND lon<" + QString::number(maxLon)
+            + " AND lat<" + QString::number(maxLat)
             + " AND way IN(SELECT ref FROM way_tags"
             + " WHERE tag IN("
             + " SELECT id FROM tags"
@@ -165,10 +165,10 @@ void Partitioning::InitData()
         querySize = qQuery.value(0).toInt();
     }
 
-    query = "SELECT way,num,node FROM ways,way_nodes WHERE way_nodes.way=ways.id AND ways.lon1>" + QString::number(lonMin)
-            + " AND ways.lat1>" + QString::number(latMin)
-            + " AND ways.lon2<" + QString::number(lonMax)
-            + " AND ways.lat2<" + QString::number(latMax)
+    query = "SELECT way,num,node FROM ways,way_nodes WHERE way_nodes.way=ways.id AND ways.lon1>" + QString::number(minLon)
+            + " AND lat>" + QString::number(minLat)
+            + " AND lon<" + QString::number(maxLon)
+            + " AND lat<" + QString::number(maxLat)
             + " AND way IN(SELECT ref FROM way_tags"
             + " WHERE tag IN("
             + " SELECT id FROM tags"
@@ -884,7 +884,7 @@ Partitioning::DatabasePartition  Partitioning::FindPartition()
     bestQuality = quality;
     bestCellsCount = partition.cellsCount;
 
-    while(partition.cellsCount > 1998) {
+    while(partition.cellsCount > 1798) {
         if(partition.cellsCount % 100 == 0) {
             emit partCalcProgress((int)((1.0-((double)partition.cellsCount/(double)partition.nodesCount)) * 97)+2);
         }
@@ -902,9 +902,9 @@ Partitioning::DatabasePartition  Partitioning::FindPartition()
             }
         }
 
-        if(partition.cellsCount == 2000) {
-            SaveData();
-        }
+        //if(partition.cellsCount == 2000) {
+            //SaveData();
+        //}
 
         if(maxPriority > 0) {
             //if(partition.cellsCount != 10) {
@@ -1239,6 +1239,14 @@ void Partitioning::setPrecision(qint8 prec)
 {
     precision = 0;
     precision = prec;
+}
+
+void Partitioning::setCoordinates(double minLon, double maxLon, double minLat, double maxLat)
+{
+    this->minLon = minLon;
+    this->maxLon = maxLon;
+    this->minLat = minLat;
+    this->maxLat = maxLat;
 }
 
 void Partitioning::Delete()

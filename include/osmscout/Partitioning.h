@@ -197,6 +197,7 @@ namespace osmscout {
         QString finalDataPath;
         Partition partition;
         Partition bestPartition;
+        double minLon, maxLon, minLat, maxLat;
         qint8 precision;
         double alpha;
         double beta;
@@ -335,6 +336,15 @@ namespace osmscout {
          * @param prec
          */
         void setPrecision(qint8 prec);
+        /**
+         * @brief
+         *
+         * @param minLon
+         * @param maxLon
+         * @param minLat
+         * @param maxLat
+         */
+        void setCoordinates(double minLon, double maxLon, double minLat, double maxLat);
     };
 }
 

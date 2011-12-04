@@ -286,6 +286,7 @@ namespace osmscout {
         osmscout::Database database(databaseParameter);
 
         QString map = Settings::getInstance()->getMapPath();
+        //QString map = "";
         if (map.size() != 0 && !database.Open((const char*)map.toAscii())) {
             emit Error(tr("Cannot open database!"));
             qDebug() << "Fatal error: Cannot open database";
