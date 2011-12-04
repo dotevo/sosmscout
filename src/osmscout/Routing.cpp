@@ -233,7 +233,7 @@ namespace osmscout {
             //
             // getting best move from available moves
             //
-            if(availableMoves.size() == 0 || currentProgress < -150) {
+            if(availableMoves.size() == 0 || currentProgress < -150 || usedMoves.size() > 1500) {
                 emit Error(tr("Cannot find route! \nRouting to nearest..."));
 
                 double bestDistance = 99999.99;
