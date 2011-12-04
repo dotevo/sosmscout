@@ -37,10 +37,13 @@ public:
     class Intersection {
     public:
         Intersection();
+        Intersection(QPointF myPos, QPointF cross, QPointF way);
         QPointF myPos;
         QPointF cross;
         QPointF way;
-        QList<QPointF> ways; // at '0' is our road
+        //QList<QPointF> *ways; // at '0' is our road
+        //QPointF *ways;
+        //int numOfWays;
     };
 
     Searching();
@@ -85,9 +88,16 @@ public:
                                     double tolerance = 3,
                                     double changeRouteTolerance = 20);
 
+    /**
+      @brief Simulating of next intersection.
+      @param lasNode Previous visited node.
+      @param crossingNode Intersection node.
+      @param waysNodes Ways nodes.
+      @return Intersection in points coordinates form.
+      */
     static Intersection SimulateNextCrossing(osmscout::Routing::Step lastNode,
                                      osmscout::Routing::Step crossingNode,
-                                     QList<osmscout::Routing::Step> waysNodes);
+                                     QList<osmscout::Routing::Step> *waysNodes);
 
     void searchAllRegions();
 
